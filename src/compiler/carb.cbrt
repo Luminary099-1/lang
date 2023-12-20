@@ -1,5 +1,13 @@
-/* Imports will go here */
+#include "./syntaxTree/base.hpp"
+#include "./syntaxTree/function.hpp"
+#include "./syntaxTree/statements.hpp"
+#include "./syntaxTree/expressions.hpp"
+#include "./syntaxTree/constructs.hpp"
+#include "./syntaxTree/literals.hpp"
 
+#include <cstdlib>
+#include <string>
+#include <utility>
 
 
 %scanner%
@@ -8,7 +16,7 @@
 : [\ \t\n]+;	/* Skips whitespace. */
 ASSIGN: =;
 SEMICOL: \;;
-COMMA: ,;
+COMMA: \,;
 PLUS: \+;
 MINUS: \-;
 ASTERISK: \*;
@@ -31,12 +39,13 @@ GREATER: >;
 LESSER: <;
 GREATEQ: >=;
 LESSEQ: <=;
-LPAREN: \(;;
+LPAREN: \(;
 RPAREN: \);
 LCURLY: \{;
 RCURLY: \};
-DECIMAL: [0-9]+;
-ID: [a-zA-Z_][a-zA-Z0-9_]+;
+DECIMAL: [0-9]+ { $$ = std::atoi($text); }
+ID: [a-zA-Z_][a-zA-Z0-9_]+ { $$ = $text; }
+STRING: \".*\" { $$ = $text; }
 IF: if;
 ELSE: else;
 MATCH: match;
@@ -48,122 +57,293 @@ FALSE: false;
 BREAK: break;
 
 %token ASSIGN SEMICOL COMMA PLUS MINUS ASTERISK SLASH PERCENT INC DEC AND OR XOR COMP SHR SHL LAND
-%token LOR DENY EQUAL NEQUAL GREATER LESSER GREATEQ LESSEQ LPAREN RPAREN LCURLY RCURLY DECIMAL ID IF
-%token ELSE MATCH FOR LOOP WHILE TRUE FALSE BREAK
+%token LOR DENY EQUAL NEQUAL GREATER LESSER GREATEQ LESSEQ LPAREN RPAREN LCURLY RCURLY DECIMAL ID
+%token STRING IF ELSE MATCH FOR LOOP WHILE TRUE FALSE BREAK
+
+%type DECIMAL: int
+%type ID STRING: std::string
+/* Not sure what else to put here for now. */
+%token_type int
+
 
 %nt globals global type_expr function_def param_list param_list_tail param statement compound_stmt
 %nt statements var_def_stmt expression expression_stmt assignment_expr if_expr for_expr loop_expr
-%nt while_expr break_stmt expr_maybe enclosed_expr pre_expr multiplicative_expr additive_expr
-%nt shift_expr relative_expr absolute_expr bit_and_expr bit_xor_expr bit_or_expr logic_and_expr
-%nt logic_or_expr literal boolean
-
+%nt while_expr break_stmt expr_maybe primary_expr arg_list arg_list_tail pre_expr
+%nt multiplicative_expr additive_expr shift_expr relative_expr absolute_expr bit_and_expr
+%nt bit_xor_expr bit_or_expr logic_and_expr logic_or_expr literal boolean
 
 
 %grammar%
 
-globals: global globals;
-globals: ;
+%type globals: Unit
+globals: global globals
+	{
+		Unit u {std::move($1)};
+		u._defs.push_back($0);
+		$$ = u;
+	}
+globals:
+	{ $$ = Unit(); }
 
-global: function_def;
-global: var_def_stmt;
+%type global: SyntaxNode*
+global: function_def
+	{ $$ = $0; }
+global: var_def_stmt
+	{ $$ = $0; }
 
-type_expr: ID;
+%type type_expr: TypeNode
+type_expr: ID
+	{ $$ = new TypeNode($0); }
 
-function_def: type_expr ID LPAREN param_list RPAREN compound_stmt;
+%type function_def: FunctionNode*
+function_def: type_expr ID LPAREN param_list RPAREN compound_stmt
+	{ $$ = new FunctionNode($0, $1, std::move($3), std::move($5));}
 
-param_list: param param_list_tail;
-param_list: ;
+%type param_list: FunctionNode::ParamList
+param_list: param param_list_tail
+	{
+		FunctionNode::ParamList l {std::move($1)};
+		l.push_back($0);
+		$$ = l;
+	}
+param_list:
+	{ $$ = FunctionNode::ParamList(); }
 
-param_list_tail: COMMA param param_list_tail;
-param_list_tail: ;
+%type param_list_tail: FunctionNode::ParamList
+param_list_tail: COMMA param param_list_tail
+	{
+		FunctionNode::ParamList l {std::move($2)};
+		l.push_back($1);
+		$$ = l;
+	}
+param_list_tail:
+	{ $$ = FunctionNode::ParamList(); }
 
-param: type_expr ID;
+%type param: FunctionNode::Param
+param: type_expr ID
+	{ $$ = std::pair($0, std::move($1)); }
 
-statement: compound_stmt;
-statement: var_def_stmt;
-statement: expression;
-statement: expression_stmt;
-statement: break_stmt;
+%type statement: StmtNode*
+statement: compound_stmt
+	{ $$ = $0; }
+statement: var_def_stmt
+	{ $$ = $0; }
+statement: expression
+	{ $$ = $0; }
+statement: expression_stmt
+	{ $$ = $0; }
+statement: break_stmt
+	{ $$ = $0; }
 
-compound_stmt: LCURLY statements RCURLY;
+%type compound_stmt: CompoundStmtNode*
+compound_stmt: LCURLY statements RCURLY
+	{ $$ = new CompoundStmtNode(std::move($1)); }
 
-statements: statement statements;
-statements: ;
+%type statements: CompoundStmtNode::StmtList
+statements: statement statements
+	{
+		CompoundStmtNode::StmtList l {std::move($2)};
+		l.push_back($1);
+		$$ = l;
+	}
+statements:
+	{ $$ = CompoundStmtNode::StmtList(); }
 
-var_def_stmt: type_expr ID ASSIGN expression SEMICOL;
+%type var_def_stmt: VarDefStmtNode*
+var_def_stmt: type_expr ID ASSIGN expression SEMICOL
+	{ $$ = new VarDefStmtNode($0, $1, $3); }
 
-expression: assignment_expr;
-expression: if_expr;
-expression: for_expr;
-expression: loop_expr;
-expression: while_expr:
-expression: logic_or_expr;
+%type expression: ExprNode*
+expression: assignment_expr
+	{ $$ = $0; }
+expression: if_expr
+	{ $$ = $0; }
+expression: for_expr
+	{ $$ = $0; }
+expression: loop_expr
+	{ $$ = $0; }
+expression: while_expr
+	{ $$ = $0; }
+expression: logic_or_expr
+	{ $$ = $0; }
 
-expression_stmt: expression SEMICOL;
+%type expression_stmt: ExprStmtNode*
+expression_stmt: expression SEMICOL
+	{ $$ = new ExprStmtNode($0); }
 
-assignment_expr: ID ASSIGN expression;
+%type assignment_expr: AssignExprNode*
+assignment_expr: ID ASSIGN expression
+	{$$ = new AssignExprNode(std::move($0), $2); }
 
-if_expr: IF LPAREN expression RPAREN statement;
+%type if_expr: IfExprNode*
+if_expr: IF LPAREN expression RPAREN statement
+	{ $$ = new IfExprNode($2, $4, nullptr); }
+if_expr: IF LPAREN expression RPAREN statement ELSE statement
+	{ $$ = new IfExprNode($2, $4, $6); }
 
-for_expr: FOR LPAREN expr_maybe SEMICOL expr_maybe SEMICOL expr_maybe RPAREN statement;
+%type for_expr: ForExprNode*
+for_expr: FOR LPAREN expr_maybe SEMICOL expr_maybe SEMICOL expr_maybe RPAREN statement
+	{ $$ = new ForExprNode($2, $4, $6, $8); }
 
-loop_expr: LOOP statement;
+%type loop: LoopExprNode*
+loop_expr: LOOP statement
+	{ $$ = new LoopExprNode($1); }
 
-while_expr: WHILE LPAREN expression RPAREN statement;
+%type while_expr: WhileExprNode*
+while_expr: WHILE LPAREN expression RPAREN statement
+	{ $$ = new WhileExprNode($2, $4); }
 
-break_stmt: BREAK expr_maybe SEMICOL;
-break_stmt: BREAK LPAREN DECIMAL RPAREN expr_maybe SEMICOL;
+%type break_stmt: BreakStmtNode*
+break_stmt: BREAK expr_maybe SEMICOL
+	{ $$ = new BreakStmtNode($1); }
+break_stmt: BREAK LPAREN DECIMAL RPAREN expr_maybe SEMICOL
+	{ $$ = new BreakStmtNode($4, $2); }
 
-expr_maybe: expression;
-expr_maybe: ;
+%type expr_maybe: Expression*
+expr_maybe: expression
+	{ $$ = $0; }
+expr_maybe:
+	{ $$ = nullptr; }
 
 
 /* TODO: Replace expression parsing with the Shunting Yard algorithm. */
-enclosed_expr: LPAREN expression RPAREN;
-enclosed_expr: ID LPAREN argument_list RPAREN;
-enclosed_expr: expression INC;
-enclosed_expr: expression DEC;
-enclosed_expr: literal;
+%type primary_expr: ExprNode*
+primary_expr: LPAREN expression RPAREN
+	{ $$ = $1; }
+primary_expr: ID LPAREN arg_list RPAREN
+	{ $$ = new InvokeNode($0, $2); }
+primary_expr: expression INC
+	{ $$ = new PostExprNode($0, PostExprNode::Ops::Inc); }
+primary_expr: expression DEC
+	{ $$ = new PostExprNode($0, PostExprNode::Ops::Dec); }
+primary_expr: literal
+	{ $$ = $0; }
 
-pre_expr: PLUS enclosed_expr;
-pre_expr: MINUS enclosed_expr;
-pre_expr: INC enclosed_expr;
-pre_expr: DEC enclosed_expr;
-pre_expr: DENY enclosed_expr;
-pre_expr: COMP enclosed_expr;
+%type arg_list: InvokeNode::ArgList
+arg_list: expression arg_list_tail
+	{
+		InvokeNode::ArgList l {std::move($1)};
+		l.push_back($0);
+		$$ = l;
+	}
+arg_list:
+	{ $$ = InvokeNode::ArgList(); }
 
-multiplicative_expr: multiplicative_expr ASTERISK pre_expr;
-multiplicative_expr: multiplicative_expr SLASH pre_expr;
-multiplicative_expr: multiplicative_expr PERCENT pre_expr;
+%type arg_list_tail: InvokeNode::ArgList
+arg_list_tail: COMMA expression arg_list_tail
+	{
+		InvokeNode::ArgList l {std::move($2)};
+		l.push_back($1);
+		$$ = l;
+	}
+arg_list_tail:
+	{ $$ = InvokeNode::ArgList(); }
 
-additive_expr: additive_expr PLUS multiplicative_expr;
-additive_expr: additive_expr MINUS multiplicative_expr;
+%type pre_expr: PreExprNode*
+pre_expr: primary_expr
+	{ $$ = $0; }
+pre_expr: PLUS primary_expr
+	{ $$ = new PreExprNode($1, PreExprNode::Ops::Pos); }
+pre_expr: MINUS primary_expr
+	{ $$ = new PreExprNode($1, PreExprNode::Ops::Neg); }
+pre_expr: INC primary_expr
+	{ $$ = new PreExprNode($1, PreExprNode::Ops::Inc); }
+pre_expr: DEC primary_expr
+	{ $$ = new PreExprNode($1, PreExprNode::Ops::Dec); }
+pre_expr: DENY primary_expr
+	{ $$ = new PreExprNode($1, PreExprNode::Ops::Deny); }
+pre_expr: COMP primary_expr
+	{ $$ = new PreExprNode($1, PreExprNode::Ops::Comp); }
 
-shift_expr: shift_expr SHL additive_expr;
-shift_expr: shift_expr SHR additive_expr;
+%type multiplicative_expr: BinaryExprNode*
+multiplicative_expr: pre_expr
+	{ $$ = $0; }
+multiplicative_expr: multiplicative_expr ASTERISK pre_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Mul); }
+multiplicative_expr: multiplicative_expr SLASH pre_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Div); }
+multiplicative_expr: multiplicative_expr PERCENT pre_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Mod); }
 
-relative_expr: relative_expr LESSER shift_expr;
-relative_expr: relative_expr LESSEQ shift_expr;
-relative_expr: relative_expr GREATER shift_expr;
-relative_expr: relative_expr GREATEQ shift_expr;
+%type additive_expr: BinaryExprNode*
+additive_expr: multiplicative_expr
+	{ $$ = $0; }
+additive_expr: additive_expr PLUS multiplicative_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Add); }
+additive_expr: additive_expr MINUS multiplicative_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Sub); }
 
-absolute_expr: absolute_expr EQUAL relative_expr;
-absolute_expr: absolute_expr NEQUAL relative_expr;
+%type shift_expr: BinaryExprNode*
+shift_expr: additive_expr
+	{ $$ = $0; }
+shift_expr: shift_expr SHL additive_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::LShift); }
+shift_expr: shift_expr SHR additive_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::RShift); }
 
-bit_and_expr: bit_and_expr AND absolute_expr;
+%type relative_expr: BinaryExprNode*
+relative_expr: shift_expr
+	{ $$ = $0; }
+relative_expr: relative_expr LESSER shift_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Less); }
+relative_expr: relative_expr LESSEQ shift_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::LessEq); }
+relative_expr: relative_expr GREATER shift_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::More); }
+relative_expr: relative_expr GREATEQ shift_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::MoreEq); }
 
-bit_xor_expr: bit_xor_expr XOR bit_and_expr;
+%type absolute_expr: BinaryExprNode*
+absolute_expr: relative_expr
+	{ $$ = $0; }
+absolute_expr: absolute_expr EQUAL relative_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::EQ); }
+absolute_expr: absolute_expr NEQUAL relative_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::NEQ); }
 
-bit_or_expr: bit_or_expr OR bit_xor_expr;
+%type bit_and_expr: BinaryExprNode*
+bit_and_expr: absolute_expr
+	{ $$ = $0; }
+bit_and_expr: bit_and_expr AND absolute_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::AND); }
 
-logic_and_expr: logic_and_expr LAND bit_or_expr;
+%type bit_xor_expr: BinaryExprNode*
+bit_xor_expr: bit_and_expr
+	{ $$ = $0; }
+bit_xor_expr: bit_xor_expr XOR bit_and_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::XOR); }
 
-logic_or_expr: logic_or_expr LOR logic_and_expr;
+%type bit_or_expr: BinaryExprNode*
+bit_or_expr: bit_xor_expr
+	{ $$ = $0; }
+bit_or_expr: bit_or_expr OR bit_xor_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::OR); }
+
+%type logic_and_expr: BinaryExprNode*
+logic_and_expr: bit_or_expr
+	{ $$ = $0; }
+logic_and_expr: logic_and_expr LAND bit_or_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::LAND); }
+
+%type logic_or_expr: BinaryExprNode*
+logic_or_expr: logic_and_expr
+	{ $$ = $0; }
+logic_or_expr: logic_or_expr LOR logic_and_expr
+	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::LOR); }
 
 
-literal: ID;
-literal: DECIMAL;
-literal: boolean;
+%type literal: LiteralNode*
+literal: ID
+	{ $$ = new IDNode(std::move($0)); }
+literal: DECIMAL
+	{ $$ = new DecimalNode($0); }
+literal: boolean
+	{ $$ = new BoolNode($0); }
+literal: STRING
+	{ $$ = StrNode::build(std::move($0)); }
 
-boolean: TRUE;
-boolean: FALSE;
+%type boolean: bool
+boolean: TRUE
+	{ $$ = true; }
+boolean: FALSE
+	{ $$ = false; }
