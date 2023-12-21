@@ -1,3 +1,5 @@
 build
 specification.txt
 .vscode
+src/compiler/parse.cpp
+src/compiler/parse.h
