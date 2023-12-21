@@ -142,8 +142,8 @@ compound_stmt: LCURLY statements RCURLY
 %type statements: CompoundStmtNode::StmtList
 statements: statement statements
 	{
-		CompoundStmtNode::StmtList l {std::move($2)};
-		l.push_back($1);
+		CompoundStmtNode::StmtList l {std::move($1)};
+		l.push_back($0);
 		$$ = l;
 	}
 statements:
@@ -185,7 +185,7 @@ if_expr: IF LPAREN expression RPAREN statement ELSE statement
 for_expr: FOR LPAREN expr_maybe SEMICOL expr_maybe SEMICOL expr_maybe RPAREN statement
 	{ $$ = new ForExprNode($2, $4, $6, $8); }
 
-%type loop: LoopExprNode*
+%type loop_expr: LoopExprNode*
 loop_expr: LOOP statement
 	{ $$ = new LoopExprNode($1); }
 
@@ -212,10 +212,6 @@ primary_expr: LPAREN expression RPAREN
 	{ $$ = $1; }
 primary_expr: ID LPAREN arg_list RPAREN
 	{ $$ = new InvokeNode($0, $2); }
-primary_expr: expression INC
-	{ $$ = new PostExprNode($0, PostExprNode::Ops::Inc); }
-primary_expr: expression DEC
-	{ $$ = new PostExprNode($0, PostExprNode::Ops::Dec); }
 primary_expr: literal
 	{ $$ = $0; }
 
@@ -347,3 +343,35 @@ boolean: TRUE
 	{ $$ = true; }
 boolean: FALSE
 	{ $$ = false; }
+
+
+
+%prefer additive_expr: additive_expr * MINUS multiplicative_expr
+%over shift_expr: additive_expr *
+
+%prefer additive_expr: additive_expr * PLUS multiplicative_expr
+%over shift_expr: additive_expr *
+
+%prefer shift_expr: shift_expr SHR additive_expr *
+%over additive_expr: additive_expr * MINUS multiplicative_expr
+
+%prefer shift_expr: shift_expr SHR additive_expr *
+%over additive_expr: additive_expr * PLUS multiplicative_expr
+
+%prefer shift_expr: shift_expr SHL additive_expr *
+%over additive_expr: additive_expr * MINUS multiplicative_expr
+
+%prefer shift_expr: shift_expr SHL additive_expr *
+%over additive_expr: additive_expr * PLUS multiplicative_expr
+
+%prefer literal: ID *
+%over type_expr: ID *
+
+%prefer primary_expr: ID * LPAREN arg_list RPAREN
+%over literal: ID *
+
+%prefer expression_stmt: expression * SEMICOL
+%over statement: expression *
+
+%prefer break_stmt: BREAK LPAREN DECIMAL * RPAREN expr_maybe SEMICOL
+%over literal: DECIMAL *

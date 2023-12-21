@@ -8,5 +8,5 @@ add_custom_target(
 
 add_custom_target(
 	run_carburetta
-	COMMAND ${PROJECT_SOURCE_DIR}/tools/carburetta/build/Win_amd64/Release/carburetta.exe ${PROJECT_SOURCE_DIR}/src/compiler/carb.cbrt
+	COMMAND ${PROJECT_SOURCE_DIR}/tools/carburetta/build/Win_amd64/Release/carburetta.exe ${PROJECT_SOURCE_DIR}/src/compiler/carb.cbrt --c parse.cpp --h
 )
