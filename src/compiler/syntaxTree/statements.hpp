@@ -17,6 +17,9 @@ struct CompoundStmtNode : public StmtNode
 	StmtList _kids;
 	
 	CompoundStmtNode(StmtList kids);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
@@ -27,6 +30,9 @@ struct VarDefStmtNode : public StmtNode
 	ExprNode* _init;
 
 	VarDefStmtNode(TypeNode type, std::string name, ExprNode* init);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
@@ -43,6 +49,9 @@ struct ExprStmtNode : public StmtNode
 	ExprNode* _expr;
 
 	ExprStmtNode(ExprNode* expr);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
@@ -52,4 +61,7 @@ struct BreakStmtNode : public StmtNode
 	ExprNode* _expr;
 
 	BreakStmtNode(ExprNode* expr, int levels = 1);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

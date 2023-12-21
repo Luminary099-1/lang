@@ -12,6 +12,9 @@ struct AssignExprNode : public ExprNode
 	ExprNode* _expr;
 
 	AssignExprNode(std::string name, ExprNode* expr);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
@@ -21,7 +24,10 @@ struct IfExprNode : public ExprNode
 	StmtNode* _body;
 	StmtNode* _alt;
 
-	IfExprNode(ExprNode* cond, StmtNode* body, StmtNode* _alt);
+	IfExprNode(ExprNode* cond, StmtNode* body, StmtNode* alt);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
@@ -33,6 +39,9 @@ struct ForExprNode : public ExprNode
 	StmtNode* _body;
 
 	ForExprNode(ExprNode* init, ExprNode* cond, ExprNode* inc, StmtNode* body);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
@@ -41,6 +50,9 @@ struct LoopExprNode : public ExprNode
 	StmtNode* _body;
 
 	LoopExprNode(StmtNode* body);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
@@ -50,4 +62,7 @@ struct WhileExprNode : public ExprNode
 	StmtNode* _body;
 
 	WhileExprNode(ExprNode* cond, StmtNode* body);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

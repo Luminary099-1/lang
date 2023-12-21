@@ -8,6 +8,7 @@
 #include <vector>
 
 
+// FIXME: Function parameters are stored in reverse order.
 struct FunctionNode : public SyntaxNode
 {
 	using Param = std::pair<TypeNode, std::string>;
@@ -20,4 +21,7 @@ struct FunctionNode : public SyntaxNode
 
 	FunctionNode(TypeNode type, std::string name
 		, ParamList params, CompoundStmtNode* body);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

@@ -3,6 +3,11 @@
 #include "base.hpp"
 #include "statements.hpp"
 
+#include <string_view>
+
+
+using namespace std::string_view_literals;
+
 
 struct BinaryExprNode : public ExprNode
 {
@@ -33,6 +38,10 @@ struct BinaryExprNode : public ExprNode
 	Ops _op;
 
 	BinaryExprNode(ExprNode* argl, ExprNode* argr, Ops op);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
+	std::string_view GetOpName(Ops op);
 };
 
 
@@ -52,6 +61,10 @@ struct PreExprNode : public ExprNode
 	Ops _op;
 
 	PreExprNode(ExprNode* arg, Ops op);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
+	std::string_view GetOpName(Ops op);
 };
 
 
@@ -67,9 +80,14 @@ struct PostExprNode : public ExprNode
 	Ops _op;
 
 	PostExprNode(ExprNode* arg, Ops op);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
+	std::string_view GetOpName(Ops op);
 };
 
 
+// FIXME: Function arguments are stored in reverse order.
 struct InvokeNode : public ExprNode
 {
 	using ArgList = std::vector<ExprNode*>;
@@ -79,4 +97,7 @@ struct InvokeNode : public ExprNode
 	ArgList _args;
 
 	InvokeNode(std::string name, ArgList args);
+	void Validate() override;
+	void Scope() override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
