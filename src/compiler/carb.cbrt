@@ -66,7 +66,7 @@ BREAK: break;
 %token_type int
 
 
-%nt globals global type_expr function_def param_list param_list_tail param statement compound_stmt
+%nt global type_expr function_def param_list param_list_tail param statement compound_stmt
 %nt statements var_def_stmt expression expression_stmt assignment_expr if_expr for_expr loop_expr
 %nt while_expr break_stmt expr_maybe primary_expr arg_list arg_list_tail pre_expr
 %nt multiplicative_expr additive_expr shift_expr relative_expr absolute_expr bit_and_expr
@@ -74,16 +74,6 @@ BREAK: break;
 
 
 %grammar%
-
-%type globals: Unit
-globals: global globals
-	{
-		Unit u {std::move($1)};
-		u._defs.push_back($0);
-		$$ = u;
-	}
-globals:
-	{ $$ = Unit(); }
 
 %type global: SyntaxNode*
 global: function_def

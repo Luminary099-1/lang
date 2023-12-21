@@ -6,14 +6,6 @@
 #include <vector>
 
 
-struct Unit
-{
-	std::vector<SyntaxNode*> _defs;
-
-	Unit();
-};
-
-
 struct SyntaxNode
 {
 	virtual void Validate() = 0;

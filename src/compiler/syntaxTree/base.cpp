@@ -4,12 +4,6 @@
 using namespace std::string_view_literals;
 
 
-Unit::Unit()
-{
-	_defs = std::vector<SyntaxNode*>();
-}
-
-
 void SyntaxNode::PrintIndent(
 	std::ostream& os, std::string_view indent, int depth)
 {
