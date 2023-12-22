@@ -123,3 +123,31 @@ void PostExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 	os << "Arg:\n";
 	_arg->Print(os, indent, depth + 1);
 }
+
+
+InvokeNode::InvokeNode(std::string name, ArgList args)
+	: _name{name}, _args{args}
+{
+	std::reverse(_args.begin(), _args.end());
+}
+
+
+void InvokeNode::Validate()
+{}
+
+
+void InvokeNode::Scope()
+{}
+
+
+void InvokeNode::Print(std::ostream& os, std::string_view indent, int depth)
+{
+	PrintIndent(os, indent, depth);
+	os << "InvokeNode(name: "sv << _name << "):\n"sv;
+	for (ExprNode* arg : _args)
+	{
+		PrintIndent(os, indent, depth);
+		os << "Arg:\n";
+		arg->Print(os, indent, depth + 1);
+	}
+}

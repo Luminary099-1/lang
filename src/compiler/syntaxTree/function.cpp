@@ -1,12 +1,16 @@
 #include "function.hpp"
 
+#include <algorithm>
+
 using namespace std::string_view_literals;
 
 
 FunctionNode::FunctionNode(TypeNode type, std::string name
 	, ParamList params, CompoundStmtNode* body)
 	: _type{type}, _name{name}, _params{params}, _body{body}
-{}
+{
+	std::reverse(_params.begin(), _params.end());
+}
 
 
 void FunctionNode::Validate()

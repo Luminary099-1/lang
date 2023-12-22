@@ -5,7 +5,9 @@ using namespace std::string_view_literals;
 
 CompoundStmtNode::CompoundStmtNode(StmtList kids)
 	: _kids{kids}
-{}
+{
+	std::reverse(_kids.begin(), _kids.end());
+}
 
 
 void CompoundStmtNode::Validate()

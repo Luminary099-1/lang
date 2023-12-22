@@ -137,7 +137,6 @@ struct PostExprNode : public ExprNode
 
 // Represnts a function invocation.
 struct InvokeNode : public ExprNode
-// FIXME: Function arguments are stored in reverse order.
 {
 	// Stores the arguments passed to a function.
 	using ArgList = std::vector<ExprNode*>;
@@ -150,7 +149,8 @@ struct InvokeNode : public ExprNode
 	 * @brief Construct a new InvokeNode object.
 	 * 
 	 * @param name The name pf tje function being called.
-	 * @param args The arguments specified by the function call.
+	 * @param args The arguments specified by the function call. Assumed to be
+	 * in reverse order after being parsed.
 	 */
 	InvokeNode(std::string name, ArgList args);
 

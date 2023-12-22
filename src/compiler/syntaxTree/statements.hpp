@@ -20,7 +20,8 @@ struct CompoundStmtNode : public StmtNode
 	/**
 	 * @brief Construct a new CompoundStmtNode object.
 	 * 
-	 * @param kids This node's children statements.
+	 * @param kids This node's children statements. Assumed to be in reverse 
+	 * order after being parsed.
 	 */
 	CompoundStmtNode(StmtList kids);
 

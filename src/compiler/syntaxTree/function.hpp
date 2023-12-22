@@ -10,7 +10,6 @@
 
 // Represents a function definition.
 struct FunctionNode : public SyntaxNode
-// FIXME: Function parameters are stored in reverse order.
 {	
 	// Stores a parameter expressed in the function definition.
 	using Param = std::pair<TypeNode, std::string>;
@@ -27,7 +26,8 @@ struct FunctionNode : public SyntaxNode
 	 * 
 	 * @param type The function's return type.
 	 * @param name The function's name.
-	 * @param params The function's parameters.
+	 * @param params The function's parameters. Assumed to be in reverse order
+	 * after being parsed.
 	 * @param body The function's body.
 	 */
 	FunctionNode(TypeNode type, std::string name 
