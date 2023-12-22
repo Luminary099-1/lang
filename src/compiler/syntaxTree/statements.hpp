@@ -10,7 +10,7 @@ struct StmtNode : public SyntaxNode {};
 
 
 // Represents compound statements.
-struct CompoundStmtNode : public StmtNode
+struct CompoundStmtNode : public ExprNode
 {
 	// Stores a list of statements.
 	using StmtList = std::vector<StmtNode*>;
