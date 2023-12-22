@@ -8,19 +8,31 @@
 #include <vector>
 
 
-// FIXME: Function parameters are stored in reverse order.
+// Represents a function definition.
 struct FunctionNode : public SyntaxNode
-{
+// FIXME: Function parameters are stored in reverse order.
+{	
+	// Stores a parameter expressed in the function definition.
 	using Param = std::pair<TypeNode, std::string>;
+	// Stores the parameters expressed in the function definition.
 	using ParamList = std::vector<Param>;
 
-	TypeNode _type;
-	std::string _name;
-	ParamList _params;
-	CompoundStmtNode* _body;
+	TypeNode _type;				// The function's return type.
+	std::string _name;			// The name of the function.
+	ParamList _params;			// The function's parameters.
+	CompoundStmtNode* _body;	// The function's body statements.
 
-	FunctionNode(TypeNode type, std::string name
+	/**
+	 * @brief Construct a new FunctionNode object.
+	 * 
+	 * @param type The function's return type.
+	 * @param name The function's name.
+	 * @param params The function's parameters.
+	 * @param body The function's body.
+	 */
+	FunctionNode(TypeNode type, std::string name 
 		, ParamList params, CompoundStmtNode* body);
+
 	void Validate() override;
 	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;

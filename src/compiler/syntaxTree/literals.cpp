@@ -1,6 +1,5 @@
 #include "literals.hpp"
 
-
 using namespace std::string_view_literals;
 
 

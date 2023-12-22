@@ -1,6 +1,5 @@
 #include "function.hpp"
 
-
 using namespace std::string_view_literals;
 
 

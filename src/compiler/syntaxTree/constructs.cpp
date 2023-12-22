@@ -1,6 +1,5 @@
 #include "constructs.hpp"
 
-
 using namespace std::string_view_literals;
 
 
