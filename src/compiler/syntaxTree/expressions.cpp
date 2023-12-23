@@ -34,14 +34,6 @@ std::string_view BinaryExprNode::GetOpText(Ops op)
 }
 
 
-void BinaryExprNode::Validate()
-{}
-
-
-void BinaryExprNode::Scope()
-{}
-
-
 void BinaryExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -74,14 +66,6 @@ std::string_view PreExprNode::GetOpText(Ops op)
 }
 
 
-void PreExprNode::Validate()
-{}
-
-
-void PreExprNode::Scope()
-{}
-
-
 void PreExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -107,14 +91,6 @@ std::string_view PostExprNode::GetOpText(Ops op)
 }
 
 
-void PostExprNode::Validate()
-{}
-
-
-void PostExprNode::Scope()
-{}
-
-
 void PostExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -130,14 +106,6 @@ InvokeNode::InvokeNode(std::string name, ArgList args)
 {
 	std::reverse(_args.begin(), _args.end());
 }
-
-
-void InvokeNode::Validate()
-{}
-
-
-void InvokeNode::Scope()
-{}
 
 
 void InvokeNode::Print(std::ostream& os, std::string_view indent, int depth)

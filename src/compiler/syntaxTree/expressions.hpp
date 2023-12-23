@@ -55,8 +55,6 @@ struct BinaryExprNode : public ExprNode
 	 */
 	std::string_view GetOpText(Ops op);
 
-	void Validate() override;
-	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -94,8 +92,6 @@ struct PreExprNode : public ExprNode
 	 */
 	std::string_view GetOpText(Ops op);
 
-	void Validate() override;
-	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -129,8 +125,6 @@ struct PostExprNode : public ExprNode
 	 */
 	std::string_view GetOpText(Ops op);
 
-	void Validate() override;
-	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -154,7 +148,5 @@ struct InvokeNode : public ExprNode
 	 */
 	InvokeNode(std::string name, ArgList args);
 
-	void Validate() override;
-	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

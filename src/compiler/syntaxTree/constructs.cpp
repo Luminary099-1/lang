@@ -8,14 +8,6 @@ AssignExprNode::AssignExprNode(std::string name, ExprNode* expr)
 {}
 
 
-void AssignExprNode::Validate()
-{}
-
-
-void AssignExprNode::Scope()
-{}
-
-
 void AssignExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -28,14 +20,6 @@ void AssignExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 
 IfExprNode::IfExprNode(ExprNode* cond, StmtNode* body, StmtNode* alt)
 	: _cond{cond}, _body{body}, _alt{alt}
-{}
-
-
-void IfExprNode::Validate()
-{}
-
-
-void IfExprNode::Scope()
 {}
 
 
@@ -59,14 +43,6 @@ void IfExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 ForExprNode::ForExprNode(
 	ExprNode* init, ExprNode* cond, ExprNode* inc, StmtNode* body)
 	: _init{init}, _cond{cond}, _inc{inc}, _body{body}
-{}
-
-
-void ForExprNode::Validate()
-{}
-
-
-void ForExprNode::Scope()
 {}
 
 
@@ -103,14 +79,6 @@ LoopExprNode::LoopExprNode(StmtNode* body)
 {}
 
 
-void LoopExprNode::Validate()
-{}
-
-
-void LoopExprNode::Scope()
-{}
-
-
 void LoopExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -123,14 +91,6 @@ void LoopExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 
 WhileExprNode::WhileExprNode(ExprNode* cond, StmtNode* body)
 	: _cond{cond}, _body{body}
-{}
-
-
-void WhileExprNode::Validate()
-{}
-
-
-void WhileExprNode::Scope()
 {}
 
 

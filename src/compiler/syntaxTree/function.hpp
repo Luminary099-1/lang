@@ -33,7 +33,5 @@ struct FunctionNode : public SyntaxNode
 	FunctionNode(TypeNode type, std::string name 
 		, ParamList params, CompoundStmtNode* body);
 
-	void Validate() override;
-	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

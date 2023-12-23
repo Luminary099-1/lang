@@ -10,18 +10,6 @@
 struct SyntaxNode
 {
 	/**
-	 * @brief Traverses the AST and checks that all identifiers are defined in
-	 * their scope at most once. Decorates the tree with references to
-	 * definitions of types defined elsewhere in the tree.
-	 */
-	virtual void Scope(/* Something goes here that refers to the scope stack. */) = 0;
-
-	/**
-	 * @brief Traverses the AST and checks for semantic and typing correctness.
-	 */
-	virtual void Validate() = 0;
-	
-	/**
 	 * @brief Prints a textual representation of this AST node to the specified
 	 * stream.
 	 * 
@@ -66,12 +54,5 @@ struct TypeNode : public SyntaxNode
 	 */
 	TypeNode(std::string type_name);
 
-	/**
-	 * @brief Sets the type reference to the applicable node of the syntax tree.
-	 */
-	void Resolve(/* Something goes here that refers to the scope stack. */);
-
-	void Scope() override;
-	void Validate() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

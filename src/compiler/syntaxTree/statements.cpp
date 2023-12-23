@@ -10,14 +10,6 @@ CompoundStmtNode::CompoundStmtNode(StmtList kids)
 }
 
 
-void CompoundStmtNode::Validate()
-{}
-
-
-void CompoundStmtNode::Scope()
-{}
-
-
 void CompoundStmtNode::Print(
 	std::ostream& os, std::string_view indent, int depth)
 {
@@ -30,14 +22,6 @@ void CompoundStmtNode::Print(
 
 VarDefStmtNode::VarDefStmtNode(TypeNode type, std::string name, ExprNode* init)
 	: _type{type}, _name{name}, _init{init}
-{}
-
-
-void VarDefStmtNode::Validate()
-{}
-
-
-void VarDefStmtNode::Scope()
 {}
 
 
@@ -61,14 +45,6 @@ ExprStmtNode::ExprStmtNode(ExprNode* expr)
 {}
 
 
-void ExprStmtNode::Validate()
-{}
-
-
-void ExprStmtNode::Scope()
-{}
-
-
 void ExprStmtNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -81,14 +57,6 @@ void ExprStmtNode::Print(std::ostream& os, std::string_view indent, int depth)
 
 BreakStmtNode::BreakStmtNode(ExprNode* expr, int levels)
 	: _expr{expr}, _levels{levels}
-{}
-
-
-void BreakStmtNode::Validate()
-{}
-
-
-void BreakStmtNode::Scope()
 {}
 
 

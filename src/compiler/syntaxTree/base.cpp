@@ -15,18 +15,6 @@ TypeNode::TypeNode(std::string type_name)
 {}
 
 
-void TypeNode::Resolve()
-{}
-
-
-void TypeNode::Validate()
-{}
-
-
-void TypeNode::Scope()
-{}
-
-
 void TypeNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);

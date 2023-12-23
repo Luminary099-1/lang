@@ -13,14 +13,6 @@ FunctionNode::FunctionNode(TypeNode type, std::string name
 }
 
 
-void FunctionNode::Validate()
-{}
-
-
-void FunctionNode::Scope()
-{}
-
-
 void FunctionNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);

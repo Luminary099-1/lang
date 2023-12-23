@@ -8,14 +8,6 @@ IDNode::IDNode(std::string value)
 {}
 
 
-void IDNode::Validate()
-{}
-
-
-void IDNode::Scope()
-{}
-
-
 void IDNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -25,14 +17,6 @@ void IDNode::Print(std::ostream& os, std::string_view indent, int depth)
 
 DecimalNode::DecimalNode(int value)
 	: _value{value}
-{}
-
-
-void DecimalNode::Validate()
-{}
-
-
-void DecimalNode::Scope()
 {}
 
 
@@ -48,14 +32,6 @@ BoolNode::BoolNode(bool value)
 {}
 
 
-void BoolNode::Validate()
-{}
-
-
-void BoolNode::Scope()
-{}
-
-
 void BoolNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -65,14 +41,6 @@ void BoolNode::Print(std::ostream& os, std::string_view indent, int depth)
 
 StrNode::StrNode(std::string value)
 	: _value{value}
-{}
-
-
-void StrNode::Validate()
-{}
-
-
-void StrNode::Scope()
 {}
 
 

@@ -9,73 +9,65 @@
 struct LiteralNode : public ExprNode {};
 
 
-// 
+// Represents identifiers.
 struct IDNode : public LiteralNode
 {
-	std::string _value;	// 
+	std::string _value;	// The identifier's name.
 
 	/**
-	 * @brief Construct a new IDNode object
+	 * @brief Construct a new IDNode object.
 	 * 
-	 * @param value 
+	 * @param value The identifier's name.
 	 */
 	IDNode(std::string value);
 
-	void Validate() override;
-	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
-// 
+// Represents integer literals.
 struct DecimalNode : public LiteralNode
 {
-	int _value;	// 
+	int _value;	// The literal's integer value.
 
 	/**
-	 * @brief Construct a new Decimal Node object
+	 * @brief Construct a new DecimalNode object.
 	 * 
-	 * @param value 
+	 * @param value The literal's integer value.
 	 */
 	DecimalNode(int value);
 
-	void Validate() override;
-	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
-//
+// Represents Boolean literals.
 struct BoolNode : public LiteralNode
 {
-	bool _value;	// 
+	bool _value;	// The literal's Boolean value.
 
 	/**
-	 * @brief Construct a new Bool Node object
+	 * @brief Construct a new BoolNode object.
 	 * 
-	 * @param value 
+	 * @param value The literal's Boolean value.
 	 */
 	BoolNode(bool value);
 
-	void Validate() override;
-	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
-//
+// Represents string literals.
 struct StrNode : public LiteralNode
 {
-	std::string _value;	// 
+	std::string _value;	// The literal's string value.
 
 	/**
-	 * @brief Construct a new Str Node object
+	 * @brief Construct a new StrNode object.
 	 * 
-	 * @param value 
+	 * @param value The literal's Boolean value.
 	 */
 	StrNode(std::string value);
 
-	void Validate() override;
-	void Scope() override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
