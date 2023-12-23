@@ -325,7 +325,7 @@ literal: DECIMAL
 literal: boolean
 	{ $$ = new BoolNode($0); }
 literal: STRING
-	{ $$ = new StrNode($0); }
+	{ $$ = StrNode::build($0); }
 
 %type boolean: bool
 boolean: TRUE
@@ -338,10 +338,17 @@ boolean: FALSE
 %prefer additive_expr: additive_expr * MINUS multiplicative_expr
 %over shift_expr: additive_expr *
 
-%prefer additive_expr: additive_expr * PLUS multiplicative_expr
-%over shift_expr: additive_expr *
-
-%prefer shift_expr: shift_expr SHR additive_expr *
+%prefer shift_e<<<<<<< HEAD
+	{ $$ = new StrNode($0); }
+=======
+	{ $$ = new StrNode(std::move($0)); }
+>>>>>>> 87cf31808<<<<<<< HEAD
+	{ $$ = new StrNode($0); }
+=======
+	{ $$ = new StrNode(std::move($0)); }
+>>>>>>> 87cf31808ed9ef4fbc6220f3ef9613e75871c570
+570
+_expr *
 %over additive_expr: additive_expr * MINUS multiplicative_expr
 
 %prefer shift_expr: shift_expr SHR additive_expr *
