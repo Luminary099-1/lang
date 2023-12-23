@@ -7,7 +7,6 @@
 
 #include <cstdlib>
 #include <string>
-#include <utility>
 
 
 %scanner%
@@ -83,16 +82,16 @@ global: var_def_stmt
 
 %type type_expr: TypeNode
 type_expr: ID
-	{ $$ = new TypeNode($0); }
+	{ $$ = TypeNode($0); }
 
 %type function_def: FunctionNode*
 function_def: type_expr ID LPAREN param_list RPAREN compound_stmt
-	{ $$ = new FunctionNode($0, $1, std::move($3), std::move($5));}
+	{ $$ = new FunctionNode($0, $1, $3,$5);}
 
 %type param_list: FunctionNode::ParamList
 param_list: param param_list_tail
 	{
-		FunctionNode::ParamList l {std::move($1)};
+		FunctionNode::ParamList l {$1};
 		l.push_back($0);
 		$$ = l;
 	}
@@ -102,7 +101,7 @@ param_list:
 %type param_list_tail: FunctionNode::ParamList
 param_list_tail: COMMA param param_list_tail
 	{
-		FunctionNode::ParamList l {std::move($2)};
+		FunctionNode::ParamList l {$2};
 		l.push_back($1);
 		$$ = l;
 	}
@@ -111,7 +110,7 @@ param_list_tail:
 
 %type param: FunctionNode::Param
 param: type_expr ID
-	{ $$ = std::pair($0, std::move($1)); }
+	{ $$ = std::pair($0, $1); }
 
 %type statement: StmtNode*
 statement: compound_stmt
@@ -127,12 +126,12 @@ statement: break_stmt
 
 %type compound_stmt: CompoundStmtNode*
 compound_stmt: LCURLY statements RCURLY
-	{ $$ = new CompoundStmtNode(std::move($1)); }
+	{ $$ = new CompoundStmtNode($1); }
 
 %type statements: CompoundStmtNode::StmtList
 statements: statement statements
 	{
-		CompoundStmtNode::StmtList l {std::move($1)};
+		CompoundStmtNode::StmtList l {$1};
 		l.push_back($0);
 		$$ = l;
 	}
@@ -163,7 +162,7 @@ expression_stmt: expression SEMICOL
 
 %type assignment_expr: AssignExprNode*
 assignment_expr: ID ASSIGN expression
-	{$$ = new AssignExprNode(std::move($0), $2); }
+	{$$ = new AssignExprNode($0, $2); }
 
 %type if_expr: IfExprNode*
 if_expr: IF LPAREN expression RPAREN statement
@@ -189,7 +188,7 @@ break_stmt: BREAK expr_maybe SEMICOL
 break_stmt: BREAK LPAREN DECIMAL RPAREN expr_maybe SEMICOL
 	{ $$ = new BreakStmtNode($4, $2); }
 
-%type expr_maybe: Expression*
+%type expr_maybe: ExprNode*
 expr_maybe: expression
 	{ $$ = $0; }
 expr_maybe:
@@ -208,7 +207,7 @@ primary_expr: literal
 %type arg_list: InvokeNode::ArgList
 arg_list: expression arg_list_tail
 	{
-		InvokeNode::ArgList l {std::move($1)};
+		InvokeNode::ArgList l {$1};
 		l.push_back($0);
 		$$ = l;
 	}
@@ -218,16 +217,16 @@ arg_list:
 %type arg_list_tail: InvokeNode::ArgList
 arg_list_tail: COMMA expression arg_list_tail
 	{
-		InvokeNode::ArgList l {std::move($2)};
+		InvokeNode::ArgList l {$2};
 		l.push_back($1);
 		$$ = l;
 	}
 arg_list_tail:
 	{ $$ = InvokeNode::ArgList(); }
 
-%type pre_expr: PreExprNode*
+%type pre_expr: ExprNode*
 pre_expr: primary_expr
-	{ $$ = $0; }
+	{ $$ = static_cast<PreExprNode*>($0); }
 pre_expr: PLUS primary_expr
 	{ $$ = new PreExprNode($1, PreExprNode::Ops::Pos); }
 pre_expr: MINUS primary_expr
@@ -241,92 +240,92 @@ pre_expr: DENY primary_expr
 pre_expr: COMP primary_expr
 	{ $$ = new PreExprNode($1, PreExprNode::Ops::Comp); }
 
-%type multiplicative_expr: BinaryExprNode*
+%type multiplicative_expr: ExprNode*
 multiplicative_expr: pre_expr
 	{ $$ = $0; }
 multiplicative_expr: multiplicative_expr ASTERISK pre_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Mul); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::Mul); }
 multiplicative_expr: multiplicative_expr SLASH pre_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Div); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::Div); }
 multiplicative_expr: multiplicative_expr PERCENT pre_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Mod); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::Mod); }
 
-%type additive_expr: BinaryExprNode*
+%type additive_expr: ExprNode*
 additive_expr: multiplicative_expr
 	{ $$ = $0; }
 additive_expr: additive_expr PLUS multiplicative_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Add); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::Add); }
 additive_expr: additive_expr MINUS multiplicative_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Sub); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::Sub); }
 
-%type shift_expr: BinaryExprNode*
+%type shift_expr: ExprNode*
 shift_expr: additive_expr
 	{ $$ = $0; }
 shift_expr: shift_expr SHL additive_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::LShift); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::LShift); }
 shift_expr: shift_expr SHR additive_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::RShift); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::RShift); }
 
-%type relative_expr: BinaryExprNode*
+%type relative_expr: ExprNode*
 relative_expr: shift_expr
 	{ $$ = $0; }
 relative_expr: relative_expr LESSER shift_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::Less); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::Less); }
 relative_expr: relative_expr LESSEQ shift_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::LessEq); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::LessEq); }
 relative_expr: relative_expr GREATER shift_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::More); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::More); }
 relative_expr: relative_expr GREATEQ shift_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::MoreEq); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::MoreEq); }
 
-%type absolute_expr: BinaryExprNode*
+%type absolute_expr: ExprNode*
 absolute_expr: relative_expr
 	{ $$ = $0; }
 absolute_expr: absolute_expr EQUAL relative_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::EQ); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::Eq); }
 absolute_expr: absolute_expr NEQUAL relative_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::NEQ); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::Neq); }
 
-%type bit_and_expr: BinaryExprNode*
+%type bit_and_expr: ExprNode*
 bit_and_expr: absolute_expr
 	{ $$ = $0; }
 bit_and_expr: bit_and_expr AND absolute_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::AND); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::AND); }
 
-%type bit_xor_expr: BinaryExprNode*
+%type bit_xor_expr: ExprNode*
 bit_xor_expr: bit_and_expr
 	{ $$ = $0; }
 bit_xor_expr: bit_xor_expr XOR bit_and_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::XOR); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::XOR); }
 
-%type bit_or_expr: BinaryExprNode*
+%type bit_or_expr: ExprNode*
 bit_or_expr: bit_xor_expr
 	{ $$ = $0; }
 bit_or_expr: bit_or_expr OR bit_xor_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::OR); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::OR); }
 
-%type logic_and_expr: BinaryExprNode*
+%type logic_and_expr: ExprNode*
 logic_and_expr: bit_or_expr
 	{ $$ = $0; }
 logic_and_expr: logic_and_expr LAND bit_or_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::LAND); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::LAND); }
 
-%type logic_or_expr: BinaryExprNode*
+%type logic_or_expr: ExprNode*
 logic_or_expr: logic_and_expr
 	{ $$ = $0; }
 logic_or_expr: logic_or_expr LOR logic_and_expr
-	{ $$ = new BinaryExprNode($0, $1, BinaryExprNode::Ops::LOR); }
+	{ $$ = new BinaryExprNode($0, $2, BinaryExprNode::Ops::LOR); }
 
 
 %type literal: LiteralNode*
 literal: ID
-	{ $$ = new IDNode(std::move($0)); }
+	{ $$ = new IDNode($0); }
 literal: DECIMAL
 	{ $$ = new DecimalNode($0); }
 literal: boolean
 	{ $$ = new BoolNode($0); }
 literal: STRING
-	{ $$ = StrNode::build(std::move($0)); }
+	{ $$ = new StrNode($0); }
 
 %type boolean: bool
 boolean: TRUE
