@@ -87,7 +87,7 @@ struct ExprStmtNode : public StmtNode
 
 
 // Represents a break statement.
-struct BreakStmtNode : public StmtNode
+struct BreakStmtNode : public ExprNode
 {
 	int _levels {1};	// The number of loop levels to break from.
 	ExprNode* _expr;	// The expression to be returned (optional).
