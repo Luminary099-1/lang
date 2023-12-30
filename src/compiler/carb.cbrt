@@ -367,8 +367,8 @@ boolean: FALSE
 %prefer shift_expr: shift_expr SHL additive_expr *
 %over additive_expr: additive_expr * PLUS multiplicative_expr
 
-%prefer literal: ID *
-%over type_expr: ID *
+%prefer type_expr: ID *
+%over literal: ID *
 
 %prefer primary_expr: ID * LPAREN arg_list RPAREN
 %over literal: ID *
