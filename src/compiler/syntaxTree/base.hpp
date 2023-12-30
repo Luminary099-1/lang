@@ -18,7 +18,7 @@ struct SyntaxNode
 	 * @param depth The depth of the node in the tree. Need not be set.
 	 */
 	virtual void
-		Print(std::ostream& os, std::string_view indent, int depth = 0);
+		Print(std::ostream& os, std::string_view indent, int depth = 0) = 0;
 
 	/**
 	 * @brief Prints the indentation for Print().

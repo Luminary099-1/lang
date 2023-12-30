@@ -1,4 +1,5 @@
 #include "parse.h"
+#include "syntaxTree/base.hpp"
 
 #include <cstdlib>
 #include <fstream>
@@ -28,18 +29,26 @@ int main(int argc, char** argv)
 	}
 
 	source_file.seekg(0, std::ios_base::end);
-	const int tu_size {source_file.tellg()};
+	const int tu_size = source_file.tellg();
 	source_file.seekg(0);
 	char* tu_buffer = static_cast<char*>(malloc(tu_size));
 	source_file.read(tu_buffer, tu_size);
 	source_file.close();
 
-	struct carb_stack stack;
-	carb_stack_init(&stack);
-	carb_set_input(&stack, tu_buffer, tu_size, 1);
+	struct carb_stack carb_stack;
+	carb_stack_init(&carb_stack);
+	carb_set_input(&carb_stack, tu_buffer, tu_size, 1);
+	
+	SyntaxNode* out_node {nullptr};
+	carb_scan(&carb_stack, out_node);
+	if (out_node != nullptr)
+	{
+		out_node->Print(std::cout, "   "sv);
+		delete out_node;
+	}
+	else std::cerr << "It didn't work...\n"sv;
 
-	
-	
+	carb_stack_cleanup(&carb_stack);
 	delete tu_buffer;
 	return EXIT_SUCCESS;
 }

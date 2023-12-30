@@ -31,6 +31,8 @@ std::string_view BinaryExprNode::GetOpText(Ops op)
 		case Ops::Div:		return "/"sv;
 		case Ops::Mod:		return "%"sv;
 	}
+
+	return ""sv; // Shouldn't ever reach this but the compiler complains.
 }
 
 
@@ -63,6 +65,8 @@ std::string_view PreExprNode::GetOpText(Ops op)
 		case Ops::Deny: 	return "!"sv;
 		case Ops::Comp: 	return "~"sv;
 	}
+
+	return ""sv; // Shouldn't ever reach this but the compiler complains.
 }
 
 
@@ -88,6 +92,8 @@ std::string_view PostExprNode::GetOpText(Ops op)
 		case Ops::Inc: return "++"sv;
 		case Ops::Dec: return "--"sv;
 	}
+
+	return ""sv; // Shouldn't ever reach this but the compiler complains.
 }
 
 

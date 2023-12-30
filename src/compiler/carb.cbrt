@@ -8,6 +8,12 @@
 #include <cstdlib>
 #include <string>
 
+%no_externc
+
+%header%
+#include "./syntaxTree/base.hpp"
+%%
+
 
 %scanner%
 %prefix carb_
@@ -73,12 +79,13 @@ BREAK: break;
 
 
 %grammar%
+%params SyntaxNode* out_node
 
 %type global: SyntaxNode*
 global: function_def
-	{ $$ = $0; }
+	{ out_node = $0; }
 global: var_def_stmt
-	{ $$ = $0; }
+	{ out_node = $0; }
 
 %type type_expr: TypeNode
 type_expr: ID
@@ -325,7 +332,7 @@ literal: DECIMAL
 literal: boolean
 	{ $$ = new BoolNode($0); }
 literal: STRING
-	{ $$ = StrNode::build($0); }
+	{ $$ = new StrNode($0); }
 
 %type boolean: bool
 boolean: TRUE

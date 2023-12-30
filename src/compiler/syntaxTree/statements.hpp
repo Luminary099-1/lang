@@ -9,46 +9,6 @@
 struct StmtNode : public SyntaxNode {};
 
 
-// Represents compound statements.
-struct CompoundStmtNode : public ExprNode
-{
-	// Stores a list of statements.
-	using StmtList = std::vector<StmtNode*>;
-
-	StmtList _kids;	// This node's children statements.
-	
-	/**
-	 * @brief Construct a new CompoundStmtNode object.
-	 * 
-	 * @param kids This node's children statements. Assumed to be in reverse 
-	 * order after being parsed.
-	 */
-	CompoundStmtNode(StmtList kids);
-
-	void Print(std::ostream& os, std::string_view indent, int depth) override;
-};
-
-
-// Represents a variable definition (including initialization).
-struct VarDefStmtNode : public StmtNode
-{
-	TypeNode _type;		// The variable's type.
-	std::string _name;	// The variable's name.
-	ExprNode* _init;	// The variable's initialization expression.
-
-	/**
-	 * @brief Construct a new VarDefStmtNode object.
-	 * 
-	 * @param type The variable's type.
-	 * @param name The variable's name.
-	 * @param init The variable's initialization expression.
-	 */
-	VarDefStmtNode(TypeNode type, std::string name, ExprNode* init);
-
-	void Print(std::ostream& os, std::string_view indent, int depth) override;
-};
-
-
 // Base class to represent expressions.
 struct ExprNode : public StmtNode
 {
@@ -80,6 +40,26 @@ struct ExprStmtNode : public StmtNode
 };
 
 
+// Represents a variable definition (including initialization).
+struct VarDefStmtNode : public StmtNode
+{
+	TypeNode _type;		// The variable's type.
+	std::string _name;	// The variable's name.
+	ExprNode* _init;	// The variable's initialization expression.
+
+	/**
+	 * @brief Construct a new VarDefStmtNode object.
+	 * 
+	 * @param type The variable's type.
+	 * @param name The variable's name.
+	 * @param init The variable's initialization expression.
+	 */
+	VarDefStmtNode(TypeNode type, std::string name, ExprNode* init);
+
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
+};
+
+
 // Represents a break statement.
 struct BreakStmtNode : public ExprNode
 {
@@ -93,6 +73,26 @@ struct BreakStmtNode : public ExprNode
 	 * @param levels The expression to be returned.
 	 */
 	BreakStmtNode(ExprNode* expr, int levels = 1);
+
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
+};
+
+
+// Represents compound statements.
+struct CompoundStmtNode : public ExprNode
+{
+	// Stores a list of statements.
+	using StmtList = std::vector<StmtNode*>;
+
+	StmtList _kids;	// This node's children statements.
+	
+	/**
+	 * @brief Construct a new CompoundStmtNode object.
+	 * 
+	 * @param kids This node's children statements. Assumed to be in reverse 
+	 * order after being parsed.
+	 */
+	CompoundStmtNode(StmtList kids);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

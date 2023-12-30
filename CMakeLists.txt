@@ -11,8 +11,14 @@ add_custom_target(
 	COMMAND ${PROJECT_SOURCE_DIR}/tools/carburetta/build/Win_amd64/Release/carburetta.exe ${PROJECT_SOURCE_DIR}/src/compiler/carb.cbrt --c ${PROJECT_SOURCE_DIR}/src/compiler/parse.cpp --h
 )
 
-add_executable(compiler src/compiler/main.cpp)
-target_include_directories(compiler
-	PUBLIC src/compiler/syntaxTree/
+add_executable(compiler
+	src/compiler/main.cpp
+	src/compiler/parse.cpp
+	src/compiler/syntaxTree/base.cpp
+	src/compiler/syntaxTree/constructs.cpp
+	src/compiler/syntaxTree/expressions.cpp
+	src/compiler/syntaxTree/function.cpp
+	src/compiler/syntaxTree/literals.cpp
+	src/compiler/syntaxTree/statements.cpp
 )
 set_property(TARGET compiler PROPERTY CXX_STANDARD 17)
