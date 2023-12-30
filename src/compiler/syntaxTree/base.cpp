@@ -10,6 +10,10 @@ void SyntaxNode::PrintIndent(
 }
 
 
+TypeNode::TypeNode()
+{}
+
+
 TypeNode::TypeNode(std::string type_name)
 	: _name{type_name}
 {}

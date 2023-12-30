@@ -78,6 +78,21 @@ struct BreakStmtNode : public ExprNode
 };
 
 
+struct ReturnStmtNode : public ExprNode
+{
+	ExprNode* _expr;	// The expression to be returned (optional).
+
+	/**
+	 * @brief Construct a new ReturnStmtNode object.
+	 * 
+	 * @param expr // The expression to be returned (optional).
+	 */
+	ReturnStmtNode(ExprNode* expr);
+
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
+};
+
+
 // Represents compound statements.
 struct CompoundStmtNode : public ExprNode
 {

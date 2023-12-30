@@ -47,6 +47,10 @@ struct TypeNode : public SyntaxNode
 	std::string _name;	// The type's name.
 	BasicTypes _type;	// Enumeration of the fundamental type, if applicable.
 
+
+	TypeNode();
+
+
 	/**
 	 * @brief Construct a new TypeNode object.
 	 * 

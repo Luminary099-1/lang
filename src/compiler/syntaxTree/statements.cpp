@@ -48,7 +48,7 @@ ExprStmtNode::ExprStmtNode(ExprNode* expr)
 void ExprStmtNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "ExprStmtNode:"sv;
+	os << "ExprStmtNode:\n"sv;
 	PrintIndent(os, indent, depth);
 	os << "Expr:\n";
 	_expr->Print(os, indent, ++ depth);
@@ -64,6 +64,22 @@ void BreakStmtNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "BreakStmtNode(levels: "sv << _levels << "):\n"sv;
+	if (_expr == nullptr) return;
+	PrintIndent(os, indent, depth);
+	os << "Expr:\n";
+	_expr->Print(os, indent, ++ depth);
+}
+
+
+ReturnStmtNode::ReturnStmtNode(ExprNode* expr)
+	: _expr{expr}
+{}
+
+
+void ReturnStmtNode::Print(std::ostream& os, std::string_view indent, int depth)
+{
+	PrintIndent(os, indent, depth);
+	os << "ReturnStmtNode():\n"sv;
 	if (_expr == nullptr) return;
 	PrintIndent(os, indent, depth);
 	os << "Expr:\n";

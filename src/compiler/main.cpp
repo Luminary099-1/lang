@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 	source_file.seekg(0, std::ios_base::end);
 	const int tu_size = source_file.tellg();
 	source_file.seekg(0);
-	char* tu_buffer = static_cast<char*>(malloc(tu_size));
+	char* tu_buffer = reinterpret_cast<char*>(malloc(tu_size));
 	source_file.read(tu_buffer, tu_size);
 	source_file.close();
 
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 	carb_set_input(&carb_stack, tu_buffer, tu_size, 1);
 	
 	SyntaxNode* out_node {nullptr};
-	carb_scan(&carb_stack, out_node);
+	carb_scan(&carb_stack, &out_node);
 	if (out_node != nullptr)
 	{
 		out_node->Print(std::cout, "   "sv);

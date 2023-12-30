@@ -23,4 +23,5 @@ void FunctionNode::Print(std::ostream& os, std::string_view indent, int depth)
 		os << "Param(name: "sv << p.second << "):\n"sv;
 		p.first.Print(os, indent, depth + 1);
 	}
+	_body->Print(os, indent, ++ depth);
 }
