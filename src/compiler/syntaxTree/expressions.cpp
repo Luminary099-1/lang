@@ -39,13 +39,16 @@ std::string_view BinaryExprNode::GetOpText(Ops op)
 void BinaryExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "BinaryExprNode(op: "sv << GetOpText(_op) << "):\n"sv;
+	os << "BinaryExpression(Op = "sv << GetOpText(_op) << ", Type = "sv;
+	_type.Print(os, indent, depth);
+	os << "):\n"sv;
+	++ depth;
 	PrintIndent(os, indent, depth);
-	os << "ArgL:\n";
-	_argl->Print(os, indent, depth + 1);
+	os << "Left Operand =\n"sv;
+	PrintMaybe(_argl, os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
-	os << "ArgR:\n";
-	_argr->Print(os, indent, depth + 1);
+	os << "Right Operand =\n"sv;
+	PrintMaybe(_argr, os, indent, depth + 1);
 }
 
 
@@ -73,10 +76,12 @@ std::string_view PreExprNode::GetOpText(Ops op)
 void PreExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "PreExprNode(op: "sv << GetOpText(_op) << "):\n"sv;
-	PrintIndent(os, indent, depth);
-	os << "Arg:\n";
-	_arg->Print(os, indent, depth + 1);
+	os << "PreExpression(Op = "sv << GetOpText(_op) << ", Type = "sv;
+	_type.Print(os, indent, depth);
+	os << "):\n"sv;
+	PrintIndent(os, indent, ++ depth);
+	os << "Operand =\n"sv;
+	PrintMaybe(_arg, os, indent, ++ depth);
 }
 
 
@@ -100,10 +105,12 @@ std::string_view PostExprNode::GetOpText(Ops op)
 void PostExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "PostExprNode(op: "sv << GetOpText(_op) << "):\n"sv;
-	PrintIndent(os, indent, depth);
-	os << "Arg:\n";
-	_arg->Print(os, indent, depth + 1);
+	os << "PostExpression(Op = "sv << GetOpText(_op) << ", Type = "sv;
+	_type.Print(os, indent, depth);
+	os << "):\n"sv;
+	PrintIndent(os, indent, ++ depth);
+	os << "Operand =\n"sv;
+	PrintMaybe(_arg, os, indent, ++ depth);
 }
 
 
@@ -117,11 +124,14 @@ InvokeNode::InvokeNode(std::string name, ArgList args)
 void InvokeNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "InvokeNode(name: "sv << _name << "):\n"sv;
-	for (ExprNode* arg : _args)
+	os << "InvokeExpression(Function = "sv << _name << ", Type = "sv;
+	_type.Print(os, indent, depth);
+	os << "):\n"sv;
+	++ depth;
+	for (size_t i {0}; i < _args.size(); ++ i)
 	{
 		PrintIndent(os, indent, depth);
-		os << "Arg:\n";
-		arg->Print(os, indent, depth + 1);
+		os << "Arg["sv << i << "] =\n"sv;
+		_args[i]->Print(os, indent, depth + 1);
 	}
 }

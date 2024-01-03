@@ -10,6 +10,18 @@ void SyntaxNode::PrintIndent(
 }
 
 
+void SyntaxNode::PrintMaybe(
+	SyntaxNode* node, std::ostream& os, std::string_view indent, int depth)
+{
+	if (node != nullptr) node->Print(os, indent, depth);
+	else
+	{
+		PrintIndent(os, indent, depth);
+		os << "nullptr\n"sv;
+	}
+}
+
+
 TypeNode::TypeNode()
 {}
 
@@ -21,6 +33,5 @@ TypeNode::TypeNode(std::string type_name)
 
 void TypeNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
-	PrintIndent(os, indent, depth);
-	os << "TypeNode(name: "sv << _name << ')' << '\n';
+	os << _name;
 }

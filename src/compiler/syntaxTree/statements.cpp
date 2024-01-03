@@ -4,9 +4,9 @@ using namespace std::string_view_literals;
 
 
 CompoundStmtNode::CompoundStmtNode(StmtList kids)
-	: _kids{kids}
+	: _stmts{kids}
 {
-	std::reverse(_kids.begin(), _kids.end());
+	std::reverse(_stmts.begin(), _stmts.end());
 }
 
 
@@ -14,9 +14,14 @@ void CompoundStmtNode::Print(
 	std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "CompoundStmtNode:\n"sv;
+	os << "CompoundStatement:\n"sv;
 	++ depth;
-	for (StmtNode* stmt : _kids) stmt->Print(os, indent, depth);
+	for (size_t i {0}; i < _stmts.size(); ++ i)
+	{
+		PrintIndent(os, indent, depth);
+		os << "Statement["sv << i << "] =\n"sv;
+		_stmts[i]->Print(os, indent, depth + 1);
+	}
 }
 
 
@@ -33,10 +38,10 @@ ExprNode::ExprNode()
 void VarDefStmtNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "VarDefStmtNode(name: "sv << _name << "):\n"sv;
-	++ depth;
+	os << "VariableInitialization(_name = "sv << _name << ", Type = "sv;
 	_type.Print(os, indent, depth);
-	_init->Print(os, indent, depth);
+	os << "):\n"sv;
+	_init->Print(os, indent, ++ depth);
 }
 
 
@@ -48,10 +53,8 @@ ExprStmtNode::ExprStmtNode(ExprNode* expr)
 void ExprStmtNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "ExprStmtNode:\n"sv;
-	PrintIndent(os, indent, depth);
-	os << "Expr:\n";
-	_expr->Print(os, indent, ++ depth);
+	os << "ExpressionStatement:\n"sv;
+	PrintMaybe(_expr, os, indent, ++ depth);
 }
 
 
@@ -63,11 +66,8 @@ BreakStmtNode::BreakStmtNode(ExprNode* expr, int levels)
 void BreakStmtNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "BreakStmtNode(levels: "sv << _levels << "):\n"sv;
-	if (_expr == nullptr) return;
-	PrintIndent(os, indent, depth);
-	os << "Expr:\n";
-	_expr->Print(os, indent, ++ depth);
+	os << "BreakStatement(Levels = "sv << _levels << "):\n"sv;
+	PrintMaybe(_expr, os, indent, ++ depth);
 }
 
 
@@ -79,9 +79,6 @@ ReturnStmtNode::ReturnStmtNode(ExprNode* expr)
 void ReturnStmtNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "ReturnStmtNode():\n"sv;
-	if (_expr == nullptr) return;
-	PrintIndent(os, indent, depth);
-	os << "Expr:\n";
-	_expr->Print(os, indent, ++ depth);
+	os << "ReturnStatement:\n"sv;
+	PrintMaybe(_expr, os, indent, ++ depth);
 }

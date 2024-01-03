@@ -99,7 +99,7 @@ struct CompoundStmtNode : public ExprNode
 	// Stores a list of statements.
 	using StmtList = std::vector<StmtNode*>;
 
-	StmtList _kids;	// This node's children statements.
+	StmtList _stmts;	// This node's children statements.
 	
 	/**
 	 * @brief Construct a new CompoundStmtNode object.

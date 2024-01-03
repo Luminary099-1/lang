@@ -11,7 +11,7 @@ IDNode::IDNode(std::string value)
 void IDNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "IDNode(name: "sv << _value << ")\n"sv;
+	os << "Identifier(Name = "sv << _value << ")\n"sv;
 }
 
 
@@ -23,7 +23,7 @@ DecimalNode::DecimalNode(int value)
 void DecimalNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "DecimalNode(value: "sv << _value << ")\n"sv;
+	os << "IntegerLiteral(Value = "sv << _value << ")\n"sv;
 }
 
 
@@ -35,7 +35,7 @@ BoolNode::BoolNode(bool value)
 void BoolNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "BoolNode(value: "sv << _value << ")\n"sv;
+	os << "BooleanLiteral(Value = "sv << _value << ")\n"sv;
 }
 
 
@@ -47,5 +47,5 @@ StrNode::StrNode(std::string value)
 void StrNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "StrNode(value: "sv << _value << ")\n"sv;
+	os << "StringLiteral(Value = "sv << _value << ")\n"sv;
 }

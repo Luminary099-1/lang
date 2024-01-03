@@ -16,12 +16,17 @@ FunctionNode::FunctionNode(TypeNode type, std::string name
 void FunctionNode::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "FunctionNode(name: "sv << _name << "):\n"sv;
-	for (Param p : _params)
+	os << "Function(Name = "sv << _name << "):\n"sv;
+	++ depth;
+	for (size_t i {0}; i < _params.size(); ++ i)
 	{
 		PrintIndent(os, indent, depth);
-		os << "Param(name: "sv << p.second << "):\n"sv;
-		p.first.Print(os, indent, depth + 1);
+		os << "Parameters[" << i << "](Name = "sv << _params[i].second
+			<< ", Type = "sv;
+		_params[i].first.Print(os, indent, depth);
+		os << ")\n"sv;
 	}
-	_body->Print(os, indent, ++ depth);
+	PrintIndent(os, indent, depth);
+	os << "Body =\n"sv;
+	PrintMaybe(_body, os, indent, depth + 1);
 }

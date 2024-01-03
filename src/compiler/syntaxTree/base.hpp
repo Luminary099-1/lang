@@ -28,7 +28,21 @@ struct SyntaxNode
 	 * @param depth The depth of the node in the tree (the number of levels of
 	 * indentation).
 	 */
-	void PrintIndent(std::ostream& os, std::string_view indent, int depth);
+	static void
+		PrintIndent(std::ostream& os, std::string_view indent, int depth);
+
+	/**
+	 * @brief Calls Print() on the referenced node. If the node is nullptr,
+	 * "nullptr\n" is printed instead.
+	 * 
+	 * @param node A node to attempt to print.
+	 * @param os The output stream to print to.
+	 * @param indent A view of the unit of indentation to be used.
+	 * @param depth The depth of the node in the tree (the number of levels of
+	 * indentation).
+	 */
+	static void PrintMaybe(
+		SyntaxNode* node, std::ostream& os, std::string_view indent, int depth);
 };
 
 
