@@ -23,7 +23,7 @@ void printErrorLine(char* src, int src_len, carb_stack* stack)
 
 
 bool runParser(char* src, int src_len,
-	carb_stack* stack, std::vector<SyntaxNode*>& node_list)
+	carb_stack* stack, std::vector<SyntaxTreeNode*>& node_list)
 {
 	bool failed {false};
 	int err_code {-1};
@@ -76,7 +76,7 @@ bool runParser(char* src, int src_len,
 }
 
 
-int readNodes(char* src_path, std::vector<SyntaxNode*>& destTU)
+int readNodes(char* src_path, std::vector<SyntaxTreeNode*>& destTU)
 {
 	std::ifstream src_file;
 	src_file.open(src_path, std::ios_base::in);
@@ -115,8 +115,8 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	std::vector<SyntaxNode*> tu;
+	std::vector<SyntaxTreeNode*> tu;
 	const int exit_code {readNodes(argv[argc - 1], tu)};
-	for (SyntaxNode* node : tu) node->Print(std::cout, "  "sv);
+	for (SyntaxTreeNode* node : tu) node->Print(std::cout, "  "sv);
 	return exit_code;
 }

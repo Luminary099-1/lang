@@ -7,7 +7,7 @@
 
 
 // Base class for nodes of the AST.
-struct SyntaxNode
+struct SyntaxTreeNode
 {
 	/**
 	 * @brief Prints a textual representation of this AST node to the specified
@@ -42,12 +42,12 @@ struct SyntaxNode
 	 * indentation).
 	 */
 	static void PrintMaybe(
-		SyntaxNode* node, std::ostream& os, std::string_view indent, int depth);
+		SyntaxTreeNode* node, std::ostream& os, std::string_view indent, int depth);
 };
 
 
 // Represents a type in the program.
-struct TypeNode : public SyntaxNode
+struct Type : public SyntaxTreeNode
 {
 	// Enumerates the fundamental types of the language.
 	enum class BasicTypes
@@ -62,15 +62,15 @@ struct TypeNode : public SyntaxNode
 	BasicTypes _type;	// Enumeration of the fundamental type, if applicable.
 
 
-	TypeNode();
+	Type();
 
 
 	/**
-	 * @brief Construct a new TypeNode object.
+	 * @brief Construct a new Type object.
 	 * 
 	 * @param type_name The type's name.
 	 */
-	TypeNode(std::string type_name);
+	Type(std::string type_name);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

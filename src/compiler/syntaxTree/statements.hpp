@@ -6,109 +6,109 @@
 
 
 // Base class to represent statements.
-struct StmtNode : public SyntaxNode {};
+struct Statement : public SyntaxTreeNode {};
 
 
 // Stores a list of statements.
-using StmtList = std::vector<StmtNode*>;
+using StmtList = std::vector<Statement*>;
 
 
 // Base class to represent expressions.
-struct ExprNode : public StmtNode
+struct Expression : public Statement
 {
-	TypeNode _type;	// The expression's type.
+	Type _type;	// The expression's type.
 
 	/**
-	 * @brief Construct a new ExprNode object.
+	 * @brief Construct a new Expression object.
 	 * 
 	 * Satisfied the need for a default constructor. The type is only known
 	 * after Scope() is called.
 	 */
-	ExprNode();
+	Expression();
 };
 
 
 // Represents an expression statement (does not return its evaluation).
-struct ExprStmtNode : public StmtNode
+struct ExprStmt : public Statement
 {
-	ExprNode* _expr;	// The contained expression.
+	Expression* _expr;	// The contained expression.
 
 	/**
-	 * @brief Construct a new ExprStmtNode object.
+	 * @brief Construct a new ExprStmt object.
 	 * 
 	 * @param expr The expression to be contained.
 	 */
-	ExprStmtNode(ExprNode* expr);
+	ExprStmt(Expression* expr);
 	
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents a variable definition (including initialization).
-struct VarDefStmtNode : public StmtNode
+struct VariableInit : public Statement
 {
-	TypeNode _type;		// The variable's type.
+	Type _type;		// The variable's type.
 	std::string _name;	// The variable's name.
-	ExprNode* _init;	// The variable's initialization expression.
+	Expression* _init;	// The variable's initialization expression.
 
 	/**
-	 * @brief Construct a new VarDefStmtNode object.
+	 * @brief Construct a new VariableInit object.
 	 * 
 	 * @param type The variable's type.
 	 * @param name The variable's name.
 	 * @param init The variable's initialization expression.
 	 */
-	VarDefStmtNode(TypeNode type, std::string name, ExprNode* init);
+	VariableInit(Type type, std::string name, Expression* init);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents a break statement.
-struct BreakStmtNode : public ExprNode
+struct BreakStmt : public Expression
 {
 	int _levels {1};	// The number of loop levels to break from.
-	ExprNode* _expr;	// The expression to be returned (optional).
+	Expression* _expr;	// The expression to be returned (optional).
 
 	/**
-	 * @brief Construct a new BreakStmtNode object.
+	 * @brief Construct a new BreakStmt object.
 	 * 
 	 * @param expr The number of loop levels to break from.
 	 * @param levels The expression to be returned.
 	 */
-	BreakStmtNode(ExprNode* expr, int levels = 1);
+	BreakStmt(Expression* expr, int levels = 1);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
-struct ReturnStmtNode : public ExprNode
+struct ReturnStmt : public Expression
 {
-	ExprNode* _expr;	// The expression to be returned (optional).
+	Expression* _expr;	// The expression to be returned (optional).
 
 	/**
-	 * @brief Construct a new ReturnStmtNode object.
+	 * @brief Construct a new ReturnStmt object.
 	 * 
 	 * @param expr // The expression to be returned (optional).
 	 */
-	ReturnStmtNode(ExprNode* expr);
+	ReturnStmt(Expression* expr);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents compound statements.
-struct CompoundStmtNode : public ExprNode
+struct CompoundStmt : public Expression
 {
 	StmtList _stmts;	// This node's children statements.
 	
 	/**
-	 * @brief Construct a new CompoundStmtNode object.
+	 * @brief Construct a new CompoundStmt object.
 	 * 
 	 * @param kids This node's children statements. Assumed to be in reverse 
 	 * order after being parsed.
 	 */
-	CompoundStmtNode(StmtList kids);
+	CompoundStmt(StmtList kids);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

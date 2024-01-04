@@ -7,94 +7,94 @@
 
 
 // Represents an assignment expression.
-struct AssignExprNode : public ExprNode
+struct AssignmentExpr : public Expression
 {
 	std::string _name;	// The name of the variable being assigned.
-	ExprNode* _expr;	// The expression being assigned to the variable.
+	Expression* _expr;	// The expression being assigned to the variable.
 
 	/**
-	 * @brief Construct a new AssignExprNode object.
+	 * @brief Construct a new AssignmentExpr object.
 	 * 
 	 * @param name The name of the variable being assigned.
 	 * @param expr The expression being assigned to the variable.
 	 */
-	AssignExprNode(std::string name, ExprNode* expr);
+	AssignmentExpr(std::string name, Expression* expr);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents an if expression (if statement that can return values).
-struct IfExprNode : public ExprNode
+struct IfExpr : public Expression
 {
-	ExprNode* _cond;	// The condition expression. Must be a Boolean.
-	StmtNode* _body;	// A statement executed if the condition is true.
-	StmtNode* _alt;		// The else case if the condition is false (optional).
+	Expression* _cond;	// The condition expression. Must be a Boolean.
+	Statement* _body;	// A statement executed if the condition is true.
+	Statement* _alt;		// The else case if the condition is false (optional).
 
 	/**
-	 * @brief Construct a new IfExprNode object;
+	 * @brief Construct a new IfExpr object;
 	 * 
 	 * @param cond A condition expression.
 	 * @param body A statement executed on true.
 	 * @param alt The else case if the condition is false.
 	 */
-	IfExprNode(ExprNode* cond, StmtNode* body, StmtNode* alt);
+	IfExpr(Expression* cond, Statement* body, Statement* alt);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents a counting for expression (a for loop that can return values).
-struct ForExprNode : public ExprNode
+struct ForExpr : public Expression
 {
-	ExprNode* _init;	// Initialization expression; runs before the loop.
-	ExprNode* _cond;	// Conditional expression; runs between iterations.
-	ExprNode* _inc;		// Increment expression; runs after the condition.
-	StmtNode* _body;	// The statement to be executed each iteration.
+	Expression* _init;	// Initialization expression; runs before the loop.
+	Expression* _cond;	// Conditional expression; runs between iterations.
+	Expression* _inc;		// Increment expression; runs after the condition.
+	Statement* _body;	// The statement to be executed each iteration.
 
 	/**
-	 * @brief Construct a new ForExprNode object.
+	 * @brief Construct a new ForExpr object.
 	 * 
 	 * @param init An initialization expression.
 	 * @param cond A condition expression.
 	 * @param inc An increment expression.
 	 * @param body The statement executed each iteration.
 	 */
-	ForExprNode(ExprNode* init, ExprNode* cond, ExprNode* inc, StmtNode* body);
+	ForExpr(Expression* init, Expression* cond, Expression* inc, Statement* body);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents an infinite loop expression (a loop that can return values).
-struct LoopExprNode : public ExprNode
+struct LoopExpr : public Expression
 {
-	StmtNode* _body;	// The statement to be executed each iteration.
+	Statement* _body;	// The statement to be executed each iteration.
 
 	/**
-	 * @brief Construct a new LoopExprNode object;
+	 * @brief Construct a new LoopExpr object;
 	 * 
 	 * @param body The statement executed each iteration.
 	 */
-	LoopExprNode(StmtNode* body);
+	LoopExpr(Statement* body);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents a while loop expression (a while loop that can return a value).
-struct WhileExprNode : public ExprNode
+struct WhileExpr : public Expression
 {
-	ExprNode* _cond;	// Conditional expression; runs between iterations.
-	StmtNode* _body;	// // The statement to be executed each iteration.
+	Expression* _cond;	// Conditional expression; runs between iterations.
+	Statement* _body;	// // The statement to be executed each iteration.
 
 	/**
-	 * @brief Construct a new While Expr Node object
+	 * @brief Construct a new WhileExpr object.
 	 * 
 	 * @param cond A condition expression.
 	 * @param body The statement executed each iteration.
 	 */
-	WhileExprNode(ExprNode* cond, StmtNode* body);
+	WhileExpr(Expression* cond, Statement* body);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

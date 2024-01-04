@@ -6,68 +6,68 @@
 
 
 // Base class to represent literals.
-struct LiteralNode : public ExprNode {};
+struct Literal : public Expression {};
 
 
 // Represents identifiers.
-struct IDNode : public LiteralNode
+struct Identifier : public Literal
 {
 	std::string _value;	// The identifier's name.
 
 	/**
-	 * @brief Construct a new IDNode object.
+	 * @brief Construct a new Identifier object.
 	 * 
 	 * @param value The identifier's name.
 	 */
-	IDNode(std::string value);
+	Identifier(std::string value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents integer literals.
-struct DecimalNode : public LiteralNode
+struct IntLiteral : public Literal
 {
 	int _value;	// The literal's integer value.
 
 	/**
-	 * @brief Construct a new DecimalNode object.
+	 * @brief Construct a new IntLiteral object.
 	 * 
 	 * @param value The literal's integer value.
 	 */
-	DecimalNode(int value);
+	IntLiteral(int value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents Boolean literals.
-struct BoolNode : public LiteralNode
+struct BoolLiteral : public Literal
 {
 	bool _value;	// The literal's Boolean value.
 
 	/**
-	 * @brief Construct a new BoolNode object.
+	 * @brief Construct a new BoolLiteral object.
 	 * 
 	 * @param value The literal's Boolean value.
 	 */
-	BoolNode(bool value);
+	BoolLiteral(bool value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents string literals.
-struct StrNode : public LiteralNode
+struct StrLiteral : public Literal
 {
 	std::string _value;	// The literal's string value.
 
 	/**
-	 * @brief Construct a new StrNode object.
+	 * @brief Construct a new StrLiteral object.
 	 * 
 	 * @param value The literal's Boolean value.
 	 */
-	StrNode(std::string value);
+	StrLiteral(std::string value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

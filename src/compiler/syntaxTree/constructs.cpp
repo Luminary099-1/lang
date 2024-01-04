@@ -3,12 +3,12 @@
 using namespace std::string_view_literals;
 
 
-AssignExprNode::AssignExprNode(std::string name, ExprNode* expr)
+AssignmentExpr::AssignmentExpr(std::string name, Expression* expr)
 	: _name{name}, _expr{expr}
 {}
 
 
-void AssignExprNode::Print(std::ostream& os, std::string_view indent, int depth)
+void AssignmentExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "AssignmentExpression(Name = "sv << _name << "):\n"sv;
@@ -18,12 +18,12 @@ void AssignExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-IfExprNode::IfExprNode(ExprNode* cond, StmtNode* body, StmtNode* alt)
+IfExpr::IfExpr(Expression* cond, Statement* body, Statement* alt)
 	: _cond{cond}, _body{body}, _alt{alt}
 {}
 
 
-void IfExprNode::Print(std::ostream& os, std::string_view indent, int depth)
+void IfExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "IfExpression(Type = "sv;
@@ -42,13 +42,13 @@ void IfExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-ForExprNode::ForExprNode(
-	ExprNode* init, ExprNode* cond, ExprNode* inc, StmtNode* body)
+ForExpr::ForExpr(
+	Expression* init, Expression* cond, Expression* inc, Statement* body)
 	: _init{init}, _cond{cond}, _inc{inc}, _body{body}
 {}
 
 
-void ForExprNode::Print(std::ostream& os, std::string_view indent, int depth)
+void ForExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "ForExpression(Type = "sv;
@@ -70,12 +70,12 @@ void ForExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-LoopExprNode::LoopExprNode(StmtNode* body)
+LoopExpr::LoopExpr(Statement* body)
 	: _body{body}
 {}
 
 
-void LoopExprNode::Print(std::ostream& os, std::string_view indent, int depth)
+void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "LoopExpression(Type = "sv;
@@ -87,12 +87,12 @@ void LoopExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-WhileExprNode::WhileExprNode(ExprNode* cond, StmtNode* body)
+WhileExpr::WhileExpr(Expression* cond, Statement* body)
 	: _cond{cond}, _body{body}
 {}
 
 
-void WhileExprNode::Print(std::ostream& os, std::string_view indent, int depth)
+void WhileExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "WhileExpression(Type = "sv;

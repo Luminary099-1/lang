@@ -9,7 +9,7 @@ using namespace std::string_view_literals;
 
 
 // Represents a binary expression.
-struct BinaryExprNode : public ExprNode
+struct BinaryExpr : public Expression
 {
 	// Enumerates all valid binary operators.
 	enum class Ops
@@ -34,18 +34,18 @@ struct BinaryExprNode : public ExprNode
 		Mod
 	};
 
-	ExprNode* _argl;	// The expression's left operand.
-	ExprNode* _argr;	// The expression's right operand.
+	Expression* _argl;	// The expression's left operand.
+	Expression* _argr;	// The expression's right operand.
 	Ops _op;			// The operator being applied.
 
 	/**
-	 * @brief Construct a new BinaryExprNode object.
+	 * @brief Construct a new BinaryExpr object.
 	 * 
 	 * @param argl A left operand expression.
 	 * @param argr A right operand expression.
 	 * @param op The operator to be applied.
 	 */
-	BinaryExprNode(ExprNode* argl, ExprNode* argr, Ops op);
+	BinaryExpr(Expression* argl, Expression* argr, Ops op);
 
 	/**
 	 * @brief Returns a view to a textual representation of the operator.
@@ -60,7 +60,7 @@ struct BinaryExprNode : public ExprNode
 
 
 // Represents a prefix expression.
-struct PreExprNode : public ExprNode
+struct PreExpr : public Expression
 {
 	// Enumerates all valid prefix operators.
 	enum class Ops
@@ -73,16 +73,16 @@ struct PreExprNode : public ExprNode
 		Comp
 	};
 
-	ExprNode* _arg;		// The expression's operand.
+	Expression* _arg;		// The expression's operand.
 	Ops _op;			// The operator being applied.
 
 	/**
-	 * @brief Construct a new PreExprNode object.
+	 * @brief Construct a new PreExpr object.
 	 * 
 	 * @param arg An operand expression.
 	 * @param op The operator to be applied.
 	 */
-	PreExprNode(ExprNode* arg, Ops op);
+	PreExpr(Expression* arg, Ops op);
 
 	/**
 	 * @brief Returns a view to a textual representation of the operator.
@@ -97,7 +97,7 @@ struct PreExprNode : public ExprNode
 
 
 // Represents a postfix expression.
-struct PostExprNode : public ExprNode
+struct PostExpr : public Expression
 {
 	// Enumeration of all valid postfix operators.
 	enum class Ops
@@ -106,16 +106,16 @@ struct PostExprNode : public ExprNode
 		Dec
 	};
 
-	ExprNode* _arg;	// The expression's operand.
+	Expression* _arg;	// The expression's operand.
 	Ops _op;		// The operator being applied.
 
 	/**
-	 * @brief Construct a new PostExprNode object.
+	 * @brief Construct a new PostExpr object.
 	 * 
 	 * @param arg An operand expression.
 	 * @param op The operator to be applied.
 	 */
-	PostExprNode(ExprNode* arg, Ops op);
+	PostExpr(Expression* arg, Ops op);
 
 	/**
 	 * @brief Returns a view to a textual representation of the operator.
@@ -130,23 +130,23 @@ struct PostExprNode : public ExprNode
 
 
 // Represnts a function invocation.
-struct InvokeNode : public ExprNode
+struct Invocation : public Expression
 {
 	// Stores the arguments passed to a function.
-	using ArgList = std::vector<ExprNode*>;
+	using ArgList = std::vector<Expression*>;
 
 	std::string _name;	// The name of the function being called.
-	SyntaxNode* _fn;	// The AST node of the function being called.
+	SyntaxTreeNode* _fn;	// The AST node of the function being called.
 	ArgList _args;		// The arguments specified by the function call.
 
 	/**
-	 * @brief Construct a new InvokeNode object.
+	 * @brief Construct a new Invocation object.
 	 * 
 	 * @param name The name pf tje function being called.
 	 * @param args The arguments specified by the function call. Assumed to be
 	 * in reverse order after being parsed.
 	 */
-	InvokeNode(std::string name, ArgList args);
+	Invocation(std::string name, ArgList args);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

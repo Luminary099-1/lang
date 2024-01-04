@@ -5,7 +5,7 @@
 using namespace std::string_view_literals;
 
 
-FunctionNode::FunctionNode(TypeNode type, std::string name
+Function::Function(Type type, std::string name
 	, ParamList params, StmtList body)
 	: _type{type}, _name{name}, _params{params}, _body{body}
 {
@@ -14,7 +14,7 @@ FunctionNode::FunctionNode(TypeNode type, std::string name
 }
 
 
-void FunctionNode::Print(std::ostream& os, std::string_view indent, int depth)
+void Function::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "Function(Name = "sv << _name << "):\n"sv;
@@ -27,5 +27,5 @@ void FunctionNode::Print(std::ostream& os, std::string_view indent, int depth)
 		_params[i].first.Print(os, indent, depth);
 		os << ")\n"sv;
 	}
-	for (StmtNode* node : _body) node->Print(os, indent, depth) ;
+	for (Statement* node : _body) node->Print(os, indent, depth) ;
 }

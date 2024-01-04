@@ -3,12 +3,12 @@
 using namespace std::string_view_literals;
 
 
-BinaryExprNode::BinaryExprNode(ExprNode* argl, ExprNode* argr, Ops op)
+BinaryExpr::BinaryExpr(Expression* argl, Expression* argr, Ops op)
 	: _argl{argl}, _argr{argr}, _op{op}
 {}
 
 
-std::string_view BinaryExprNode::GetOpText(Ops op)
+std::string_view BinaryExpr::GetOpText(Ops op)
 {
 	switch (op)
 	{
@@ -36,7 +36,7 @@ std::string_view BinaryExprNode::GetOpText(Ops op)
 }
 
 
-void BinaryExprNode::Print(std::ostream& os, std::string_view indent, int depth)
+void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "BinaryExpression(Op = "sv << GetOpText(_op) << ", Type = "sv;
@@ -52,12 +52,12 @@ void BinaryExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-PreExprNode::PreExprNode(ExprNode* arg, Ops op)
+PreExpr::PreExpr(Expression* arg, Ops op)
 	: _arg{arg}, _op{op}
 {}
 
 
-std::string_view PreExprNode::GetOpText(Ops op)
+std::string_view PreExpr::GetOpText(Ops op)
 {
 	switch (op)
 	{
@@ -73,7 +73,7 @@ std::string_view PreExprNode::GetOpText(Ops op)
 }
 
 
-void PreExprNode::Print(std::ostream& os, std::string_view indent, int depth)
+void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "PreExpression(Op = "sv << GetOpText(_op) << ", Type = "sv;
@@ -85,12 +85,12 @@ void PreExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-PostExprNode::PostExprNode(ExprNode* arg, Ops op)
+PostExpr::PostExpr(Expression* arg, Ops op)
 	: _arg{arg}, _op{op}
 {}
 
 
-std::string_view PostExprNode::GetOpText(Ops op)
+std::string_view PostExpr::GetOpText(Ops op)
 {
 	switch (op)
 	{
@@ -102,7 +102,7 @@ std::string_view PostExprNode::GetOpText(Ops op)
 }
 
 
-void PostExprNode::Print(std::ostream& os, std::string_view indent, int depth)
+void PostExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "PostExpression(Op = "sv << GetOpText(_op) << ", Type = "sv;
@@ -114,14 +114,14 @@ void PostExprNode::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-InvokeNode::InvokeNode(std::string name, ArgList args)
+Invocation::Invocation(std::string name, ArgList args)
 	: _name{name}, _args{args}
 {
 	std::reverse(_args.begin(), _args.end());
 }
 
 
-void InvokeNode::Print(std::ostream& os, std::string_view indent, int depth)
+void Invocation::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "InvokeExpression(Function = "sv << _name << ", Type = "sv;
