@@ -6,7 +6,7 @@
 
 
 // Base class to represent literals.
-struct Literal : public Expression {};
+struct Literal : public Expression, public SymbolInfo {};
 
 
 // Represents identifiers.

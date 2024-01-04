@@ -35,3 +35,14 @@ void Type::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	os << _name;
 }
+
+
+void SymbolInfo::SetSymbolInfo(SymbolInfo info)
+{
+	_row		= info._row;
+	_endRow		= info._endRow;
+	_col		= info._col;
+	_endCol		= info._endCol;
+	_offset		= info._offset;
+	_endOffset	= info._endOffset;
+}

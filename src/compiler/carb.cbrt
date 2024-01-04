@@ -9,14 +9,26 @@
 #include <string>
 
 %no_externc
+%prefix carb_
 
 %header%
 #include "./syntaxTree/base.hpp"
 %%
 
 
+
 %scanner%
-%prefix carb_
+%common_class SymbolInfo
+
+$:
+{
+	$._row = $line;
+	$._endRow = $endline;
+	$._col = $column;
+	$._endCol = $endcolumn;
+	$._offset = $offset;
+	$._endOffset = $endoffset;
+}
 
 : [\ \t\n]+;	/* Skips whitespace. */
 ASSIGN: =;
@@ -332,19 +344,41 @@ logic_or_expr: logic_or_expr LOR logic_and_expr
 
 %class literal: Literal*
 literal: ID
-	{ $$ = new Identifier($0); }
+	{
+		Identifier* id = new Identifier($0);
+		id->SetSymbolInfo(${0});
+		$$ = id;
+	}
 literal: DECIMAL
-	{ $$ = new IntLiteral($0); }
+	{
+		IntLiteral* lit = new IntLiteral($0);
+		lit->SetSymbolInfo(${0});
+		$$ = lit;
+	}
 literal: boolean
-	{ $$ = new BoolLiteral($0); }
+	{
+		BoolLiteral* lit = new BoolLiteral($0);
+		lit->SetSymbolInfo(${0});
+		$$ = lit;
+	}
 literal: STRING
-	{ $$ = new StrLiteral($0); }
+	{
+		StrLiteral* lit = new StrLiteral($0);
+		lit->SetSymbolInfo(${0});
+		$$ = lit;
+	}
 
 %type boolean: bool
 boolean: TRUE
-	{ $$ = true; }
+	{
+		$ = ${0};
+		$$ = true;
+	}
 boolean: FALSE
-	{ $$ = false; }
+	{
+		$ = ${0};
+		$$ = false;
+	}
 
 
 
