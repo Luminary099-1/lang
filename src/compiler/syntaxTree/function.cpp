@@ -6,10 +6,11 @@ using namespace std::string_view_literals;
 
 
 FunctionNode::FunctionNode(TypeNode type, std::string name
-	, ParamList params, CompoundStmtNode* body)
+	, ParamList params, StmtList body)
 	: _type{type}, _name{name}, _params{params}, _body{body}
 {
 	std::reverse(_params.begin(), _params.end());
+	std::reverse(_body.begin(), _body.end());
 }
 
 
@@ -26,7 +27,5 @@ void FunctionNode::Print(std::ostream& os, std::string_view indent, int depth)
 		_params[i].first.Print(os, indent, depth);
 		os << ")\n"sv;
 	}
-	PrintIndent(os, indent, depth);
-	os << "Body =\n"sv;
-	PrintMaybe(_body, os, indent, depth + 1);
+	for (StmtNode* node : _body) node->Print(os, indent, depth) ;
 }

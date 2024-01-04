@@ -9,6 +9,10 @@
 struct StmtNode : public SyntaxNode {};
 
 
+// Stores a list of statements.
+using StmtList = std::vector<StmtNode*>;
+
+
 // Base class to represent expressions.
 struct ExprNode : public StmtNode
 {
@@ -96,9 +100,6 @@ struct ReturnStmtNode : public ExprNode
 // Represents compound statements.
 struct CompoundStmtNode : public ExprNode
 {
-	// Stores a list of statements.
-	using StmtList = std::vector<StmtNode*>;
-
 	StmtList _stmts;	// This node's children statements.
 	
 	/**

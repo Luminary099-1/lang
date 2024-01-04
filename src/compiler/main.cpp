@@ -117,6 +117,6 @@ int main(int argc, char** argv)
 
 	std::vector<SyntaxNode*> tu;
 	const int exit_code {readNodes(argv[argc - 1], tu)};
-	for (SyntaxNode* node : tu) node->Print(std::cout, "   "sv);
+	for (SyntaxNode* node : tu) node->Print(std::cout, "  "sv);
 	return exit_code;
 }
