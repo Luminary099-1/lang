@@ -19,6 +19,14 @@ struct TUBuffer
 };
 
 
+/**
+ * @brief Prints the line of referenced token to the specified output stream.
+ * 
+ * @param os The output stream to write the line and highlighting to.
+ * @param src The source file buffer containing the line.
+ * @param info The token to highlight from the line.
+ */
+void HighlightError(std::ostream& os, TUBuffer& src, TokenInfo& info);
 
 
 struct ScopeStack
