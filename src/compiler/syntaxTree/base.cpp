@@ -3,6 +3,12 @@
 using namespace std::string_view_literals;
 
 
+bool SyntaxTreeNode::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	return true;
+}
+
+
 void SyntaxTreeNode::PrintIndent(
 	std::ostream& os, std::string_view indent, int depth)
 {
@@ -37,12 +43,12 @@ void Type::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-void SymbolInfo::SetSymbolInfo(SymbolInfo info)
+void TokenInfo::SetSymbolInfo(TokenInfo info)
 {
 	_row		= info._row;
 	_endRow		= info._endRow;
 	_col		= info._col;
 	_endCol		= info._endCol;
-	_offset		= info._offset;
-	_endOffset	= info._endOffset;
+	_off		= info._off;
+	_endOff	= info._endOff;
 }

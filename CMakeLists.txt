@@ -13,6 +13,7 @@ add_custom_target(
 
 add_executable(compiler
 	src/compiler/main.cpp
+	src/compiler/utilities.cpp
 	src/compiler/parse.cpp
 	src/compiler/syntaxTree/base.cpp
 	src/compiler/syntaxTree/constructs.cpp

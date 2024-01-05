@@ -3,15 +3,31 @@
 #include "syntaxTree/base.hpp"
 
 #include <string_view>
-#include <stack>
+#include <forward_list>
 #include <map>
+#include <ostream>
+
+// Forward declarations to accommodate cyclic includes.
+struct Symbol;
+struct TokenInfo;
+
+
+struct TUBuffer
+{
+	char* _buf;
+	size_t _size;
+};
+
+
 
 
 struct ScopeStack
 {
+protected:
 	// A stack of scopes that map identifiers to AST definitions.
-	std::stack<std::map<std::string_view, SyntaxTreeNode*>> _stackMap;
+	std::forward_list<std::map<std::string_view, Symbol*>> _stackMap;
 
+public:
 	/**
 	 * @brief Begin a new scope in the scope stack.
 	 */
@@ -23,21 +39,24 @@ struct ScopeStack
 	void Exit();
 
 	/**
-	 * @brief Attempts to define a new symbol in the scope stack.
+	 * @brief Attempts to define a new symbol in the scope stack in the current
+	 * scope.
 	 * 
 	 * @param name The symbol's identifier (name).
 	 * @param node The AST node referred to by the symbol.
-	 * @return true if the symbol was successfully define; false otherwise.
+	 * @return A pointer to the already defined AST node referred to by name. If
+	 * there isn't a name collision, nullptr is returned.
 	 */
-	bool Define(std::string_view name, SyntaxTreeNode* node);
+	Symbol* Define(std::string_view name, Symbol* node);
 
 	/**
 	 * @brief Returns a pointer to the AST node referred to by the specfied
-	 * symbol, if it exists.
+	 * symbol, if it exists in any scope. The most recently defined instance of
+	 * the symbol will be returned.
 	 * 
 	 * @param name The symbol's identifier (name).
-	 * @return SyntaxTreeNode* A pointer to the AST node of the already defined
-	 * symbol.
+	 * @return Symbol* A pointer to the AST node of the already defined symbol.
+	 * If no such symbol is define, nullptr is returned.
 	 */
-	SyntaxTreeNode* Lookup(std::string_view name);
+	Symbol* Lookup(std::string_view name);
 };

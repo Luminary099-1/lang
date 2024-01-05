@@ -1,14 +1,28 @@
 #pragma once
 
+#include "../utilities.hpp"
+
 #include <string>
 #include <string_view>
 #include <ostream>
 #include <vector>
 
+// Forward declarations to accommodate cyclic includes.
+struct ScopeStack;
+struct TUBuffer;
+
 
 // Base class for nodes of the AST.
 struct SyntaxTreeNode
 {
+	/**
+	 * @brief 
+	 * 
+	 * @param ss 
+	 * @return true 
+	 */
+	virtual bool Scope(ScopeStack& ss, TUBuffer& src);
+
 	/**
 	 * @brief Prints a textual representation of this AST node to the specified
 	 * stream.
@@ -77,14 +91,18 @@ struct Type : public SyntaxTreeNode
 };
 
 
-struct SymbolInfo
+struct TokenInfo
 {
-	int _row {1};			// Row at the start of the match.
-	int _endRow {1};		// Row after the end of the match.
-	int _col {1};			// Column at the start of the match.
-	int _endCol {1};		// Column after the end of the match.
-	size_t _offset {0};		// Offset of the first character of the match.
-	size_t _endOffset {0};	// Offset after the last character of the match.
+	int _row {1};		// Row at the start of the match.
+	int _endRow {1};	// Row after the end of the match.
+	int _col {1};		// Column at the start of the match.
+	int _endCol {1};	// Column after the end of the match.
+	size_t _off {0};	// Offset of the first character of the match.
+	size_t _endOff {0};	// Offset after the last character of the match.
 
-	void SetSymbolInfo(SymbolInfo info);
+	void SetSymbolInfo(TokenInfo info);
 };
+
+
+struct Symbol : public TokenInfo
+{};

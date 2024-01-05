@@ -25,7 +25,7 @@ void CompoundStmt::Print(
 }
 
 
-VariableInit::VariableInit(Type type, std::string name, Expression* init)
+VariableDef::VariableDef(Type type, std::string name, Expression* init)
 	: _type{type}, _name{name}, _init{init}
 {}
 
@@ -35,7 +35,7 @@ Expression::Expression()
 {}
 
 
-void VariableInit::Print(std::ostream& os, std::string_view indent, int depth)
+void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "VariableInitialization(_name = "sv << _name << ", Type = "sv;

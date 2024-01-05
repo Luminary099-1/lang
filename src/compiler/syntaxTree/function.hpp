@@ -8,18 +8,38 @@
 #include <vector>
 
 
-// Represents a function definition.
-struct Function : public SyntaxTreeNode
-{	
-	// Stores a parameter expressed in the function definition.
-	using Param = std::pair<Type, std::string>;
-	// Stores the parameters expressed in the function definition.
-	using ParamList = std::vector<Param>;
+// Represents a function definition's parameters.
+struct Parameter : public SyntaxTreeNode, public TokenInfo
+{
+	Type _type;			// The parameter's type.
+	std::string _name;	// The parameter's name.
 
-	Type _type;		// The function's return type.
+	// Default constructor.
+	Parameter();
+
+	/**
+	 * @brief Construct a new Parameter object.
+	 * 
+	 * @param type The name of the parameter's type.
+	 * @param name The parameter's name.
+	 */
+	Parameter(Type type, std::string name);
+
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
+};
+
+
+// Represents a function definition.
+struct Function : public SyntaxTreeNode, public Symbol
+{
+	// Stores the parameters expressed in the function definition.
+	using ParamList = std::vector<Parameter>;
+
+	Type _type;			// The function's return type.
 	std::string _name;	// The name of the function.
 	ParamList _params;	// The function's parameters.
-	StmtList _body;	// The function's body statements.
+	StmtList _body;		// The function's body statements.
 
 	/**
 	 * @brief Construct a new Function object.
@@ -31,8 +51,8 @@ struct Function : public SyntaxTreeNode
 	 * @param body The function's body. Assumed to be in reverse order after
 	 * being parsed.
 	 */
-	Function(
-		Type type, std::string name, ParamList params, StmtList body);
+	Function(Type type, std::string name, ParamList params, StmtList body);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

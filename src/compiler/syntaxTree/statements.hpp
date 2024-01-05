@@ -45,20 +45,20 @@ struct ExprStmt : public Statement
 
 
 // Represents a variable definition (including initialization).
-struct VariableInit : public Statement
+struct VariableDef : public Statement
 {
-	Type _type;		// The variable's type.
+	Type _type;			// The variable's type.
 	std::string _name;	// The variable's name.
 	Expression* _init;	// The variable's initialization expression.
 
 	/**
-	 * @brief Construct a new VariableInit object.
+	 * @brief Construct a new VariableDef object.
 	 * 
 	 * @param type The variable's type.
 	 * @param name The variable's name.
 	 * @param init The variable's initialization expression.
 	 */
-	VariableInit(Type type, std::string name, Expression* init);
+	VariableDef(Type type, std::string name, Expression* init);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
