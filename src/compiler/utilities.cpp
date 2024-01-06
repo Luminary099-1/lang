@@ -14,9 +14,20 @@ void HighlightError(std::ostream& os, TUBuffer& src, TokenInfo& info)
 };
 
 
+void TokenInfo::SetSymbolInfo(TokenInfo info)
+{
+	_row		= info._row;
+	_endRow		= info._endRow;
+	_col		= info._col;
+	_endCol		= info._endCol;
+	_off		= info._off;
+	_endOff	= info._endOff;
+}
+
+
 void ScopeStack::Enter()
 {
-	_stackMap.push_front(std::map<std::string_view, Symbol*>());
+	_stackMap.push_front(std::map<std::string_view, SyntaxTreeNode*>());
 }
 
 
@@ -27,18 +38,18 @@ void ScopeStack::Exit()
 }
 
 
-Symbol* ScopeStack::Define(std::string_view name, Symbol* node)
+SyntaxTreeNode* ScopeStack::Define(std::string_view name, SyntaxTreeNode* node)
 {
-	std::map<std::string_view, Symbol*>& front {_stackMap.front()};
+	std::map<std::string_view, SyntaxTreeNode*>& front {_stackMap.front()};
 	if (front.count(name) == 0) return front[name];
 	front.insert(std::pair(name, node));
 	return nullptr;
 }
 
 
-Symbol* ScopeStack::Lookup(std::string_view name)
+SyntaxTreeNode* ScopeStack::Lookup(std::string_view name)
 {
-	for (std::map<std::string_view, Symbol*> scope : _stackMap)
+	for (std::map<std::string_view, SyntaxTreeNode*> scope : _stackMap)
 		if (scope.count(name)) return scope[name];
 	return nullptr;
 }

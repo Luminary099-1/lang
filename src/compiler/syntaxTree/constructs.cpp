@@ -1,11 +1,27 @@
 #include "constructs.hpp"
 
+#include <iostream>
+
 using namespace std::string_view_literals;
 
 
 AssignmentExpr::AssignmentExpr(std::string name, Expression* expr)
 	: _name{name}, _expr{expr}
 {}
+
+
+bool AssignmentExpr::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+{
+	SyntaxTreeNode* pre_def {ss.Lookup(_name)};
+	if (pre_def == nullptr)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Unkown function: " << _name << '\n';
+		HighlightError(std::cerr, src, *this);
+		return false;
+	}
+	return true;
+}
 
 
 void AssignmentExpr::Print(std::ostream& os, std::string_view indent, int depth)

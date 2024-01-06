@@ -13,7 +13,8 @@ struct Literal : public Expression, public TokenInfo
 // Represents identifiers.
 struct Identifier : public Literal
 {
-	std::string _value;	// The identifier's name.
+	std::string _value;		// The identifier's name.
+	SyntaxTreeNode* _def;	// The AST node that defines this variable.
 
 	/**
 	 * @brief Construct a new Identifier object.
@@ -22,6 +23,7 @@ struct Identifier : public Literal
 	 */
 	Identifier(std::string value);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 

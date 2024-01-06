@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "function.hpp"
 #include "statements.hpp"
 
 #include <string_view>
@@ -107,7 +108,7 @@ struct PostExpr : public Expression
 	};
 
 	Expression* _arg;	// The expression's operand.
-	Ops _op;		// The operator being applied.
+	Ops _op;			// The operator being applied.
 
 	/**
 	 * @brief Construct a new PostExpr object.
@@ -130,23 +131,24 @@ struct PostExpr : public Expression
 
 
 // Represnts a function invocation.
-struct Invocation : public Expression
+struct Invocation : public Expression, public TokenInfo
 {
 	// Stores the arguments passed to a function.
 	using ArgList = std::vector<Expression*>;
 
-	std::string _name;		// The name of the function being called.
-	SyntaxTreeNode* _fn;	// The AST node of the function being called.
-	ArgList _args;			// The arguments specified by the function call.
+	std::string _name;	// The name of the function being called.
+	Function* _def;		// The AST node defining the called function.
+	ArgList _args;		// The arguments specified by the function call.
 
 	/**
 	 * @brief Construct a new Invocation object.
 	 * 
-	 * @param name The name pf tje function being called.
+	 * @param name The name of the function being called.
 	 * @param args The arguments specified by the function call. Assumed to be
 	 * in reverse order after being parsed.
 	 */
 	Invocation(std::string name, ArgList args);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

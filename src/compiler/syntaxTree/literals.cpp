@@ -1,11 +1,27 @@
 #include "literals.hpp"
 
+#include <iostream>
+
 using namespace std::string_view_literals;
 
 
 Identifier::Identifier(std::string value)
 	: _value{value}
 {}
+
+
+bool Identifier::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+{
+	_def = ss.Lookup(_value);
+	if (_def == nullptr)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Unkown symbol: " << _value << '\n';
+		HighlightError(std::cerr, src, *this);
+		return false;
+	}
+	return true;
+}
 
 
 void Identifier::Print(std::ostream& os, std::string_view indent, int depth)

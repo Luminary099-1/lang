@@ -1,9 +1,11 @@
 #include "base.hpp"
 
+#include <iostream>
+
 using namespace std::string_view_literals;
 
 
-bool SyntaxTreeNode::Scope(ScopeStack& ss, TUBuffer& src)
+bool SyntaxTreeNode::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 {
 	return true;
 }
@@ -28,6 +30,14 @@ void SyntaxTreeNode::PrintMaybe(
 }
 
 
+const std::map<std::string_view, Type::Fundamentals> Type::_namedFundamentals {
+	{"void"sv,		Type::Fundamentals::Void},
+	{"int"sv,		Type::Fundamentals::Int},
+	{"bool"sv,		Type::Fundamentals::Bool},
+	{"string"sv,	Type::Fundamentals::String}
+};
+
+
 Type::Type()
 {}
 
@@ -37,18 +47,25 @@ Type::Type(std::string type_name)
 {}
 
 
-void Type::Print(std::ostream& os, std::string_view indent, int depth)
+bool Type::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 {
-	os << _name;
+	try { _fund_type = _namedFundamentals.at(_name); }
+	catch(const std::out_of_range& e)
+	{
+		_type = ss.Lookup(_name);
+		if (_type == nullptr)
+		{
+			std::cerr << '(' << _row << ", "sv << _col
+				<< "): Unknown type: "sv << _name << '\n';
+			HighlightError(std::cerr, src, *this);
+			return false;
+		}
+	}
+	return true;
 }
 
 
-void TokenInfo::SetSymbolInfo(TokenInfo info)
+void Type::Print(std::ostream& os, std::string_view indent, int depth)
 {
-	_row		= info._row;
-	_endRow		= info._endRow;
-	_col		= info._col;
-	_endCol		= info._endCol;
-	_off		= info._off;
-	_endOff	= info._endOff;
+	os << _name;
 }

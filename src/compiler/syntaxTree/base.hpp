@@ -4,12 +4,9 @@
 
 #include <string>
 #include <string_view>
+#include <map>
 #include <ostream>
 #include <vector>
-
-// Forward declarations to accommodate cyclic includes.
-struct ScopeStack;
-struct TUBuffer;
 
 
 // Base class for nodes of the AST.
@@ -19,9 +16,10 @@ struct SyntaxTreeNode
 	 * @brief 
 	 * 
 	 * @param ss 
+	 * @param first_pass 
 	 * @return true 
 	 */
-	virtual bool Scope(ScopeStack& ss, TUBuffer& src);
+	virtual bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass);
 
 	/**
 	 * @brief Prints a textual representation of this AST node to the specified
@@ -61,10 +59,10 @@ struct SyntaxTreeNode
 
 
 // Represents a type in the program.
-struct Type : public SyntaxTreeNode
+struct Type : public SyntaxTreeNode, public TokenInfo
 {
 	// Enumerates the fundamental types of the language.
-	enum class BasicTypes
+	enum class Fundamentals
 	{
 		Void,
 		Int,
@@ -72,12 +70,14 @@ struct Type : public SyntaxTreeNode
 		String
 	};
 
-	std::string _name;	// The type's name (identifier token).
-	BasicTypes _type;	// Enumeration of the fundamental type, if applicable.
+	// Maps the names of fundamental types to their enumerations.
+	static const std::map<std::string_view, Fundamentals> _namedFundamentals;
 
-	/**
-	 * @brief Default constructor for a new Type object.
-	 */
+	std::string _name;			// The type's name.
+	Fundamentals _fund_type;	// The fundamental type, if applicable.
+	SyntaxTreeNode*	_type;		// The defined type, if applicable.
+
+	// Default constructor.
 	Type();
 
 	/**
@@ -87,22 +87,6 @@ struct Type : public SyntaxTreeNode
 	 */
 	Type(std::string type_name);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
-
-
-struct TokenInfo
-{
-	int _row {1};		// Row at the start of the match.
-	int _endRow {1};	// Row after the end of the match.
-	int _col {1};		// Column at the start of the match.
-	int _endCol {1};	// Column after the end of the match.
-	size_t _off {0};	// Offset of the first character of the match.
-	size_t _endOff {0};	// Offset after the last character of the match.
-
-	void SetSymbolInfo(TokenInfo info);
-};
-
-
-struct Symbol : public TokenInfo
-{};

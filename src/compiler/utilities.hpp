@@ -1,21 +1,40 @@
 #pragma once
 
-#include "syntaxTree/base.hpp"
-
 #include <string_view>
 #include <forward_list>
 #include <map>
 #include <ostream>
 
-// Forward declarations to accommodate cyclic includes.
-struct Symbol;
-struct TokenInfo;
+// Forward declaration to define SyntaxTreeNode without including base.hpp.
+struct SyntaxTreeNode;
 
 
+// Stores the information necessary to locate a token in the TU buffer.
+struct TokenInfo
+{
+	int _row {1};		// Row at the start of the match.
+	int _endRow {1};	// Row after the end of the match.
+	int _col {1};		// Column at the start of the match.
+	int _endCol {1};	// Column after the end of the match.
+	size_t _off {0};	// Offset of the first character of the match.
+	size_t _endOff {0};	// Offset after the last character of the match.
+
+	/**
+	 * @brief Convenience function to copy in the fields defined by this struct
+	 * from other instances of TokenInfo.
+	 * 
+	 * @param info An instance of TokenInfo whose values are to be copied to
+	 * this.
+	 */
+	void SetSymbolInfo(TokenInfo info);
+};
+
+
+// Wraps the buffer that contains a TU's source, including its length.
 struct TUBuffer
 {
-	char* _buf;
-	size_t _size;
+	char* _buf;		// A pointer to a TU's source buffer.
+	size_t _size;	// The TU's size.
 };
 
 
@@ -29,11 +48,12 @@ struct TUBuffer
 void HighlightError(std::ostream& os, TUBuffer& src, TokenInfo& info);
 
 
+// A data structure to store program symbols in a scope hierarchy.
 struct ScopeStack
 {
 protected:
 	// A stack of scopes that map identifiers to AST definitions.
-	std::forward_list<std::map<std::string_view, Symbol*>> _stackMap;
+	std::forward_list<std::map<std::string_view, SyntaxTreeNode*>> _stackMap;
 
 public:
 	/**
@@ -55,7 +75,7 @@ public:
 	 * @return A pointer to the already defined AST node referred to by name. If
 	 * there isn't a name collision, nullptr is returned.
 	 */
-	Symbol* Define(std::string_view name, Symbol* node);
+	SyntaxTreeNode* Define(std::string_view name, SyntaxTreeNode* node);
 
 	/**
 	 * @brief Returns a pointer to the AST node referred to by the specfied
@@ -63,8 +83,8 @@ public:
 	 * the symbol will be returned.
 	 * 
 	 * @param name The symbol's identifier (name).
-	 * @return Symbol* A pointer to the AST node of the already defined symbol.
-	 * If no such symbol is define, nullptr is returned.
+	 * @return SyntaxTreeNode* A pointer to the AST node of the already defined
+	 * symbol. If no such symbol is define, nullptr is returned.
 	 */
-	Symbol* Lookup(std::string_view name);
+	SyntaxTreeNode* Lookup(std::string_view name);
 };

@@ -17,9 +17,9 @@ Parameter::Parameter(Type type, std::string name)
 {}
 
 
-bool Parameter::Scope(ScopeStack& ss, TUBuffer& src)
+bool Parameter::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 {
-	return _type.Scope(ss, src);
+	return _type.Scope(ss, src, first_pass);
 }
 
 
@@ -40,24 +40,30 @@ Function::Function(
 }
 
 
-bool Function::Scope(ScopeStack& ss, TUBuffer& src)
+bool Function::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 {
-	bool success {true};
-	Symbol* pre_def {ss.Define(_name, this)};
-	if (pre_def != nullptr)
+	if (first_pass)
 	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Symbol collision: "sv << _name
-			<< "\n-> The following on line"sv << _row << ":\n";
-		HighlightError(std::cerr, src, *this);
-		std::cerr << "-> Redefines on line "sv << pre_def->_row << ":\n";
-		HighlightError(std::cerr, src, *pre_def);
-		success = false;
+		TokenInfo* pre_def {dynamic_cast<TokenInfo*>(ss.Define(_name, this))}; // Trusting this for now.
+		if (pre_def != nullptr)
+		{
+			std::cerr << '(' << _row << ", "sv << _col
+				<< "): Symbol collision: "sv << _name
+				<< "\n-> The following on line"sv << _row << ":\n";
+			HighlightError(std::cerr, src, *this);
+			std::cerr << "-> Redefines on line "sv << pre_def->_row << ":\n";
+			HighlightError(std::cerr, src, *pre_def);
+			return false;
+		}
+		return true;
 	}
 
+	bool success {true};
 	ss.Enter();
-	for (Parameter param : _params) success = success && param.Scope(ss, src);
-	for (Statement* stmt : _body) success = success && stmt->Scope(ss, src);
+	for (Parameter param : _params)
+		success = success && param.Scope(ss, src, first_pass);
+	for (Statement* stmt : _body)
+		success = success && stmt->Scope(ss, src, first_pass);
 	ss.Exit();
 	return success;
 }

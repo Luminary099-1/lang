@@ -25,13 +25,13 @@ struct Parameter : public SyntaxTreeNode, public TokenInfo
 	 */
 	Parameter(Type type, std::string name);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents a function definition.
-struct Function : public SyntaxTreeNode, public Symbol
+struct Function : public SyntaxTreeNode, public TokenInfo
 {
 	// Stores the parameters expressed in the function definition.
 	using ParamList = std::vector<Parameter>;
@@ -53,6 +53,6 @@ struct Function : public SyntaxTreeNode, public Symbol
 	 */
 	Function(Type type, std::string name, ParamList params, StmtList body);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

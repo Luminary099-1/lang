@@ -7,7 +7,7 @@
 
 
 // Represents an assignment expression.
-struct AssignmentExpr : public Expression
+struct AssignmentExpr : public Expression, public TokenInfo
 {
 	std::string _name;	// The name of the variable being assigned.
 	Expression* _expr;	// The expression being assigned to the variable.
@@ -20,6 +20,7 @@ struct AssignmentExpr : public Expression
 	 */
 	AssignmentExpr(std::string name, Expression* expr);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -29,7 +30,7 @@ struct IfExpr : public Expression
 {
 	Expression* _cond;	// The condition expression. Must be a Boolean.
 	Statement* _body;	// A statement executed if the condition is true.
-	Statement* _alt;		// The else case if the condition is false (optional).
+	Statement* _alt;	// The else case if the condition is false (optional).
 
 	/**
 	 * @brief Construct a new IfExpr object;
@@ -49,7 +50,7 @@ struct ForExpr : public Expression
 {
 	Expression* _init;	// Initialization expression; runs before the loop.
 	Expression* _cond;	// Conditional expression; runs between iterations.
-	Expression* _inc;		// Increment expression; runs after the condition.
+	Expression* _inc;	// Increment expression; runs after the condition.
 	Statement* _body;	// The statement to be executed each iteration.
 
 	/**
@@ -86,7 +87,7 @@ struct LoopExpr : public Expression
 struct WhileExpr : public Expression
 {
 	Expression* _cond;	// Conditional expression; runs between iterations.
-	Statement* _body;	// // The statement to be executed each iteration.
+	Statement* _body;	// The statement to be executed each iteration.
 
 	/**
 	 * @brief Construct a new WhileExpr object.

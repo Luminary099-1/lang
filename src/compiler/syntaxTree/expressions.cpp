@@ -1,5 +1,7 @@
 #include "expressions.hpp"
 
+#include <iostream>
+
 using namespace std::string_view_literals;
 
 
@@ -118,6 +120,20 @@ Invocation::Invocation(std::string name, ArgList args)
 	: _name{name}, _args{args}
 {
 	std::reverse(_args.begin(), _args.end());
+}
+
+
+bool Invocation::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+{
+	_def = dynamic_cast<Function*>(ss.Lookup(_name));
+	if (_def == nullptr)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Unkown function: " << _name << '\n';
+		HighlightError(std::cerr, src, *this);
+		return false;
+	}
+	return true;
 }
 
 
