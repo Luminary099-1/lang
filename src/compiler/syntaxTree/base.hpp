@@ -13,11 +13,16 @@
 struct SyntaxTreeNode
 {
 	/**
-	 * @brief 
+	 * @brief Accumulates all symbols definitions into the specified scope stack
+	 * and verifies the existence of symbols for all other occurrences. Performs
+	 * a pass of only global definitions first, allowing them to be ordered
+	 * arbitrarily.
 	 * 
-	 * @param ss 
-	 * @param first_pass 
-	 * @return true 
+	 * @param ss The scope stack instance to use.
+	 * @param first_pass True if only global definitions are to be considered.
+	 * False for the general case where all symbols are to be checked.
+	 * @return true on success; false if a symbol is redefined in the same scope
+	 * or an undefined symbol is referenced.
 	 */
 	virtual bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass);
 
@@ -53,8 +58,8 @@ struct SyntaxTreeNode
 	 * @param depth The depth of the node in the tree (the number of levels of
 	 * indentation).
 	 */
-	static void PrintMaybe(
-		SyntaxTreeNode* node, std::ostream& os, std::string_view indent, int depth);
+	static void PrintMaybe(SyntaxTreeNode* node, std::ostream& os
+		, std::string_view indent, int depth);
 };
 
 
