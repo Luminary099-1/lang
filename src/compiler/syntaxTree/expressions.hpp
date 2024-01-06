@@ -135,9 +135,9 @@ struct Invocation : public Expression
 	// Stores the arguments passed to a function.
 	using ArgList = std::vector<Expression*>;
 
-	std::string _name;	// The name of the function being called.
+	std::string _name;		// The name of the function being called.
 	SyntaxTreeNode* _fn;	// The AST node of the function being called.
-	ArgList _args;		// The arguments specified by the function call.
+	ArgList _args;			// The arguments specified by the function call.
 
 	/**
 	 * @brief Construct a new Invocation object.

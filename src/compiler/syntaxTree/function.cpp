@@ -43,7 +43,8 @@ Function::Function(
 bool Function::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	bool success {true};
-	if (Symbol* pre_def = ss.Define(std::string_view(_name), this))
+	Symbol* pre_def {ss.Define(_name, this)};
+	if (pre_def != nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Symbol collision: "sv << _name

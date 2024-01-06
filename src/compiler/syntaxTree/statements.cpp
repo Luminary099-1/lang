@@ -1,5 +1,7 @@
 #include "statements.hpp"
 
+#include <iostream>
+
 using namespace std::string_view_literals;
 
 
@@ -7,6 +9,16 @@ CompoundStmt::CompoundStmt(StmtList kids)
 	: _stmts{kids}
 {
 	std::reverse(_stmts.begin(), _stmts.end());
+}
+
+
+bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	bool success {true};
+	ss.Enter();
+	for (Statement* stmt : _stmts) success = success && stmt->Scope(ss, src);
+	ss.Exit();
+	return success;
 }
 
 
@@ -33,6 +45,23 @@ VariableDef::VariableDef(Type type, std::string name, Expression* init)
 Expression::Expression()
 	: _type{""}
 {}
+
+
+bool VariableDef::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	Symbol* pre_def {ss.Define(_name, this)};
+	if (pre_def != nullptr)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Symbol collision: "sv << _name
+			<< "\n-> The following on line"sv << _row << ":\n";
+		HighlightError(std::cerr, src, *this);
+		std::cerr << "-> Redefines on line "sv << pre_def->_row << ":\n";
+		HighlightError(std::cerr, src, *pre_def);
+		return false;
+	}
+	return true;
+}
 
 
 void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)

@@ -45,7 +45,7 @@ struct ExprStmt : public Statement
 
 
 // Represents a variable definition (including initialization).
-struct VariableDef : public Statement
+struct VariableDef : public Statement, public Symbol
 {
 	Type _type;			// The variable's type.
 	std::string _name;	// The variable's name.
@@ -60,6 +60,7 @@ struct VariableDef : public Statement
 	 */
 	VariableDef(Type type, std::string name, Expression* init);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -110,5 +111,6 @@ struct CompoundStmt : public Expression
 	 */
 	CompoundStmt(StmtList kids);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
