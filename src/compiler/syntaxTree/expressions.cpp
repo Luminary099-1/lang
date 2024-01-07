@@ -1,6 +1,7 @@
 #include "expressions.hpp"
 
 #include <iostream>
+#include <utility>
 
 using namespace std::string_view_literals;
 
@@ -42,15 +43,15 @@ void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "BinaryExpression(Op = "sv << GetOpText(_op) << ", "sv;
-	_type.Print(os, indent, depth);
+	_type->Print(os, indent, depth);
 	os << "):\n"sv;
 	++ depth;
 	PrintIndent(os, indent, depth);
 	os << "Left Operand =\n"sv;
-	PrintMaybe(_argl, os, indent, depth + 1);
+	PrintMaybe(_argl.get(), os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
 	os << "Right Operand =\n"sv;
-	PrintMaybe(_argr, os, indent, depth + 1);
+	PrintMaybe(_argr.get(), os, indent, depth + 1);
 }
 
 
@@ -79,11 +80,11 @@ void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "PreExpression(Op = "sv << GetOpText(_op) << ", "sv;
-	_type.Print(os, indent, depth);
+	_type->Print(os, indent, depth);
 	os << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
 	os << "Operand =\n"sv;
-	PrintMaybe(_arg, os, indent, ++ depth);
+	PrintMaybe(_arg.get(), os, indent, ++ depth);
 }
 
 
@@ -108,16 +109,16 @@ void PostExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "PostExpression(Op = "sv << GetOpText(_op) << ", "sv;
-	_type.Print(os, indent, depth);
+	_type->Print(os, indent, depth);
 	os << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
 	os << "Operand =\n"sv;
-	PrintMaybe(_arg, os, indent, ++ depth);
+	PrintMaybe(_arg.get(), os, indent, ++ depth);
 }
 
 
-Invocation::Invocation(std::string name, ArgList args)
-	: _name{name}, _args{args}
+Invocation::Invocation(std::string name, ArgList& args)
+	: _name{name}, _args{std::move(args)}
 {
 	std::reverse(_args.begin(), _args.end());
 }
@@ -141,7 +142,7 @@ void Invocation::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "InvokeExpression(Function = "sv << _name << ", "sv;
-	_type.Print(os, indent, depth);
+	_type->Print(os, indent, depth);
 	os << "):\n"sv;
 	++ depth;
 	for (size_t i {0}; i < _args.size(); ++ i)

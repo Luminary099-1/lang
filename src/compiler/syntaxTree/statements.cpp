@@ -38,13 +38,8 @@ void CompoundStmt::Print(
 }
 
 
-VariableDef::VariableDef(Type type, std::string name, Expression* init)
+VariableDef::VariableDef(Type* type, std::string name, Expression* init)
 	: _type{type}, _name{name}, _init{init}
-{}
-
-
-Expression::Expression()
-	: _type{""}
 {}
 
 
@@ -69,7 +64,7 @@ void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "VariableInitialization(_name = "sv << _name << ", "sv;
-	_type.Print(os, indent, depth);
+	_type->Print(os, indent, depth);
 	os << "):\n"sv;
 	_init->Print(os, indent, ++ depth);
 }
@@ -84,7 +79,7 @@ void ExprStmt::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "ExpressionStatement:\n"sv;
-	PrintMaybe(_expr, os, indent, ++ depth);
+	PrintMaybe(_expr.get(), os, indent, ++ depth);
 }
 
 
@@ -97,7 +92,7 @@ void BreakStmt::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "BreakStatement(Levels = "sv << _levels << "):\n"sv;
-	PrintMaybe(_expr, os, indent, ++ depth);
+	PrintMaybe(_expr.get(), os, indent, ++ depth);
 }
 
 
@@ -110,5 +105,5 @@ void ReturnStmt::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "ReturnStatement:\n"sv;
-	PrintMaybe(_expr, os, indent, ++ depth);
+	PrintMaybe(_expr.get(), os, indent, ++ depth);
 }

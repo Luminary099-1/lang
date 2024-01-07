@@ -2,11 +2,14 @@
 
 #include "base.hpp"
 
+#include <memory>
 #include <vector>
 
 
 // Base class to represent statements.
-struct Statement : public SyntaxTreeNode {};
+struct Statement
+	: public SyntaxTreeNode
+{};
 
 
 // Stores a list of statements.
@@ -14,24 +17,18 @@ using StmtList = std::vector<Statement*>;
 
 
 // Base class to represent expressions.
-struct Expression : public Statement
+struct Expression
+	: public Statement
 {
-	Type _type;	// The expression's type.
-
-	/**
-	 * @brief Construct a new Expression object.
-	 * 
-	 * Satisfied the need for a default constructor. The type is only known
-	 * after Scope() is called.
-	 */
-	Expression();
+	Type* _type {nullptr};	// The expression's type.
 };
 
 
 // Represents an expression statement (does not return its evaluation).
-struct ExprStmt : public Statement
+struct ExprStmt
+	: public Statement
 {
-	Expression* _expr;	// The contained expression.
+	std::unique_ptr<Expression> _expr;	// The contained expression.
 
 	/**
 	 * @brief Construct a new ExprStmt object.
@@ -45,11 +42,12 @@ struct ExprStmt : public Statement
 
 
 // Represents a variable definition (including initialization).
-struct VariableDef : public Statement, public TokenInfo
+struct VariableDef
+	: public Statement, public TokenInfo
 {
-	Type _type;			// The variable's type.
-	std::string _name;	// The variable's name.
-	Expression* _init;	// The variable's initialization expression.
+	std::unique_ptr<Type> _type;		// The variable's type.
+	std::string _name;					// The variable's symbolic name.
+	std::unique_ptr<Expression> _init;	// The variable's initializer.
 
 	/**
 	 * @brief Construct a new VariableDef object.
@@ -58,7 +56,7 @@ struct VariableDef : public Statement, public TokenInfo
 	 * @param name The variable's name.
 	 * @param init The variable's initialization expression.
 	 */
-	VariableDef(Type type, std::string name, Expression* init);
+	VariableDef(Type* type, std::string name, Expression* init);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -66,15 +64,16 @@ struct VariableDef : public Statement, public TokenInfo
 
 
 // Represents a break statement.
-struct BreakStmt : public Expression
+struct BreakStmt
+	: public Expression
 {
-	int _levels {1};	// The number of loop levels to break from.
-	Expression* _expr;	// The expression to be returned (optional).
+	int _levels {1};					// The number of statements to break.
+	std::unique_ptr<Expression> _expr;	// An optional return expression.
 
 	/**
 	 * @brief Construct a new BreakStmt object.
 	 * 
-	 * @param expr The number of loop levels to break from.
+	 * @param expr The number of statements to break.
 	 * @param levels The expression to be returned.
 	 */
 	BreakStmt(Expression* expr, int levels = 1);
@@ -83,14 +82,15 @@ struct BreakStmt : public Expression
 };
 
 
-struct ReturnStmt : public Expression
+struct ReturnStmt
+	: public Expression
 {
-	Expression* _expr;	// The expression to be returned (optional).
+	std::unique_ptr<Expression> _expr;	// An optional return expression.
 
 	/**
 	 * @brief Construct a new ReturnStmt object.
 	 * 
-	 * @param expr The expression to be returned (optional).
+	 * @param expr An optional return expression.
 	 */
 	ReturnStmt(Expression* expr);
 
@@ -99,7 +99,8 @@ struct ReturnStmt : public Expression
 
 
 // Represents compound statements.
-struct CompoundStmt : public Expression
+struct CompoundStmt
+	: public Expression
 {
 	StmtList _stmts;	// This node's children statements.
 	

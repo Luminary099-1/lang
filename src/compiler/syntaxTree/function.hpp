@@ -4,15 +4,17 @@
 #include "statements.hpp"
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 
 // Represents a function definition's parameters.
-struct Parameter : public SyntaxTreeNode, public TokenInfo
+struct Parameter
+	: public SyntaxTreeNode, public TokenInfo
 {
-	Type _type;			// The parameter's type.
-	std::string _name;	// The parameter's name.
+	std::unique_ptr<Type> _type;	// The parameter's type.
+	std::string _name;				// The parameter's name.
 
 	// Default constructor.
 	Parameter();
@@ -23,7 +25,7 @@ struct Parameter : public SyntaxTreeNode, public TokenInfo
 	 * @param type The name of the parameter's type.
 	 * @param name The parameter's name.
 	 */
-	Parameter(Type type, std::string name);
+	Parameter(Type* type, std::string name);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -31,15 +33,16 @@ struct Parameter : public SyntaxTreeNode, public TokenInfo
 
 
 // Represents a function definition.
-struct Function : public SyntaxTreeNode, public TokenInfo
+struct Function
+	: public SyntaxTreeNode, public TokenInfo
 {
 	// Stores the parameters expressed in the function definition.
-	using ParamList = std::vector<Parameter>;
+	using ParamList = std::vector<std::unique_ptr<Parameter>>;
 
-	Type _type;			// The function's return type.
-	std::string _name;	// The name of the function.
-	ParamList _params;	// The function's parameters.
-	StmtList _body;		// The function's body statements.
+	std::unique_ptr<Type> _type;	// The function's return type.
+	std::string _name;				// The name of the function.
+	ParamList _params;				// The function's parameters.
+	StmtList _body;					// The function's body statements.
 
 	/**
 	 * @brief Construct a new Function object.
@@ -51,7 +54,7 @@ struct Function : public SyntaxTreeNode, public TokenInfo
 	 * @param body The function's body. Assumed to be in reverse order after
 	 * being parsed.
 	 */
-	Function(Type type, std::string name, ParamList params, StmtList body);
+	Function(Type* type, std::string name, ParamList& params, StmtList body);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;

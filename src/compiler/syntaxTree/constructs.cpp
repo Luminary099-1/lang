@@ -30,7 +30,7 @@ void AssignmentExpr::Print(std::ostream& os, std::string_view indent, int depth)
 	os << "AssignmentExpression(Name = "sv << _name << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
 	os << "Expression =\n"sv;
-	PrintMaybe(_expr, os, indent, ++ depth);
+	PrintMaybe(_expr.get(), os, indent, ++ depth);
 }
 
 
@@ -43,18 +43,18 @@ void IfExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "IfExpression("sv;
-	_type.Print(os, indent, depth);
+	_type->Print(os, indent, depth);
 	os << "):\n";
 	++ depth;
 	PrintIndent(os, indent, depth);
 	os << "Condition =\n"sv;
-	PrintMaybe(_cond, os, indent, depth + 1);
+	PrintMaybe(_cond.get(), os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
 	os << "Body =\n"sv;
-	PrintMaybe(_body, os, indent, depth + 1);
+	PrintMaybe(_body.get(), os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
 	os << "Else =\n"sv;
-	PrintMaybe(_alt, os, indent, depth + 1);
+	PrintMaybe(_alt.get(), os, indent, depth + 1);
 }
 
 
@@ -68,21 +68,21 @@ void ForExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "ForExpression("sv;
-	_type.Print(os, indent, depth);
+	_type->Print(os, indent, depth);
 	os << "):\n";
 	++ depth;
 	PrintIndent(os, indent, depth);
 	os << "Initialize =\n"sv;
-	PrintMaybe(_init, os, indent, depth + 1);
+	PrintMaybe(_init.get(), os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
 	os << "Condition =\n"sv;
-	PrintMaybe(_cond, os, indent, depth + 1);
+	PrintMaybe(_cond.get(), os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
 	os << "Increment =\n"sv;
-	PrintMaybe(_inc, os, indent, depth + 1);
+	PrintMaybe(_inc.get(), os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
 	os << "Body =\n"sv;
-	PrintMaybe(_body, os, indent, depth + 1);
+	PrintMaybe(_body.get(), os, indent, depth + 1);
 }
 
 
@@ -95,11 +95,11 @@ void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "LoopExpression("sv;
-	_type.Print(os, indent, depth);
+	_type->Print(os, indent, depth);
 	os << "):\n";
 	PrintIndent(os, indent, ++ depth);
 	os << "Body =:\n"sv;
-	PrintMaybe(_body, os, indent, ++ depth);
+	PrintMaybe(_body.get(), os, indent, ++ depth);
 }
 
 
@@ -112,13 +112,13 @@ void WhileExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "WhileExpression("sv;
-	_type.Print(os, indent, depth);
+	_type->Print(os, indent, depth);
 	os << "):\n";
 	++ depth;
 	PrintIndent(os, indent, depth);
 	os << "Condition =\n"sv;
-	PrintMaybe(_cond, os, indent, depth + 1);
+	PrintMaybe(_cond.get(), os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
 	os << "Body =\n"sv;
-	PrintMaybe(_body, os, indent, depth + 1);
+	PrintMaybe(_body.get(), os, indent, depth + 1);
 }

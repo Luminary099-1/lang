@@ -3,14 +3,16 @@
 #include "base.hpp"
 #include "statements.hpp"
 
+#include <memory>
 #include <string>
 
 
 // Represents an assignment expression.
-struct AssignmentExpr : public Expression, public TokenInfo
+struct AssignmentExpr
+	: public Expression, public TokenInfo
 {
-	std::string _name;	// The name of the variable being assigned.
-	Expression* _expr;	// The expression being assigned to the variable.
+	std::string _name;					// The variable being assigned to.
+	std::unique_ptr<Expression> _expr;	// The expression being assigned.
 
 	/**
 	 * @brief Construct a new AssignmentExpr object.
@@ -26,11 +28,12 @@ struct AssignmentExpr : public Expression, public TokenInfo
 
 
 // Represents an if expression (if statement that can return values).
-struct IfExpr : public Expression
+struct IfExpr
+	: public Expression
 {
-	Expression* _cond;	// The condition expression. Must be a Boolean.
-	Statement* _body;	// A statement executed if the condition is true.
-	Statement* _alt;	// The else case if the condition is false (optional).
+	std::unique_ptr<Expression> _cond;	// A conditional expression.
+	std::unique_ptr<Statement> _body;	// The statement executed on true.
+	std::unique_ptr<Statement> _alt;	// The optional else case.
 
 	/**
 	 * @brief Construct a new IfExpr object;
@@ -46,18 +49,19 @@ struct IfExpr : public Expression
 
 
 // Represents a counting for expression (a for loop that can return values).
-struct ForExpr : public Expression
+struct ForExpr
+	: public Expression
 {
-	Expression* _init;	// Initialization expression; runs before the loop.
-	Expression* _cond;	// Conditional expression; runs between iterations.
-	Expression* _inc;	// Increment expression; runs after the condition.
-	Statement* _body;	// The statement to be executed each iteration.
+	std::unique_ptr<Expression> _init;	// Runs before the loop.
+	std::unique_ptr<Expression> _cond;	// Tests before iterations.
+	std::unique_ptr<Expression> _inc;	// Runs after the condition.
+	std::unique_ptr<Statement> _body;	// Executed each iteration.
 
 	/**
 	 * @brief Construct a new ForExpr object.
 	 * 
 	 * @param init An initialization expression.
-	 * @param cond A condition expression.
+	 * @param cond A conditional expression.
 	 * @param inc An increment expression.
 	 * @param body The statement executed each iteration.
 	 */
@@ -68,9 +72,10 @@ struct ForExpr : public Expression
 
 
 // Represents an infinite loop expression (a loop that can return values).
-struct LoopExpr : public Expression
+struct LoopExpr
+	: public Expression
 {
-	Statement* _body;	// The statement to be executed each iteration.
+	std::unique_ptr<Statement> _body;	// Executed each iteration.
 
 	/**
 	 * @brief Construct a new LoopExpr object;
@@ -84,15 +89,16 @@ struct LoopExpr : public Expression
 
 
 // Represents a while loop expression (a while loop that can return a value).
-struct WhileExpr : public Expression
+struct WhileExpr
+	: public Expression
 {
-	Expression* _cond;	// Conditional expression; runs between iterations.
-	Statement* _body;	// The statement to be executed each iteration.
+	std::unique_ptr<Expression> _cond;	// Tests before iterations.
+	std::unique_ptr<Statement> _body;	// Executed each iteration.
 
 	/**
 	 * @brief Construct a new WhileExpr object.
 	 * 
-	 * @param cond A condition expression.
+	 * @param cond A conditional expression.
 	 * @param body The statement executed each iteration.
 	 */
 	WhileExpr(Expression* cond, Statement* body);

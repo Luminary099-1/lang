@@ -6,12 +6,14 @@
 
 
 // Base class to represent literals.
-struct Literal : public Expression, public TokenInfo
+struct Literal
+	: public Expression, public TokenInfo
 {};
 
 
 // Represents identifiers.
-struct Identifier : public Literal
+struct Identifier
+	: public Literal
 {
 	std::string _value;		// The identifier's name.
 	SyntaxTreeNode* _def;	// The AST node that defines this variable.
@@ -21,7 +23,7 @@ struct Identifier : public Literal
 	 * 
 	 * @param value The identifier's name.
 	 */
-	Identifier(std::string value);
+	Identifier(std::string& value);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -29,7 +31,8 @@ struct Identifier : public Literal
 
 
 // Represents integer literals.
-struct IntLiteral : public Literal
+struct IntLiteral
+	: public Literal
 {
 	int _value;	// The literal's integer value.
 
@@ -38,14 +41,15 @@ struct IntLiteral : public Literal
 	 * 
 	 * @param value The literal's integer value.
 	 */
-	IntLiteral(int value);
+	IntLiteral(int& value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents Boolean literals.
-struct BoolLiteral : public Literal
+struct BoolLiteral
+	: public Literal
 {
 	bool _value;	// The literal's Boolean value.
 
@@ -54,14 +58,15 @@ struct BoolLiteral : public Literal
 	 * 
 	 * @param value The literal's Boolean value.
 	 */
-	BoolLiteral(bool value);
+	BoolLiteral(bool& value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents string literals.
-struct StrLiteral : public Literal
+struct StrLiteral
+	: public Literal
 {
 	std::string _value;	// The literal's string value.
 
@@ -70,7 +75,7 @@ struct StrLiteral : public Literal
 	 * 
 	 * @param value The literal's Boolean value.
 	 */
-	StrLiteral(std::string value);
+	StrLiteral(std::string& value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

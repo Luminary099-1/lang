@@ -1,11 +1,13 @@
 #include "literals.hpp"
 
+#include "function.hpp"
+
 #include <iostream>
 
 using namespace std::string_view_literals;
 
 
-Identifier::Identifier(std::string value)
+Identifier::Identifier(std::string& value)
 	: _value{value}
 {}
 
@@ -13,7 +15,9 @@ Identifier::Identifier(std::string value)
 bool Identifier::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 {
 	_def = ss.Lookup(_value);
-	if (_def == nullptr)
+	// TODO: Ideally, Param and VariableDef would extend a common type.
+	// VariableDef's current role is more appropriately called VariableDefInit.
+	if (_def != nullptr && dynamic_cast<Function*>(_def) != nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Unkown symbol: " << _value << '\n';
@@ -31,7 +35,7 @@ void Identifier::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-IntLiteral::IntLiteral(int value)
+IntLiteral::IntLiteral(int& value)
 	: _value{value}
 {}
 
@@ -43,7 +47,7 @@ void IntLiteral::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-BoolLiteral::BoolLiteral(bool value)
+BoolLiteral::BoolLiteral(bool& value)
 	: _value{value}
 {}
 
@@ -55,7 +59,7 @@ void BoolLiteral::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-StrLiteral::StrLiteral(std::string value)
+StrLiteral::StrLiteral(std::string& value)
 	: _value{value}
 {}
 

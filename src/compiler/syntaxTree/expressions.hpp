@@ -4,13 +4,15 @@
 #include "function.hpp"
 #include "statements.hpp"
 
+#include <memory>
 #include <string_view>
 
 using namespace std::string_view_literals;
 
 
 // Represents a binary expression.
-struct BinaryExpr : public Expression
+struct BinaryExpr
+	: public Expression
 {
 	// Enumerates all valid binary operators.
 	enum class Ops
@@ -35,9 +37,9 @@ struct BinaryExpr : public Expression
 		Mod
 	};
 
-	Expression* _argl;	// The expression's left operand.
-	Expression* _argr;	// The expression's right operand.
-	Ops _op;			// The operator being applied.
+	std::unique_ptr<Expression> _argl;	// The expression's left operand.
+	std::unique_ptr<Expression> _argr;	// The expression's right operand.
+	Ops _op;							// The operator being applied.
 
 	/**
 	 * @brief Construct a new BinaryExpr object.
@@ -61,7 +63,8 @@ struct BinaryExpr : public Expression
 
 
 // Represents a prefix expression.
-struct PreExpr : public Expression
+struct PreExpr
+	: public Expression
 {
 	// Enumerates all valid prefix operators.
 	enum class Ops
@@ -74,8 +77,8 @@ struct PreExpr : public Expression
 		Comp
 	};
 
-	Expression* _arg;		// The expression's operand.
-	Ops _op;			// The operator being applied.
+	std::unique_ptr<Expression> _arg;	// The expression's operand.
+	Ops _op;							// The operator being applied.
 
 	/**
 	 * @brief Construct a new PreExpr object.
@@ -98,7 +101,8 @@ struct PreExpr : public Expression
 
 
 // Represents a postfix expression.
-struct PostExpr : public Expression
+struct PostExpr
+	: public Expression
 {
 	// Enumeration of all valid postfix operators.
 	enum class Ops
@@ -107,8 +111,8 @@ struct PostExpr : public Expression
 		Dec
 	};
 
-	Expression* _arg;	// The expression's operand.
-	Ops _op;			// The operator being applied.
+	std::unique_ptr<Expression> _arg;	// The expression's operand.
+	Ops _op;							// The operator being applied.
 
 	/**
 	 * @brief Construct a new PostExpr object.
@@ -131,14 +135,15 @@ struct PostExpr : public Expression
 
 
 // Represnts a function invocation.
-struct Invocation : public Expression, public TokenInfo
+struct Invocation
+	: public Expression, public TokenInfo
 {
 	// Stores the arguments passed to a function.
-	using ArgList = std::vector<Expression*>;
+	using ArgList = std::vector<std::unique_ptr<Expression>>;
 
-	std::string _name;	// The name of the function being called.
-	Function* _def;		// The AST node defining the called function.
-	ArgList _args;		// The arguments specified by the function call.
+	std::string _name;	// The called function's symbolic name.
+	Function* _def;		// The node defining the call.
+	ArgList _args;		// The arguments specified by the call.
 
 	/**
 	 * @brief Construct a new Invocation object.
@@ -147,7 +152,7 @@ struct Invocation : public Expression, public TokenInfo
 	 * @param args The arguments specified by the function call. Assumed to be
 	 * in reverse order after being parsed.
 	 */
-	Invocation(std::string name, ArgList args);
+	Invocation(std::string name, ArgList& args);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;

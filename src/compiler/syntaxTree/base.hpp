@@ -64,7 +64,8 @@ struct SyntaxTreeNode
 
 
 // Represents a type in the program.
-struct Type : public SyntaxTreeNode, public TokenInfo
+struct Type
+	: public SyntaxTreeNode, public TokenInfo
 {
 	// Enumerates the fundamental types of the language.
 	enum class Fundamentals
@@ -92,12 +93,11 @@ struct Type : public SyntaxTreeNode, public TokenInfo
 	/**
 	 * @brief Construct a new Type object.
 	 * 
-	 * @param type_name The type's name.
+	 * @param type_name The type's symbolic name.
 	 */
 	Type(std::string type_name);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
-
 	// Prints inline in the format "Type = <type_name>".
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
