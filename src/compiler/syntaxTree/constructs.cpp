@@ -42,7 +42,7 @@ IfExpr::IfExpr(Expression* cond, Statement* body, Statement* alt)
 void IfExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "IfExpression(Type = "sv;
+	os << "IfExpression("sv;
 	_type.Print(os, indent, depth);
 	os << "):\n";
 	++ depth;
@@ -67,7 +67,7 @@ ForExpr::ForExpr(
 void ForExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "ForExpression(Type = "sv;
+	os << "ForExpression("sv;
 	_type.Print(os, indent, depth);
 	os << "):\n";
 	++ depth;
@@ -94,7 +94,7 @@ LoopExpr::LoopExpr(Statement* body)
 void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "LoopExpression(Type = "sv;
+	os << "LoopExpression("sv;
 	_type.Print(os, indent, depth);
 	os << "):\n";
 	PrintIndent(os, indent, ++ depth);
@@ -111,7 +111,7 @@ WhileExpr::WhileExpr(Expression* cond, Statement* body)
 void WhileExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "WhileExpression(Type = "sv;
+	os << "WhileExpression("sv;
 	_type.Print(os, indent, depth);
 	os << "):\n";
 	++ depth;

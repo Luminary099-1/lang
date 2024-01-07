@@ -32,7 +32,7 @@ void CompoundStmt::Print(
 	for (size_t i {0}; i < _stmts.size(); ++ i)
 	{
 		PrintIndent(os, indent, depth);
-		os << "Statement["sv << i << "] =\n"sv;
+		os << "Statement["sv << i << "] ->\n"sv;
 		_stmts[i]->Print(os, indent, depth + 1);
 	}
 }
@@ -68,7 +68,7 @@ bool VariableDef::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "VariableInitialization(_name = "sv << _name << ", Type = "sv;
+	os << "VariableInitialization(_name = "sv << _name << ", "sv;
 	_type.Print(os, indent, depth);
 	os << "):\n"sv;
 	_init->Print(os, indent, ++ depth);

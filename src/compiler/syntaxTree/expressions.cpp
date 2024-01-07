@@ -41,7 +41,7 @@ std::string_view BinaryExpr::GetOpText(Ops op)
 void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "BinaryExpression(Op = "sv << GetOpText(_op) << ", Type = "sv;
+	os << "BinaryExpression(Op = "sv << GetOpText(_op) << ", "sv;
 	_type.Print(os, indent, depth);
 	os << "):\n"sv;
 	++ depth;
@@ -78,7 +78,7 @@ std::string_view PreExpr::GetOpText(Ops op)
 void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "PreExpression(Op = "sv << GetOpText(_op) << ", Type = "sv;
+	os << "PreExpression(Op = "sv << GetOpText(_op) << ", "sv;
 	_type.Print(os, indent, depth);
 	os << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
@@ -107,7 +107,7 @@ std::string_view PostExpr::GetOpText(Ops op)
 void PostExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "PostExpression(Op = "sv << GetOpText(_op) << ", Type = "sv;
+	os << "PostExpression(Op = "sv << GetOpText(_op) << ", "sv;
 	_type.Print(os, indent, depth);
 	os << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
@@ -140,7 +140,7 @@ bool Invocation::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 void Invocation::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "InvokeExpression(Function = "sv << _name << ", Type = "sv;
+	os << "InvokeExpression(Function = "sv << _name << ", "sv;
 	_type.Print(os, indent, depth);
 	os << "):\n"sv;
 	++ depth;

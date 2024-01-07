@@ -69,6 +69,7 @@ struct Type : public SyntaxTreeNode, public TokenInfo
 	// Enumerates the fundamental types of the language.
 	enum class Fundamentals
 	{
+		EMPTY, // Indicates this instance is not a fundamental type.
 		Void,
 		Int,
 		Bool,
@@ -76,11 +77,14 @@ struct Type : public SyntaxTreeNode, public TokenInfo
 	};
 
 	// Maps the names of fundamental types to their enumerations.
-	static const std::map<std::string_view, Fundamentals> _namedFundamentals;
+	static std::map<std::string_view, Fundamentals> _namedFundamentals;
+	// Maps the enumerations of fundamentals to their names.
+	static std::map<Fundamentals, std::string_view> _fundamentalNames;
 
-	std::string _name;			// The type's name.
-	Fundamentals _fund_type;	// The fundamental type, if applicable.
-	SyntaxTreeNode*	_type;		// The defined type, if applicable.
+	std::string _name;					// The type's name.
+	Fundamentals _fundType				// The fundamental type, if applicable.
+		{Fundamentals::EMPTY};
+	SyntaxTreeNode*	_defType {nullptr};	// The defined type, if applicable.
 
 	// Default constructor.
 	Type();
@@ -93,5 +97,7 @@ struct Type : public SyntaxTreeNode, public TokenInfo
 	Type(std::string type_name);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
+
+	// Prints inline in the format "Type = <type_name>".
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

@@ -30,11 +30,19 @@ void SyntaxTreeNode::PrintMaybe(
 }
 
 
-const std::map<std::string_view, Type::Fundamentals> Type::_namedFundamentals {
-	{"void"sv,		Type::Fundamentals::Void},
-	{"int"sv,		Type::Fundamentals::Int},
-	{"bool"sv,		Type::Fundamentals::Bool},
-	{"string"sv,	Type::Fundamentals::String}
+std::map<std::string_view, Type::Fundamentals> Type::_namedFundamentals {
+	{"void"sv,		Fundamentals::Void		},
+	{"int"sv,		Fundamentals::Int		},
+	{"bool"sv,		Fundamentals::Bool		},
+	{"string"sv,	Fundamentals::String	}
+};
+
+
+std::map<Type::Fundamentals, std::string_view> Type::_fundamentalNames {
+	{Fundamentals::Void,	"void"sv	},
+	{Fundamentals::Int,		"int"sv		},
+	{Fundamentals::Bool,	"bool"sv	},
+	{Fundamentals::String,	"string"sv	}
 };
 
 
@@ -43,17 +51,19 @@ Type::Type()
 
 
 Type::Type(std::string type_name)
-	: _name{type_name}
-{}
+{
+	if (_namedFundamentals.count(type_name))
+		_fundType = _namedFundamentals[type_name];
+	else _name = type_name;
+}
 
 
 bool Type::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 {
-	try { _fund_type = _namedFundamentals.at(_name); }
-	catch(const std::out_of_range& e)
+	if (_fundType == Fundamentals::EMPTY)
 	{
-		_type = ss.Lookup(_name);
-		if (_type == nullptr)
+		_defType = ss.Lookup(_name);
+		if (_defType == nullptr)
 		{
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Unknown type: "sv << _name << '\n';
@@ -67,5 +77,7 @@ bool Type::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 
 void Type::Print(std::ostream& os, std::string_view indent, int depth)
 {
-	os << _name;
+	os << "Type = "sv;
+	if (_fundType == Fundamentals::EMPTY) os << _name;
+	else os << _fundamentalNames[_fundType];
 }

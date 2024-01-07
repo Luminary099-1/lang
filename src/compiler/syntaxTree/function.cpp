@@ -26,8 +26,9 @@ bool Parameter::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 void Parameter::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "Parameter(Type = "sv << _type._name
-		<< ", Name = "sv << _name << ")\n"sv;
+	os << "Parameter("sv;
+	_type.Print(os, indent, depth);
+	os << ", Name = "sv << _name << ")\n"sv;
 }
 
 
@@ -77,8 +78,9 @@ void Function::Print(std::ostream& os, std::string_view indent, int depth)
 	for (size_t i {0}; i < _params.size(); ++ i)
 	{
 		PrintIndent(os, indent, depth);
-		os << "Parameters[" << i << "](Name = "sv << _params[i]._name
-			<< ", Type = "sv << _params[i]._type._name << ")\n"sv;
+		os << "Parameters[" << i << "](Name = "sv << _params[i]._name << ", "sv;
+		_type.Print(os, indent, depth);
+		os << ")\n"sv;
 	}
 	for (Statement* node : _body) node->Print(os, indent, depth) ;
 }
