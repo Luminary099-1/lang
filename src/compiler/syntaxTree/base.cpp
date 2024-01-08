@@ -11,6 +11,12 @@ bool SyntaxTreeNode::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 }
 
 
+bool SyntaxTreeNode::Validate(TUBuffer& src)
+{
+	return true;
+}
+
+
 void SyntaxTreeNode::PrintIndent(
 	std::ostream& os, std::string_view indent, int depth)
 {
@@ -55,6 +61,20 @@ Type::Type(std::string type_name)
 	if (_namedFundamentals.count(type_name))
 		_fundType = _namedFundamentals[type_name];
 	else _name = type_name;
+}
+
+
+bool operator==(const Type& lhs, const Type& rhs)
+{
+	if (lhs._fundType != Type::Fundamentals::EMPTY)
+		return lhs._defType == rhs._defType;
+	else return lhs._fundType == rhs._fundType;
+}
+
+
+bool operator!=(const Type& lhs, const Type& rhs)
+{
+	return !(lhs == rhs);
 }
 
 

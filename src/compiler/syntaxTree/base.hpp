@@ -27,6 +27,13 @@ struct SyntaxTreeNode
 	virtual bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass);
 
 	/**
+	 * @brief 
+	 * 
+	 * @return true 
+	 */
+	virtual bool Validate(TUBuffer& src);
+
+	/**
 	 * @brief Prints a textual representation of this AST node to the specified
 	 * stream.
 	 * 
@@ -96,6 +103,12 @@ struct Type
 	 * @param type_name The type's symbolic name.
 	 */
 	Type(std::string type_name);
+
+	// Equality operator overload.
+	friend bool operator==(const Type& lhs, const Type& rhs);
+
+	// Inequality operator overload.
+	friend bool operator!=(const Type& lhs, const Type& rhs);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
 	// Prints inline in the format "Type = <type_name>".
