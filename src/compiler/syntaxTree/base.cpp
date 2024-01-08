@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+using namespace std::string_literals;
 using namespace std::string_view_literals;
 
 
@@ -36,19 +37,27 @@ void SyntaxTreeNode::PrintMaybe(
 }
 
 
-std::map<std::string_view, Type::Fundamentals> Type::_namedFundamentals {
-	{"void"sv,		Fundamentals::Void		},
-	{"int"sv,		Fundamentals::Int		},
-	{"bool"sv,		Fundamentals::Bool		},
-	{"string"sv,	Fundamentals::String	}
+const std::unique_ptr<Type> Type::_void(new Type("void"s));
+const std::unique_ptr<Type> Type::_int(new Type("int"s));
+const std::unique_ptr<Type> Type::_bool(new Type("bool"s));
+const std::unique_ptr<Type> Type::_string(new Type("string"s));
+
+
+const std::map<std::string_view, Type*> Type::_namedFundamentals
+{
+	{"void"sv,		Type::_void.get()	},
+	{"int"sv,		Type::_int.get()	},
+	{"bool"sv,		Type::_bool.get()	},
+	{"string"sv,	Type::_string.get()	}
 };
 
 
-std::map<Type::Fundamentals, std::string_view> Type::_fundamentalNames {
-	{Fundamentals::Void,	"void"sv	},
-	{Fundamentals::Int,		"int"sv		},
-	{Fundamentals::Bool,	"bool"sv	},
-	{Fundamentals::String,	"string"sv	}
+const std::set<const Type*> Type::_fundamentals
+{
+	{Type::_void.get()},
+	{Type::_int.get()},
+	{Type::_bool.get()},
+	{Type::_string.get()}
 };
 
 
@@ -56,19 +65,46 @@ Type::Type()
 {}
 
 
-Type::Type(std::string type_name)
+Type::Type(std::string& type_name)
+	: _name{type_name}
+{}
+
+
+Type* Type::Create(std::string& type_name)
 {
 	if (_namedFundamentals.count(type_name))
-		_fundType = _namedFundamentals[type_name];
-	else _name = type_name;
+		return _namedFundamentals.at(type_name);
+	else return new Type(type_name);
+}
+
+bool Type::IsVoid()
+{
+	return this == _void.get();
+}
+
+
+bool Type::IsInt()
+{
+	return this == _int.get();
+}
+
+
+bool Type::IsBool()
+{
+	return this == _bool.get();
+}
+
+
+bool Type::IsString()
+{
+	return this == _string.get();
 }
 
 
 bool operator==(const Type& lhs, const Type& rhs)
 {
-	if (lhs._fundType != Type::Fundamentals::EMPTY)
-		return lhs._defType == rhs._defType;
-	else return lhs._fundType == rhs._fundType;
+	if (Type::_fundamentals.count(&lhs)) return &lhs == &rhs;
+	else return lhs._defType == rhs._defType;
 }
 
 
@@ -80,7 +116,7 @@ bool operator!=(const Type& lhs, const Type& rhs)
 
 bool Type::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 {
-	if (_fundType == Fundamentals::EMPTY)
+	if (!_fundamentals.count(this))
 	{
 		_defType = ss.Lookup(_name);
 		if (_defType == nullptr)
@@ -97,7 +133,5 @@ bool Type::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 
 void Type::Print(std::ostream& os, std::string_view indent, int depth)
 {
-	os << "Type = "sv;
-	if (_fundType == Fundamentals::EMPTY) os << _name;
-	else os << _fundamentalNames[_fundType];
+	os << "Type = "sv << _name;
 }

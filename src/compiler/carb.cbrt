@@ -109,7 +109,7 @@ global: var_def_stmt
 type: ID
 	{
 		$ = ${0};
-		$$ = new Type($0);
+		$$ = Type::Create($0);
 	}
 
 %class function_def: Function*

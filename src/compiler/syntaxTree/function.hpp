@@ -13,8 +13,8 @@
 struct Parameter
 	: public SyntaxTreeNode, public TokenInfo
 {
-	std::unique_ptr<Type> _type;	// The parameter's type.
-	std::string _name;				// The parameter's name.
+	Type* _type {nullptr};	// The parameter's type.
+	std::string _name;		// The parameter's name.
 
 	// Default constructor.
 	Parameter();
@@ -39,10 +39,10 @@ struct Function
 	// Stores the parameters expressed in the function definition.
 	using ParamList = std::vector<std::unique_ptr<Parameter>>;
 
-	std::unique_ptr<Type> _type;	// The function's return type.
-	std::string _name;				// The name of the function.
-	ParamList _params;				// The function's parameters.
-	StmtList _body;					// The function's body statements.
+	Type* _type {nullptr};	// The function's return type.
+	std::string _name;		// The name of the function.
+	ParamList _params;		// The function's parameters.
+	StmtList _body;			// The function's body statements.
 
 	/**
 	 * @brief Construct a new Function object.

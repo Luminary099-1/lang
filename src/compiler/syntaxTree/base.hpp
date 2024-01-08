@@ -6,6 +6,7 @@
 #include <string_view>
 #include <map>
 #include <ostream>
+#include <set>
 #include <vector>
 
 
@@ -74,25 +75,16 @@ struct SyntaxTreeNode
 struct Type
 	: public SyntaxTreeNode, public TokenInfo
 {
-	// Enumerates the fundamental types of the language.
-	enum class Fundamentals
-	{
-		EMPTY, // Indicates this instance is not a fundamental type.
-		Void,
-		Int,
-		Bool,
-		String
-	};
+protected:
+	static const std::unique_ptr<Type> _void;	// Void singleton.
+	static const std::unique_ptr<Type> _int;	// Integer singleton.
+	static const std::unique_ptr<Type> _bool;	// Boolean singleton.
+	static const std::unique_ptr<Type> _string;	// String singleton.
 
-	// Maps the names of fundamental types to their enumerations.
-	static std::map<std::string_view, Fundamentals> _namedFundamentals;
-	// Maps the enumerations of fundamentals to their names.
-	static std::map<Fundamentals, std::string_view> _fundamentalNames;
-
-	std::string _name;					// The type's name.
-	Fundamentals _fundType				// The fundamental type, if applicable.
-		{Fundamentals::EMPTY};
-	SyntaxTreeNode*	_defType {nullptr};	// The defined type, if applicable.
+	// Maps the names of fundamental types to their singletons.
+	static const std::map<std::string_view, Type*> _namedFundamentals;
+	// The set of fundamental types.
+	static const std::set<const Type*> _fundamentals;
 
 	// Default constructor.
 	Type();
@@ -102,7 +94,40 @@ struct Type
 	 * 
 	 * @param type_name The type's symbolic name.
 	 */
-	Type(std::string type_name);
+	Type(std::string& type_name);
+
+public:
+	std::string _name;					// The type's name.
+	SyntaxTreeNode*	_defType {nullptr};	// The defined type, if applicable.
+
+	/**
+	 * @brief Returns a pointer to a new instance of Type with. AST nodes which
+	 * define the type must take ownership of the pointer.
+	 * 
+	 * @param type_name The type to be represented.
+	 * @return Type* A pointer to the new Type instance.
+	 */
+	static Type* Create(std::string& type_name);
+	
+	/**
+	 * @return true if this is the fundamental type void; false otherwise.
+	 */
+	bool IsVoid();
+
+	/**
+	 * @return true if this is the fundamental type int; false otherwise.
+	 */
+	bool IsInt();
+	
+	/**
+	 * @return true if this is the fundamental type bool; false otherwise.
+	 */
+	bool IsBool();
+
+	/**
+	 * @return true if this is the fundamental type string; false otherwise.
+	 */
+	bool IsString();
 
 	// Equality operator overload.
 	friend bool operator==(const Type& lhs, const Type& rhs);

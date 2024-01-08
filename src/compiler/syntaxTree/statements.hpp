@@ -45,7 +45,7 @@ struct ExprStmt
 struct VariableDef
 	: public Statement, public TokenInfo
 {
-	std::unique_ptr<Type> _type;		// The variable's type.
+	Type* _type {nullptr};				// The variable's type.
 	std::string _name;					// The variable's symbolic name.
 	std::unique_ptr<Expression> _init;	// The variable's initializer.
 
