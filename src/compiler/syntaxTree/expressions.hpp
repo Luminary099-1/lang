@@ -154,6 +154,6 @@ struct Invocation
 	 */
 	Invocation(std::string name, ArgList& args);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

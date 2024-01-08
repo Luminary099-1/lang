@@ -27,7 +27,7 @@ struct Parameter
 	 */
 	Parameter(Type* type, std::string name);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -56,6 +56,6 @@ struct Function
 	 */
 	Function(Type* type, std::string name, ParamList& params, StmtList body);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

@@ -58,7 +58,7 @@ struct VariableDef
 	 */
 	VariableDef(Type* type, std::string name, Expression* init);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -112,6 +112,6 @@ struct CompoundStmt
 	 */
 	CompoundStmt(StmtList kids);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

@@ -10,7 +10,7 @@ AssignmentExpr::AssignmentExpr(std::string name, Expression* expr)
 {}
 
 
-bool AssignmentExpr::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+bool AssignmentExpr::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	SyntaxTreeNode* pre_def {ss.Lookup(_name)};
 	if (pre_def == nullptr)

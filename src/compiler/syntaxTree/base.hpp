@@ -15,17 +15,15 @@ struct SyntaxTreeNode
 {
 	/**
 	 * @brief Accumulates all symbols definitions into the specified scope stack
-	 * and verifies the existence of symbols for all other occurrences. Performs
-	 * a pass of only global definitions first, allowing them to be ordered
-	 * arbitrarily.
+	 * and verifies the existence of symbols for all other occurrences.
 	 * 
 	 * @param ss The scope stack instance to use.
-	 * @param first_pass True if only global definitions are to be considered.
-	 * False for the general case where all symbols are to be checked.
+	 * @param src A reference to the TUBuffer that contains the source file
+	 * containing this AST node.
 	 * @return true on success; false if a symbol is redefined in the same scope
 	 * or an undefined symbol is referenced.
 	 */
-	virtual bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass);
+	virtual bool Scope(ScopeStack& ss, TUBuffer& src);
 
 	/**
 	 * @brief 
@@ -135,7 +133,7 @@ public:
 	// Inequality operator overload.
 	friend bool operator!=(const Type& lhs, const Type& rhs);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src, bool first_pass) override;
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	// Prints inline in the format "Type = <type_name>".
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

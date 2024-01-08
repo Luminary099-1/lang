@@ -124,7 +124,7 @@ Invocation::Invocation(std::string name, ArgList& args)
 }
 
 
-bool Invocation::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+bool Invocation::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	_def = dynamic_cast<Function*>(ss.Lookup(_name));
 	if (_def == nullptr)

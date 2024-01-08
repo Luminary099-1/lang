@@ -12,12 +12,12 @@ CompoundStmt::CompoundStmt(StmtList kids)
 }
 
 
-bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	bool success {true};
 	ss.Enter();
 	for (Statement* stmt : _stmts)
-		success = success && stmt->Scope(ss, src, first_pass);
+		success = success && stmt->Scope(ss, src);
 	ss.Exit();
 	return success;
 }
@@ -43,7 +43,7 @@ VariableDef::VariableDef(Type* type, std::string name, Expression* init)
 {}
 
 
-bool VariableDef::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+bool VariableDef::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	TokenInfo* pre_def {dynamic_cast<TokenInfo*>(ss.Define(_name, this))}; // Trusting this for now.
 	if (pre_def != nullptr)

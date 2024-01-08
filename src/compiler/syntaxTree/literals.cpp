@@ -12,7 +12,7 @@ Identifier::Identifier(std::string& value)
 {}
 
 
-bool Identifier::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+bool Identifier::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	_def = ss.Lookup(_value);
 	// TODO: Ideally, Param and VariableDef would extend a common type.

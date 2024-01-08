@@ -6,7 +6,7 @@ using namespace std::string_literals;
 using namespace std::string_view_literals;
 
 
-bool SyntaxTreeNode::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+bool SyntaxTreeNode::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	return true;
 }
@@ -114,7 +114,7 @@ bool operator!=(const Type& lhs, const Type& rhs)
 }
 
 
-bool Type::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
+bool Type::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	if (!_fundamentals.count(this))
 	{
