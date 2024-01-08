@@ -23,11 +23,11 @@ struct BinaryExpr
 		XOR,
 		OR,
 		Eq,
-		Neq,
-		Less,
-		LessEq,
-		More,
-		MoreEq,
+		NE,
+		LT,
+		LE,
+		GT,
+		GE,
 		LShift,
 		RShift,
 		Add,
@@ -136,7 +136,7 @@ struct PostExpr
 
 // Represnts a function invocation.
 struct Invocation
-	: public Expression, public TokenInfo
+	: public Expression
 {
 	// Stores the arguments passed to a function.
 	using ArgList = std::vector<std::unique_ptr<Expression>>;

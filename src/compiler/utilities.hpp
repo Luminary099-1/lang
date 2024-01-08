@@ -1,12 +1,13 @@
 #pragma once
 
-#include <string_view>
 #include <forward_list>
 #include <map>
 #include <ostream>
+#include <string_view>
 
-// Forward declaration to define SyntaxTreeNode without including base.hpp.
+// Forward declarations to avoid use of cyclic includes.
 struct SyntaxTreeNode;
+struct Type;
 
 
 // Stores the information necessary to locate a token in the TU buffer.

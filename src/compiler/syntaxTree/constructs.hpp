@@ -9,7 +9,7 @@
 
 // Represents an assignment expression.
 struct AssignmentExpr
-	: public Expression, public TokenInfo
+	: public Expression
 {
 	std::string _name;					// The variable being assigned to.
 	std::unique_ptr<Expression> _expr;	// The expression being assigned.

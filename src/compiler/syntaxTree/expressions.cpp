@@ -21,11 +21,11 @@ std::string_view BinaryExpr::GetOpText(Ops op)
 		case Ops::XOR:		return "^"sv;
 		case Ops::OR:		return "|"sv;
 		case Ops::Eq:		return "=="sv;
-		case Ops::Neq:		return "!="sv;
-		case Ops::Less:		return "<"sv;
-		case Ops::LessEq:	return "<="sv;
-		case Ops::More:		return ">"sv;
-		case Ops::MoreEq:	return ">="sv;
+		case Ops::NE:		return "!="sv;
+		case Ops::LT:		return "<"sv;
+		case Ops::LE:		return "<="sv;
+		case Ops::GT:		return ">"sv;
+		case Ops::GE:		return ">="sv;
 		case Ops::LShift:	return "<<"sv;
 		case Ops::RShift:	return ">>"sv;
 		case Ops::Add:		return "+"sv;
@@ -76,7 +76,7 @@ std::string_view PreExpr::GetOpText(Ops op)
 }
 
 
-void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
+void PreExpr::Print(std::ostream &os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "PreExpression(Op = "sv << GetOpText(_op) << ", "sv;
@@ -105,7 +105,7 @@ std::string_view PostExpr::GetOpText(Ops op)
 }
 
 
-void PostExpr::Print(std::ostream& os, std::string_view indent, int depth)
+void PostExpr::Print(std::ostream &os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "PostExpression(Op = "sv << GetOpText(_op) << ", "sv;

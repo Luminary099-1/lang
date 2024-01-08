@@ -50,9 +50,9 @@ bool VariableDef::Scope(ScopeStack& ss, TUBuffer& src, bool first_pass)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Symbol collision: "sv << _name
-			<< "\n-> The following on line"sv << _row << ":\n";
+			<< "\n# The following on line"sv << _row << ":\n";
 		HighlightError(std::cerr, src, *this);
-		std::cerr << "-> Redefines on line "sv << pre_def->_row << ":\n";
+		std::cerr << "# Redefines on line "sv << pre_def->_row << ":\n";
 		HighlightError(std::cerr, src, *pre_def);
 		return false;
 	}

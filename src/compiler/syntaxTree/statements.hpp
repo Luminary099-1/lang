@@ -18,7 +18,7 @@ using StmtList = std::vector<Statement*>;
 
 // Base class to represent expressions.
 struct Expression
-	: public Statement
+	: public Statement, public TokenInfo
 {
 	Type* _type {nullptr};	// The expression's type.
 };

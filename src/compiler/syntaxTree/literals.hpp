@@ -7,7 +7,7 @@
 
 // Base class to represent literals.
 struct Literal
-	: public Expression, public TokenInfo
+	: public Expression
 {};
 
 

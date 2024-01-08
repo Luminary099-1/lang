@@ -21,7 +21,7 @@ void TokenInfo::SetSymbolInfo(TokenInfo info)
 	_col		= info._col;
 	_endCol		= info._endCol;
 	_off		= info._off;
-	_endOff	= info._endOff;
+	_endOff		= info._endOff;
 }
 
 

@@ -281,93 +281,189 @@ arg_list_tail:
 pre_expr: primary_expr
 	{ $$ = static_cast<PreExpr*>($0); }
 pre_expr: PLUS primary_expr
-	{ $$ = new PreExpr($1, PreExpr::Ops::Pos); }
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Pos)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: MINUS primary_expr
-	{ $$ = new PreExpr($1, PreExpr::Ops::Neg); }
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Neg)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: INC primary_expr
-	{ $$ = new PreExpr($1, PreExpr::Ops::Inc); }
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Inc)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: DEC primary_expr
-	{ $$ = new PreExpr($1, PreExpr::Ops::Dec); }
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Dec)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: DENY primary_expr
-	{ $$ = new PreExpr($1, PreExpr::Ops::Deny); }
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Deny)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: COMP primary_expr
-	{ $$ = new PreExpr($1, PreExpr::Ops::Comp); }
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Comp)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 
 %class multiplicative_expr: Expression*
 multiplicative_expr: pre_expr
 	{ $$ = $0; }
 multiplicative_expr: multiplicative_expr ASTERISK pre_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::Mul); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Mul)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 multiplicative_expr: multiplicative_expr SLASH pre_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::Div); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Div)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 multiplicative_expr: multiplicative_expr PERCENT pre_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::Mod); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Mod)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 %class additive_expr: Expression*
 additive_expr: multiplicative_expr
 	{ $$ = $0; }
 additive_expr: additive_expr PLUS multiplicative_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::Add); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Add)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 additive_expr: additive_expr MINUS multiplicative_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::Sub); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Sub)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 %class shift_expr: Expression*
 shift_expr: additive_expr
 	{ $$ = $0; }
 shift_expr: shift_expr SHL additive_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::LShift); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LShift)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 shift_expr: shift_expr SHR additive_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::RShift); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::RShift)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 %class relative_expr: Expression*
 relative_expr: shift_expr
 	{ $$ = $0; }
 relative_expr: relative_expr LT shift_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::Less); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LT)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 relative_expr: relative_expr LE shift_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::LessEq); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LE)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 relative_expr: relative_expr GT shift_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::More); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::GT)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 relative_expr: relative_expr GE shift_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::MoreEq); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::GE)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 %class absolute_expr: Expression*
 absolute_expr: relative_expr
 	{ $$ = $0; }
 absolute_expr: absolute_expr EQ relative_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::Eq); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Eq)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 absolute_expr: absolute_expr NE relative_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::Neq); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::NE)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 %class bit_and_expr: Expression*
 bit_and_expr: absolute_expr
 	{ $$ = $0; }
 bit_and_expr: bit_and_expr AND absolute_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::AND); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::AND)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 %class bit_xor_expr: Expression*
 bit_xor_expr: bit_and_expr
 	{ $$ = $0; }
 bit_xor_expr: bit_xor_expr XOR bit_and_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::XOR); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::XOR)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 %class bit_or_expr: Expression*
 bit_or_expr: bit_xor_expr
 	{ $$ = $0; }
 bit_or_expr: bit_or_expr OR bit_xor_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::OR); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::OR)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 %class logic_and_expr: Expression*
 logic_and_expr: bit_or_expr
 	{ $$ = $0; }
 logic_and_expr: logic_and_expr LAND bit_or_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::LAND); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LAND)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 %class logic_or_expr: Expression*
 logic_or_expr: logic_and_expr
 	{ $$ = $0; }
 logic_or_expr: logic_or_expr LOR logic_and_expr
-	{ $$ = new BinaryExpr($0, $2, BinaryExpr::Ops::LOR); }
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LOR)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 
 %class literal: Literal*
