@@ -57,7 +57,9 @@ struct BinaryExpr
 	 * @return std::string_view A view to the operator's name.
 	 */
 	std::string_view GetOpText(Ops op);
-
+	
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -96,6 +98,8 @@ struct PreExpr
 	 */
 	std::string_view GetOpText(Ops op);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -130,6 +134,8 @@ struct PostExpr
 	 */
 	std::string_view GetOpText(Ops op);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -155,5 +161,6 @@ struct Invocation
 	Invocation(std::string name, ArgList& args);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

@@ -89,3 +89,12 @@ public:
 	 */
 	SyntaxTreeNode* Lookup(std::string_view name);
 };
+
+
+struct ValidateData
+{
+	// The TUBuffer for the source file expressing this AST.
+	TUBuffer& _src;
+	// Tree stack containing the chain of predecessors to the current node.
+	std::forward_list<SyntaxTreeNode*>& _ts;
+};

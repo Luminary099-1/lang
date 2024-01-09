@@ -4,6 +4,7 @@
 
 #include <string>
 #include <string_view>
+#include <list>
 #include <map>
 #include <ostream>
 #include <set>
@@ -30,7 +31,7 @@ struct SyntaxTreeNode
 	 * 
 	 * @return true 
 	 */
-	virtual bool Validate(TUBuffer& src);
+	virtual bool Validate(ValidateData& data);
 
 	/**
 	 * @brief Prints a textual representation of this AST node to the specified
@@ -105,7 +106,7 @@ public:
 	 * @param type_name The type to be represented.
 	 * @return Type* A pointer to the new Type instance.
 	 */
-	static Type* Create(std::string& type_name);
+	static Type* Create(std::string type_name);
 	
 	/**
 	 * @return true if this is the fundamental type void; false otherwise.

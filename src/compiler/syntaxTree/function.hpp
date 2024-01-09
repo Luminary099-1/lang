@@ -57,5 +57,6 @@ struct Function
 	Function(Type* type, std::string name, ParamList& params, StmtList body);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

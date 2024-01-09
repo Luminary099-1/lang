@@ -12,6 +12,7 @@ struct AssignmentExpr
 	: public Expression
 {
 	std::string _name;					// The variable being assigned to.
+	VariableDef* _def;					// The AST node declaring the assignee.
 	std::unique_ptr<Expression> _expr;	// The expression being assigned.
 
 	/**
@@ -23,6 +24,7 @@ struct AssignmentExpr
 	AssignmentExpr(std::string name, Expression* expr);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -44,13 +46,15 @@ struct IfExpr
 	 */
 	IfExpr(Expression* cond, Statement* body, Statement* alt);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents a counting for expression (a for loop that can return values).
 struct ForExpr
-	: public Expression
+	: public Breakable
 {
 	std::unique_ptr<Expression> _init;	// Runs before the loop.
 	std::unique_ptr<Expression> _cond;	// Tests before iterations.
@@ -67,13 +71,15 @@ struct ForExpr
 	 */
 	ForExpr(Expression* init, Expression* cond, Expression* inc, Statement* body);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents an infinite loop expression (a loop that can return values).
 struct LoopExpr
-	: public Expression
+	: public Breakable
 {
 	std::unique_ptr<Statement> _body;	// Executed each iteration.
 
@@ -84,13 +90,15 @@ struct LoopExpr
 	 */
 	LoopExpr(Statement* body);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
 
 // Represents a while loop expression (a while loop that can return a value).
 struct WhileExpr
-	: public Expression
+	: public Breakable
 {
 	std::unique_ptr<Expression> _cond;	// Tests before iterations.
 	std::unique_ptr<Statement> _body;	// Executed each iteration.
@@ -103,5 +111,7 @@ struct WhileExpr
 	 */
 	WhileExpr(Expression* cond, Statement* body);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

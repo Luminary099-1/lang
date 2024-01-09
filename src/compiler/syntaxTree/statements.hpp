@@ -13,7 +13,7 @@ struct Statement
 
 
 // Stores a list of statements.
-using StmtList = std::vector<Statement*>;
+using StmtList = std::vector<std::unique_ptr<Statement>>;
 
 
 // Base class to represent expressions.
@@ -21,7 +21,21 @@ struct Expression
 	: public Statement, public TokenInfo
 {
 	Type* _type {nullptr};	// The expression's type.
+
+	/**
+	 * @brief 
+	 * TODO:
+	 * @param stmt 
+	 * @return Type* 
+	 */
+	static Type* GetYieldType(Statement* stmt);
 };
+
+
+// Represents expressions like loops that can be broken.
+struct Breakable
+	: public Expression
+{};
 
 
 // Represents an expression statement (does not return its evaluation).
@@ -37,6 +51,8 @@ struct ExprStmt
 	 */
 	ExprStmt(Expression* expr);
 	
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -59,6 +75,7 @@ struct VariableDef
 	VariableDef(Type* type, std::string name, Expression* init);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -68,6 +85,7 @@ struct BreakStmt
 	: public Expression
 {
 	int _levels {1};					// The number of statements to break.
+	Breakable* _target {nullptr};		// The targetted breakable expression.
 	std::unique_ptr<Expression> _expr;	// An optional return expression.
 
 	/**
@@ -78,6 +96,8 @@ struct BreakStmt
 	 */
 	BreakStmt(Expression* expr, int levels = 1);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -94,6 +114,8 @@ struct ReturnStmt
 	 */
 	ReturnStmt(Expression* expr);
 
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };
 
@@ -113,5 +135,6 @@ struct CompoundStmt
 	CompoundStmt(StmtList kids);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

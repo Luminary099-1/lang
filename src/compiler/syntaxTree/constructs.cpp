@@ -12,15 +12,35 @@ AssignmentExpr::AssignmentExpr(std::string name, Expression* expr)
 
 bool AssignmentExpr::Scope(ScopeStack& ss, TUBuffer& src)
 {
-	SyntaxTreeNode* pre_def {ss.Lookup(_name)};
-	if (pre_def == nullptr)
+	bool success {_expr->Scope(ss, src)};
+	_def = dynamic_cast<VariableDef*>(ss.Lookup(_name)); // Trusting this for now.
+	if (_def == nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Unkown function: " << _name << '\n';
+			<< "): Unkown variable: " << _name << '\n';
 		HighlightError(std::cerr, src, *this);
-		return false;
+		success = false;
 	}
-	return true;
+	return success;
+}
+
+
+bool AssignmentExpr::Validate(ValidateData& dat)
+{
+	dat._ts.push_front(this);
+	bool success {_expr->Validate(dat)};
+	dat._ts.pop_front();
+
+	_type = _def->_type;
+	if (*_type != *_expr->_type)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected assignment expression of type "sv << _type->_name
+			<< ", found: " << _expr->_type << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		success = false;
+	}
+	return success;
 }
 
 
@@ -37,6 +57,35 @@ void AssignmentExpr::Print(std::ostream& os, std::string_view indent, int depth)
 IfExpr::IfExpr(Expression* cond, Statement* body, Statement* alt)
 	: _cond{cond}, _body{body}, _alt{alt}
 {}
+
+
+bool IfExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	// Kinda ugly to avoid short-circuit evaluation.
+	bool success {_cond->Scope(ss, src)};
+	success = _body->Scope(ss, src) && success;
+	return _alt->Scope(ss, src) && success;
+}
+
+
+bool IfExpr::Validate(ValidateData& dat)
+{
+	dat._ts.push_front(this);
+	bool success {_cond->Validate(dat)};
+	success = _body->Validate(dat) && success;
+	success = _alt->Validate(dat) && success;
+	dat._ts.pop_front();
+
+	if (!_cond->_type->IsBool())
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected if statement condition of type bool, found: "sv
+			<< _cond->_type->_name << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		success = false;
+	}
+	return success;
+}
 
 
 void IfExpr::Print(std::ostream& os, std::string_view indent, int depth)
@@ -62,6 +111,27 @@ ForExpr::ForExpr(
 	Expression* init, Expression* cond, Expression* inc, Statement* body)
 	: _init{init}, _cond{cond}, _inc{inc}, _body{body}
 {}
+
+
+bool ForExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	bool success {_init->Scope(ss, src)};
+	success = _cond->Scope(ss, src) && success;
+	success = _inc->Scope(ss, src) && success;
+	return _body->Scope(ss, src) && success;
+}
+
+
+bool ForExpr::Validate(ValidateData& dat)
+{
+	dat._ts.push_front(this);
+	bool success {_init->Validate(dat)};
+	success = _cond->Validate(dat) && success;
+	success = _inc->Validate(dat) && success;
+	success = _body->Validate(dat) && success;
+	dat._ts.pop_front();
+	return success;
+}
 
 
 void ForExpr::Print(std::ostream& os, std::string_view indent, int depth)
@@ -91,6 +161,21 @@ LoopExpr::LoopExpr(Statement* body)
 {}
 
 
+bool LoopExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	return _body->Scope(ss, src);
+}
+
+
+bool LoopExpr::Validate(ValidateData& dat)
+{
+	dat._ts.push_front(this);
+	bool success {_body->Validate(dat)};
+	dat._ts.pop_front();
+	return success;
+}
+
+
 void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -106,6 +191,32 @@ void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
 WhileExpr::WhileExpr(Expression* cond, Statement* body)
 	: _cond{cond}, _body{body}
 {}
+
+
+bool WhileExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	bool success {_cond->Scope(ss, src)};
+	return _body->Scope(ss, src) && success;
+}
+
+
+bool WhileExpr::Validate(ValidateData& dat)
+{
+	dat._ts.push_front(this);
+	bool success {_cond->Validate(dat)};
+	return _body->Validate(dat) && success;
+	dat._ts.pop_front();
+
+	if (!_cond->_type->IsBool())
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected if statement condition of type bool, found: "sv
+			<< _cond->_type->_name << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		success = false;
+	}
+	return success;
+}
 
 
 void WhileExpr::Print(std::ostream& os, std::string_view indent, int depth)

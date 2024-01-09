@@ -58,10 +58,17 @@ bool Function::Scope(ScopeStack& ss, TUBuffer& src)
 
 	ss.Enter();
 	for (size_t i {0}; i < _params.size(); ++ i)
-		success = success && _params[i]->Scope(ss, src);
-	for (Statement* stmt : _body) success = success && stmt->Scope(ss, src);
+		success = _params[i]->Scope(ss, src) && success;
+	for (size_t i {0}; i < _body.size(); ++ i)
+		success = _body[i]->Scope(ss, src) && success;
 	ss.Exit();
 	return success;
+}
+
+
+bool Function::Validate(ValidateData& dat)
+{
+	
 }
 
 
@@ -77,5 +84,6 @@ void Function::Print(std::ostream& os, std::string_view indent, int depth)
 		_type->Print(os, indent, depth);
 		os << ")\n"sv;
 	}
-	for (Statement* node : _body) node->Print(os, indent, depth) ;
+	for (size_t i {0}; i < _body.size(); ++ i)
+		_body[i]->Print(os, indent, depth);
 }

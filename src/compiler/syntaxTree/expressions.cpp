@@ -39,6 +39,110 @@ std::string_view BinaryExpr::GetOpText(Ops op)
 }
 
 
+bool BinaryExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	// Kinda ugly to avoid short-circuit evaluation.
+	bool success {_argl->Scope(ss, src)};
+	return _argr->Scope(ss, src) && success;
+}
+
+
+/**
+ * @brief 
+ * TODO:
+ * @param src 
+ * @param op 
+ * @param expr 
+ * @param is_left 
+ */
+void ExpectedBinaryType(TUBuffer& src, TokenInfo& op, Expression* expr,
+	bool is_left, std::string_view expected)
+{
+	std::cerr << '(' << op._row << ", "sv << op._col << "): Expected "sv
+		<< ((is_left) ? "left"sv : "right"sv)
+		<< " operand of type "sv << expected << ", found: "sv
+		<< expr->_type->_name << '\n';
+	HighlightError(std::cerr, src, op);
+}
+
+bool BinaryExpr::Validate(ValidateData& dat)
+{
+	dat._ts.push_front(this);
+	bool success {_argl->Validate(dat)};
+	success = _argr->Validate(dat) && success;
+	dat._ts.pop_front();
+
+	switch (_op)
+	{
+		// Operands must both be Booleans.
+		case Ops::LAND:	case Ops::LOR:
+			if (!_argl->_type->IsBool())
+			{
+				ExpectedBinaryType(
+					dat._src, *this, _argl.get(), true, "bool"sv);
+				success = false;
+			}
+			if (!_argr->_type->IsBool())
+			{
+				ExpectedBinaryType(
+					dat._src, *this, _argr.get(), false, "bool"sv);
+				success = false;
+			}
+			_type = _argl->_type;
+			break;
+
+		// Operands must both be integers.
+		case Ops::AND:		case Ops::XOR:		case Ops::OR:
+		case Ops::LShift:	case Ops::RShift:	case Ops::Mod:
+			if (!_argl->_type->IsInt())
+			{
+				ExpectedBinaryType(dat._src, *this, _argl.get(), true, "int"sv);
+				success = false;
+			}
+			if (!_argr->_type->IsInt())
+			{
+				ExpectedBinaryType(
+					dat._src, *this, _argr.get(), false, "bool"sv);
+				success = false;
+			}
+			_type = _argl->_type;
+			break;
+
+		// Operands must be the same type.
+		case Ops::Eq:		case Ops::NE:		case Ops::GT:
+		case Ops::LT:		case Ops::LE:		case Ops::GE:
+			if (_argl->_type != _argr->_type)
+			{
+				std::cerr << '(' << _row << ", "sv << _col
+					<< "): Expected operands of matching types, found: "
+					<< _argl->_type->_name << ", "sv
+					<< _argr->_type->_name << '\n';
+				HighlightError(std::cerr, dat._src, *this);
+			}
+			_type = Type::Create("bool");
+			break;
+
+		// Operands must be numbers.
+		case Ops::Add:	case Ops::Sub:
+		case Ops::Mul:	case Ops::Div:
+			if (!_argl->_type->IsInt())
+			{
+				ExpectedBinaryType(dat._src, *this, _argl.get(), true, "int"sv);
+				success = false;
+			}
+			if (!_argr->_type->IsInt())
+			{
+				ExpectedBinaryType(
+					dat._src, *this, _argr.get(), false, "bool"sv);
+				success = false;
+			}
+			_type = _argl->_type;
+			break;
+	}
+	return success;
+}
+
+
 void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -76,7 +180,32 @@ std::string_view PreExpr::GetOpText(Ops op)
 }
 
 
-void PreExpr::Print(std::ostream &os, std::string_view indent, int depth)
+bool PreExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	return _arg->Scope(ss, src);
+}
+
+
+bool PreExpr::Validate(ValidateData& dat)
+{
+	dat._ts.push_front(this);
+	bool success {_arg->Validate(dat)};
+	dat._ts.pop_front();
+
+	if (!_arg->_type->IsInt())
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected operand of type int, found: "sv
+			<< _arg->_type->_name << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		success = false;
+	}
+	_type = _arg->_type;
+	return success;
+}
+
+
+void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "PreExpression(Op = "sv << GetOpText(_op) << ", "sv;
@@ -105,7 +234,32 @@ std::string_view PostExpr::GetOpText(Ops op)
 }
 
 
-void PostExpr::Print(std::ostream &os, std::string_view indent, int depth)
+bool PostExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	return _arg->Scope(ss, src);
+}
+
+
+bool PostExpr::Validate(ValidateData& dat)
+{
+	dat._ts.push_front(this);
+	bool success {_arg->Validate(dat)};
+	dat._ts.pop_front();
+
+	if (!_arg->_type->IsInt())
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected operand of type int, found: "sv
+			<< _arg->_type->_name << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		success = false;
+	}
+	_type = _arg->_type;
+	return success;
+}
+
+
+void PostExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "PostExpression(Op = "sv << GetOpText(_op) << ", "sv;
@@ -126,15 +280,56 @@ Invocation::Invocation(std::string name, ArgList& args)
 
 bool Invocation::Scope(ScopeStack& ss, TUBuffer& src)
 {
+	bool success {true};
 	_def = dynamic_cast<Function*>(ss.Lookup(_name));
 	if (_def == nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Unkown function: " << _name << '\n';
 		HighlightError(std::cerr, src, *this);
+		success = false;
+	}
+
+	for (size_t i {0}; i < _args.size(); ++ i)
+		success = _args[i]->Scope(ss, src) && success;
+
+	return success;
+}
+
+
+bool Invocation::Validate(ValidateData& dat)
+{
+	_type = _def->_type;
+	size_t expected_args {_def->_params.size()};
+	if (_args.size() != _def->_params.size())
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected "sv << expected_args << ", found: "sv
+			<< _args.size() << '\n';
+		HighlightError(std::cerr, dat._src, *this);
 		return false;
 	}
-	return true;
+
+	bool success {true};
+	dat._ts.push_front(this);
+	for (size_t i {0}; i < expected_args; ++ i)
+	{
+		success = success && _args[i]->Validate(dat);
+		Type* expected_type {_def->_params[i]->_type};
+		Type* given_type {_args[i]->_type};
+		if (*given_type != *expected_type)
+		{
+			std::cerr << '(' << _row << ", "sv << _col
+				<< "): Expected "sv << expected_type->_name << " for argument"sv
+				<< i + 1 << " in call to "sv << _name << ", found: "sv
+				<< given_type->_name << '\n';
+			HighlightError(std::cerr, dat._src, *_args[i]);
+		}
+		success = false;
+	}
+
+	dat._ts.pop_front();
+	return success;
 }
 
 

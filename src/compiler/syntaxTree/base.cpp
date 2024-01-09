@@ -12,7 +12,7 @@ bool SyntaxTreeNode::Scope(ScopeStack& ss, TUBuffer& src)
 }
 
 
-bool SyntaxTreeNode::Validate(TUBuffer& src)
+bool SyntaxTreeNode::Validate(ValidateData& dat)
 {
 	return true;
 }
@@ -70,7 +70,7 @@ Type::Type(std::string& type_name)
 {}
 
 
-Type* Type::Create(std::string& type_name)
+Type* Type::Create(std::string type_name)
 {
 	if (_namedFundamentals.count(type_name))
 		return _namedFundamentals.at(type_name);
