@@ -37,7 +37,7 @@ struct Statement
 struct Expression
 	: public Statement, public TokenInfo
 {
-	Type* _type {nullptr};	// The expression's type.
+	Type* _type {Type::Create("void")};	// The expression's type.
 };
 
 
@@ -51,7 +51,7 @@ struct Breakable
 struct VariableDef
 	: public Statement, public TokenInfo
 {
-	Type* _type {nullptr};				// The variable's type.
+	Type* _type;						// The variable's type.
 	std::string _name;					// The variable's symbolic name.
 	std::unique_ptr<Expression> _init;	// The variable's initializer.
 

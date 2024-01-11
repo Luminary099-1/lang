@@ -114,7 +114,14 @@ bool VariableDef::Validate(ValidateData& dat)
 {
 	bool success {_init->Validate(dat)};
 
-	if (*_init->_type != *_type)
+	if (_type->IsVoid())
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Variable cannot be type void: "sv << _name << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		success = false;
+	}
+	else if (*_init->_type != *_type)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Expected initializer of type "sv << _type->_name
@@ -173,7 +180,15 @@ bool BreakStmt::Validate(ValidateData& dat)
 	else if (broken == _levels)
 	{
 		_target = expr;
-		_target->_type = _expr->_type;
+		const Type* existing {_target->_type};
+		if (!existing->IsVoid() && *existing != *_type)
+		{
+			std::cerr << '(' << _row << ", "sv << _col
+				<< "): Conflicting break evaluation types. Expected : "sv
+				<< existing->_name << ", found: "sv << _type->_name << '\n';
+			HighlightError(std::cerr, dat._src, *this);
+		}
+		else _target->_type = _expr->_type;
 	}
 
 	return success;

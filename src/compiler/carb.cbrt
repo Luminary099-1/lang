@@ -155,7 +155,7 @@ statement: compound_stmt
 	{ $$ = $0; }
 statement: var_def_stmt
 	{ $$ = $0; }
-statement: expression
+statement: expression SEMICOL
 	{ $$ = $0; }
 statement: break_stmt
 	{ $$ = $0; }

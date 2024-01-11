@@ -38,6 +38,7 @@ bool AssignmentExpr::Validate(ValidateData& dat)
 		HighlightError(std::cerr, dat._src, *this);
 		success = false;
 	}
+	
 	return success;
 }
 

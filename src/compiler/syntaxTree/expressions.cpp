@@ -298,8 +298,8 @@ bool Invocation::Validate(ValidateData& dat)
 	if (_args.size() != _def->_params.size())
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected "sv << expected_args << ", found: "sv
-			<< _args.size() << '\n';
+			<< "): Incorrect number of arguments. Expected "sv
+			<< expected_args << ", found "sv << _args.size() << ".\n"sv;
 		HighlightError(std::cerr, dat._src, *this);
 		return false;
 	}

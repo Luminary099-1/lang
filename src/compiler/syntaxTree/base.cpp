@@ -77,25 +77,25 @@ Type* Type::Create(std::string type_name)
 	else return new Type(type_name);
 }
 
-bool Type::IsVoid()
+const bool Type::IsVoid() const
 {
 	return this == _void.get();
 }
 
 
-bool Type::IsInt()
+const bool Type::IsInt() const
 {
 	return this == _int.get();
 }
 
 
-bool Type::IsBool()
+const bool Type::IsBool() const
 {
 	return this == _bool.get();
 }
 
 
-bool Type::IsString()
+const bool Type::IsString() const
 {
 	return this == _string.get();
 }

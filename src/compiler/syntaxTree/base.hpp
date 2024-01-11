@@ -114,22 +114,22 @@ public:
 	/**
 	 * @return true if this is the fundamental type void; false otherwise.
 	 */
-	bool IsVoid();
+	const bool IsVoid() const;
 
 	/**
 	 * @return true if this is the fundamental type int; false otherwise.
 	 */
-	bool IsInt();
+	const bool IsInt() const;
 	
 	/**
 	 * @return true if this is the fundamental type bool; false otherwise.
 	 */
-	bool IsBool();
+	const bool IsBool() const;
 
 	/**
 	 * @return true if this is the fundamental type string; false otherwise.
 	 */
-	bool IsString();
+	const bool IsString() const;
 
 	// Equality operator overload.
 	friend bool operator==(const Type& lhs, const Type& rhs);
