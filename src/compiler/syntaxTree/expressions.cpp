@@ -67,10 +67,8 @@ void ExpectedBinaryType(TUBuffer& src, TokenInfo& op, Expression* expr,
 
 bool BinaryExpr::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {_argl->Validate(dat)};
 	success = _argr->Validate(dat) && success;
-	dat._ts.pop_front();
 
 	switch (_op)
 	{
@@ -188,9 +186,7 @@ bool PreExpr::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool PreExpr::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {_arg->Validate(dat)};
-	dat._ts.pop_front();
 
 	if (!_arg->_type->IsInt())
 	{
@@ -242,9 +238,7 @@ bool PostExpr::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool PostExpr::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {_arg->Validate(dat)};
-	dat._ts.pop_front();
 
 	if (!_arg->_type->IsInt())
 	{
@@ -311,7 +305,6 @@ bool Invocation::Validate(ValidateData& dat)
 	}
 
 	bool success {true};
-	dat._ts.push_front(this);
 	for (size_t i {0}; i < expected_args; ++ i)
 	{
 		success = success && _args[i]->Validate(dat);
@@ -328,7 +321,6 @@ bool Invocation::Validate(ValidateData& dat)
 		success = false;
 	}
 
-	dat._ts.pop_front();
 	return success;
 }
 

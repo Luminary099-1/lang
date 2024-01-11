@@ -68,7 +68,18 @@ bool Function::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool Function::Validate(ValidateData& dat)
 {
-	
+	dat._curFunc = this;
+
+	if (!_type->IsVoid() && !Statement::DoesListReturn(_body, dat._src))
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Non-void function does not contain a return statement: \n"sv
+			<< _name << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+	}
+
+	dat._curFunc = nullptr;
+	return true;
 }
 
 

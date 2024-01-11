@@ -8,17 +8,26 @@
 using namespace std::string_view_literals;
 
 
-Type* Expression::GetYieldType(Statement* stmt)
+bool Statement::DoesListReturn(StmtList &stmts, TUBuffer& src)
 {
-	CompoundStmt* comp {dynamic_cast<CompoundStmt*>(stmt)};
-	if (comp != nullptr)
+	const size_t stmts_len {stmts.size()};
+	if (stmts_len == 0) return false;
+
+	Statement* cur {nullptr};
+	Statement* last_ret {stmts[stmts_len - 1].get()};
+	for (size_t i {0}; i < stmts_len; ++ i)
 	{
-		if (comp->_stmts.size() == 0) return Type::Create("void");
-		else return GetYieldType(comp->_stmts[comp->_stmts.size() - 1].get());
+		cur = stmts[i].get();
+		if (cur->_hasReturn) last_ret = cur;
 	}
 
-	Expression* expr {dynamic_cast<Expression*>(stmt)};
-	if (expr != nullptr) return expr->_type;
+	if (last_ret == nullptr) return false;
+	if (cur != last_ret)
+	{
+		// TODO: Error message here for dead code.
+		return false;
+	}
+	return true;
 }
 
 
@@ -42,13 +51,13 @@ bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool CompoundStmt::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {true};
-	Statement* last {_stmts[_stmts.size() - 1].get()};
-	for (size_t i {0}; i < _stmts.size(); ++ i)
+	const size_t stmts_len {_stmts.size()};
+	Statement* last {_stmts[stmts_len - 1].get()};
+	for (size_t i {0}; i < stmts_len; ++ i)
 	{
 		Statement* cur {_stmts[i].get()};
-		if (cur != last && dynamic_cast<ExprStmt*>(cur) != nullptr)
+		if (cur != last && dynamic_cast<Expression*>(cur) != nullptr)
 		{
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Statement yields value before the block ends.\n"sv;
@@ -57,7 +66,6 @@ bool CompoundStmt::Validate(ValidateData& dat)
 		}
 		success = cur->Validate(dat) && success;
 	}
-	dat._ts.pop_front();
 
 	Expression* last_expr {dynamic_cast<Expression*>(last)};
 	if (last_expr != nullptr) _type = last_expr->_type;
@@ -106,9 +114,7 @@ bool VariableDef::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool VariableDef::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {_init->Validate(dat)};
-	dat._ts.pop_front();
 
 	if (*_init->_type != *_type)
 	{
@@ -146,9 +152,7 @@ bool ExprStmt::Scope(ScopeStack &ss, TUBuffer &src)
 
 bool ExprStmt::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {_expr->Validate(dat)};
-	dat._ts.pop_front();
 	return success;
 }
 
@@ -174,13 +178,11 @@ bool BreakStmt::Scope(ScopeStack &ss, TUBuffer &src)
 
 bool BreakStmt::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {_expr->Validate(dat)};
-	dat._ts.pop_front();
 
 	Breakable* expr {nullptr};
 	int broken {0};
-	for (SyntaxTreeNode* node : dat._ts)
+	for (SyntaxTreeNode* node : dat._bs)
 	{
 		expr = dynamic_cast<Breakable*>(node);
 		if (expr != nullptr)
@@ -216,7 +218,9 @@ void BreakStmt::Print(std::ostream& os, std::string_view indent, int depth)
 
 ReturnStmt::ReturnStmt(Expression* expr)
 	: _expr{expr}
-{}
+{
+	_hasReturn = true;
+}
 
 
 bool ReturnStmt::Scope(ScopeStack &ss, TUBuffer &src)
@@ -227,30 +231,24 @@ bool ReturnStmt::Scope(ScopeStack &ss, TUBuffer &src)
 
 bool ReturnStmt::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {_expr->Validate(dat)};
-	dat._ts.pop_front();
-
-	Function* parent {nullptr};
-	for (SyntaxTreeNode* node : dat._ts)
-	{
-		parent = dynamic_cast<Function*>(node);
-		if (parent != nullptr) break;
-	}
 	
-	if (parent == nullptr)
+	if (dat._curFunc == nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Return statement outside of function body.\n"sv;
 		HighlightError(std::cerr, dat._src, *this);
+		return false;
 	}
 
-	if (*parent->_type != *_type)
+	if (*dat._curFunc->_type != *_type)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected return value of type "sv << parent->_type->_name
+			<< "): Expected return value of type "sv
+			<< dat._curFunc->_type->_name
 			<< ", found: "sv << _type->_name << '\n';
 		HighlightError(std::cerr, dat._src, *this);
+		return false;
 	}
 
 	return success;

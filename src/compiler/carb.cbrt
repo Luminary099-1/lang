@@ -170,7 +170,7 @@ compound_stmt: LCURLY statements RCURLY
 statements: statement statements
 	{
 		StmtList l {$1};
-		l.push_back($0);
+		l.emplace_back($0);
 		$$ = l;
 	}
 statements:

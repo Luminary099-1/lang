@@ -6,6 +6,7 @@
 #include <string_view>
 
 // Forward declarations to avoid use of cyclic includes.
+struct Function;
 struct SyntaxTreeNode;
 struct Type;
 
@@ -95,6 +96,8 @@ struct ValidateData
 {
 	// The TUBuffer for the source file expressing this AST.
 	TUBuffer& _src;
-	// Tree stack containing the chain of predecessors to the current node.
-	std::forward_list<SyntaxTreeNode*>& _ts;
+	// Tree stack containing the chain of breakable predecessor AST nodes.
+	std::forward_list<SyntaxTreeNode*>& _bs;
+	// The current function definition.
+	Function* _curFunc;
 };

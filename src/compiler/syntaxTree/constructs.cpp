@@ -27,9 +27,7 @@ bool AssignmentExpr::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool AssignmentExpr::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {_expr->Validate(dat)};
-	dat._ts.pop_front();
 
 	_type = _def->_type;
 	if (*_type != *_expr->_type)
@@ -70,11 +68,10 @@ bool IfExpr::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool IfExpr::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
 	bool success {_cond->Validate(dat)};
 	success = _body->Validate(dat) && success;
 	success = _alt->Validate(dat) && success;
-	dat._ts.pop_front();
+	_hasReturn = _body->_hasReturn && (_alt != nullptr && _alt->_hasReturn);
 
 	if (!_cond->_type->IsBool())
 	{
@@ -124,12 +121,12 @@ bool ForExpr::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool ForExpr::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
+	dat._bs.push_front(this);
 	bool success {_init->Validate(dat)};
 	success = _cond->Validate(dat) && success;
 	success = _inc->Validate(dat) && success;
 	success = _body->Validate(dat) && success;
-	dat._ts.pop_front();
+	dat._bs.pop_front();
 	return success;
 }
 
@@ -169,9 +166,9 @@ bool LoopExpr::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool LoopExpr::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
+	dat._bs.push_front(this);
 	bool success {_body->Validate(dat)};
-	dat._ts.pop_front();
+	dat._bs.pop_front();
 	return success;
 }
 
@@ -202,10 +199,10 @@ bool WhileExpr::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool WhileExpr::Validate(ValidateData& dat)
 {
-	dat._ts.push_front(this);
+	dat._bs.push_front(this);
 	bool success {_cond->Validate(dat)};
 	return _body->Validate(dat) && success;
-	dat._ts.pop_front();
+	dat._bs.pop_front();
 
 	if (!_cond->_type->IsBool())
 	{

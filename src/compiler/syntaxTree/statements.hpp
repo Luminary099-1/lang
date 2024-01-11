@@ -6,14 +6,17 @@
 #include <vector>
 
 
+// Stores a list of statements.
+using StmtList = std::vector<std::unique_ptr<Statement>>;
+
 // Base class to represent statements.
 struct Statement
 	: public SyntaxTreeNode
-{};
+{
+	bool _hasReturn {false};
 
-
-// Stores a list of statements.
-using StmtList = std::vector<std::unique_ptr<Statement>>;
+	static bool DoesListReturn(StmtList& stmts, TUBuffer& src);
+};
 
 
 // Base class to represent expressions.
@@ -21,14 +24,6 @@ struct Expression
 	: public Statement, public TokenInfo
 {
 	Type* _type {nullptr};	// The expression's type.
-
-	/**
-	 * @brief 
-	 * TODO:
-	 * @param stmt 
-	 * @return Type* 
-	 */
-	static Type* GetYieldType(Statement* stmt);
 };
 
 
