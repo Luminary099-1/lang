@@ -19,19 +19,22 @@ struct SyntaxTreeNode
 	 * and verifies the existence of symbols for all other occurrences.
 	 * 
 	 * @param ss The scope stack instance to use.
-	 * @param src A reference to the TUBuffer that contains the source file
-	 * containing this AST node.
+	 * @param src The TUBuffer that contains the source file containing this AST
+	 * node.
 	 * @return true on success; false if a symbol is redefined in the same scope
 	 * or an undefined symbol is referenced.
 	 */
 	virtual bool Scope(ScopeStack& ss, TUBuffer& src);
 
 	/**
-	 * @brief 
+	 * @brief Traverses the AST structure and validates the semantics of the
+	 * represented program.
 	 * 
-	 * @return true 
+	 * @param dat An instance of ValidateData to store the state of the
+	 * validation.
+	 * @return true if the validation discovered no errors; false otherwise.
 	 */
-	virtual bool Validate(ValidateData& data);
+	virtual bool Validate(ValidateData& dat);
 
 	/**
 	 * @brief Prints a textual representation of this AST node to the specified

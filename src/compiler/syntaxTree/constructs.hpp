@@ -29,22 +29,22 @@ struct AssignmentExpr
 };
 
 
-// Represents an if expression (if statement that can return values).
-struct IfExpr
-	: public Expression
+// Represents a conditional statement.
+struct IfStmt
+	: public Statement
 {
 	std::unique_ptr<Expression> _cond;	// A conditional expression.
 	std::unique_ptr<Statement> _body;	// The statement executed on true.
 	std::unique_ptr<Statement> _alt;	// The optional else case.
 
 	/**
-	 * @brief Construct a new IfExpr object;
+	 * @brief Construct a new IfStmt object;
 	 * 
 	 * @param cond A condition expression.
 	 * @param body A statement executed on true.
 	 * @param alt The else case if the condition is false.
 	 */
-	IfExpr(Expression* cond, Statement* body, Statement* alt);
+	IfStmt(Expression* cond, Statement* body, Statement* alt);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;

@@ -34,7 +34,8 @@ void Parameter::Print(std::ostream& os, std::string_view indent, int depth)
 
 Function::Function(
 	Type* type, std::string name, ParamList& params, StmtList body)
-	: _type{type}, _name{name}, _params{std::move(params)}, _body{body}
+	: _type{type}, _name{name}, _params{std::move(params)}
+		, _body{std::move(body)}
 {
 	std::reverse(_params.begin(), _params.end());
 	std::reverse(_body.begin(), _body.end());
@@ -68,18 +69,21 @@ bool Function::Scope(ScopeStack& ss, TUBuffer& src)
 
 bool Function::Validate(ValidateData& dat)
 {
+	bool success {true};
 	dat._curFunc = this;
+	const bool returns {Statement::ValidateAndGetReturn(_body, dat, success)};
+	dat._curFunc = nullptr;
 
-	if (!_type->IsVoid() && !Statement::DoesListReturn(_body, dat._src))
+	if (!_type->IsVoid() && !returns)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Non-void function does not contain a return statement: \n"sv
+			<< "): Non-void function does not return in all control paths: \n"sv
 			<< _name << '\n';
 		HighlightError(std::cerr, dat._src, *this);
+		success = false;
 	}
 
-	dat._curFunc = nullptr;
-	return true;
+	return success;
 }
 
 

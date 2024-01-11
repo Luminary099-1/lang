@@ -52,12 +52,12 @@ void AssignmentExpr::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-IfExpr::IfExpr(Expression* cond, Statement* body, Statement* alt)
+IfStmt::IfStmt(Expression* cond, Statement* body, Statement* alt)
 	: _cond{cond}, _body{body}, _alt{alt}
 {}
 
 
-bool IfExpr::Scope(ScopeStack& ss, TUBuffer& src)
+bool IfStmt::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	// Kinda ugly to avoid short-circuit evaluation.
 	bool success {_cond->Scope(ss, src)};
@@ -66,31 +66,29 @@ bool IfExpr::Scope(ScopeStack& ss, TUBuffer& src)
 }
 
 
-bool IfExpr::Validate(ValidateData& dat)
+bool IfStmt::Validate(ValidateData& dat)
 {
 	bool success {_cond->Validate(dat)};
 	success = _body->Validate(dat) && success;
 	success = _alt->Validate(dat) && success;
-	_hasReturn = _body->_hasReturn && (_alt != nullptr && _alt->_hasReturn);
+	_hasReturn = _body->_hasReturn && (_alt != nullptr || _alt->_hasReturn);
 
 	if (!_cond->_type->IsBool())
 	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected if statement condition of type bool, found: "sv
-			<< _cond->_type->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		// std::cerr << '(' << _row << ", "sv << _col
+		// 	<< "): Expected if statement condition of type bool, found: "sv
+		// 	<< _cond->_type->_name << '\n';
+		// HighlightError(std::cerr, dat._src, *this);
 		success = false;
 	}
 	return success;
 }
 
 
-void IfExpr::Print(std::ostream& os, std::string_view indent, int depth)
+void IfStmt::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "IfExpression("sv;
-	_type->Print(os, indent, depth);
-	os << "):\n";
+	os << "IfExpression:\n"sv;
 	++ depth;
 	PrintIndent(os, indent, depth);
 	os << "Condition =\n"sv;
@@ -127,6 +125,7 @@ bool ForExpr::Validate(ValidateData& dat)
 	success = _inc->Validate(dat) && success;
 	success = _body->Validate(dat) && success;
 	dat._bs.pop_front();
+	_hasReturn = _body->_hasReturn;
 	return success;
 }
 
@@ -169,6 +168,7 @@ bool LoopExpr::Validate(ValidateData& dat)
 	dat._bs.push_front(this);
 	bool success {_body->Validate(dat)};
 	dat._bs.pop_front();
+	_hasReturn = _body->_hasReturn;
 	return success;
 }
 
@@ -203,6 +203,7 @@ bool WhileExpr::Validate(ValidateData& dat)
 	bool success {_cond->Validate(dat)};
 	return _body->Validate(dat) && success;
 	dat._bs.pop_front();
+	_hasReturn = _body->_hasReturn;
 
 	if (!_cond->_type->IsBool())
 	{
