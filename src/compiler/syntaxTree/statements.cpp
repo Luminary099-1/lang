@@ -26,7 +26,9 @@ bool Statement::ValidateAndGetReturn(
 	if (last_ret == nullptr) return false;
 	if (cur != last_ret)
 	{
-		// TODO: Error message here for dead code.
+		std::cerr << '(' << cur->_row << ", "sv << cur->_col
+			<< "): Unreachable code after a returning statement.\n"sv;
+		HighlightError(std::cerr, dat._src, *cur);
 		success = false;
 		return false;
 	}
@@ -61,9 +63,10 @@ bool CompoundStmt::Validate(ValidateData& dat)
 		_type = _expr->_type;
 		if (_hasReturn)
 		{
-			std::cerr << '(' << _row << ", "sv << _col
-				<< "): Block returns before it is evaluated."sv;
-			HighlightError(std::cerr, dat._src, *this);
+			std::cerr << '(' << _expr->_row << ", "sv << _expr->_col
+				<< "): Evaluation never occurs as it appears after a "sv 
+				<< "return statement."sv;
+			HighlightError(std::cerr, dat._src, *_expr);
 			success = false;
 		}
 	}
@@ -84,26 +87,27 @@ void CompoundStmt::Print(
 		os << "Statement["sv << i << "] ->\n"sv;
 		_stmts[i]->Print(os, indent, depth + 1);
 	}
+	PrintMaybe(_expr.get(), os, indent, depth);
 }
 
 
-VariableDef::VariableDef(Type* type, std::string name, Expression* init)
-	: _type{type}, _name{name}, _init{init}
+VariableDef::VariableDef(Type* type, Identifier* name, Expression* init)
+	: Declaration{name}, _type{type}, _init{init}
 {}
 
 
 bool VariableDef::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	bool success {true};
-	TokenInfo* pre_def {dynamic_cast<TokenInfo*>(ss.Define(_name, this))}; // Trusting this for now.
+	Declaration* pre_def {ss.Define(_name->_id, this)};
 	if (pre_def != nullptr)
 	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Symbol collision: "sv << _name
-			<< "\n# The following on line"sv << _row << ":\n";
-		HighlightError(std::cerr, src, *this);
-		std::cerr << "# Redefines on line "sv << pre_def->_row << ":\n";
-		HighlightError(std::cerr, src, *pre_def);
+		std::cerr << '(' << _name->_row << ", "sv << _name->_col
+			<< "): Symbol collision: "sv << _name->_id
+			<< "\n# The following on line "sv << _name->_row << ":\n"sv;
+		HighlightError(std::cerr, src, *_name);
+		std::cerr << "# Redefines on line "sv << pre_def->_name->_row << ":\n"sv;
+		HighlightError(std::cerr, src, *pre_def->_name);
 		success = false;
 	}
 	return _init->Scope(ss, src) && success;
@@ -119,15 +123,16 @@ bool VariableDef::Validate(ValidateData& dat)
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Variable cannot be type void: "sv << _name << '\n';
 		HighlightError(std::cerr, dat._src, *this);
-		success = false;
+		return false;
 	}
-	else if (*_init->_type != *_type)
+	
+	if (*_init->_type != *_type)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Expected initializer of type "sv << _type->_name
 			<< ", found: "sv << _init->_type->_name << '\n';
 		HighlightError(std::cerr, dat._src, *this);
-		success = false;
+		return false;
 	}
 
 	return success;
@@ -137,9 +142,8 @@ bool VariableDef::Validate(ValidateData& dat)
 void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "VariableInitialization(_name = "sv << _name << ", "sv;
-	_type->Print(os, indent, depth);
-	os << "):\n"sv;
+	os << "VariableInitialization(ID = "sv << _name->_id << ", Type = "sv
+		<< _type->_name << "):\n"sv;
 	_init->Print(os, indent, ++ depth);
 }
 
@@ -159,38 +163,27 @@ bool BreakStmt::Validate(ValidateData& dat)
 {
 	bool success {_expr->Validate(dat)};
 
-	Breakable* expr {nullptr};
-	int broken {0};
-	for (SyntaxTreeNode* node : dat._bs)
-	{
-		expr = dynamic_cast<Breakable*>(node);
-		if (expr != nullptr)
-		{
-			broken ++;
-			if (broken == _levels) break;
-		}
-	}
-
-	if (broken < _levels)
+	if (dat._bs.size() < _levels)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Break exceeds breakable depth: "sv << _levels << '\n';
+			<< "): Break count exceeds breakable depth: "sv << _levels << '\n';
 		HighlightError(std::cerr, dat._src, *this);
-	}
-	else if (broken == _levels)
-	{
-		_target = expr;
-		const Type* existing {_target->_type};
-		if (!existing->IsVoid() && *existing != *_type)
-		{
-			std::cerr << '(' << _row << ", "sv << _col
-				<< "): Conflicting break evaluation types. Expected : "sv
-				<< existing->_name << ", found: "sv << _type->_name << '\n';
-			HighlightError(std::cerr, dat._src, *this);
-		}
-		else _target->_type = _expr->_type;
+		return false;
 	}
 
+	_target = dat._bs[_levels - 1];
+	const Type* existing {_target->_type};
+	Type* given {_expr->_type};
+	if (!existing->IsVoid() && *existing != *given)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected break expression of type "sv << existing->_name
+			<< ", found: "sv << given->_name << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		return false;
+	}
+	
+	_target->_type = given;
 	return success;
 }
 
@@ -222,17 +215,18 @@ bool ReturnStmt::Validate(ValidateData& dat)
 	if (dat._curFunc == nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Return statement outside of function body.\n"sv;
+			<< "): Return statement occurs outside of a function body.\n"sv;
 		HighlightError(std::cerr, dat._src, *this);
 		return false;
 	}
 
-	if (*dat._curFunc->_type != *_type)
+	const Type* expected {dat._curFunc->_type};
+	const Type* given {_expr->_type};
+	if (*given != *expected)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected return value of type "sv
-			<< dat._curFunc->_type->_name
-			<< ", found: "sv << _type->_name << '\n';
+			<< "): Expected return value of type "sv << expected->_name
+			<< ", found: "sv << given->_name << '\n';
 		HighlightError(std::cerr, dat._src, *this);
 		return false;
 	}

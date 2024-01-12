@@ -25,9 +25,27 @@ void TokenInfo::SetSymbolInfo(TokenInfo info)
 }
 
 
+void TokenInfo::SetMergedInfo(TokenInfo& i1, TokenInfo& i2)
+{
+	TokenInfo& first {i1};
+	TokenInfo& second {i2};
+	if (i2._off < i1._off)
+	{
+		first = i2;
+		second = i1;
+	}
+	_row	= first._row;
+	_endRow	= second._endRow;
+	_col	= first._col;
+	_endCol	= second._endCol;
+	_off	= first._off;
+	_endOff	= second._endOff;
+}
+
+
 void ScopeStack::Enter()
 {
-	_stackMap.push_front(std::map<std::string_view, SyntaxTreeNode*>());
+	_stackMap.push_front(std::map<std::string_view, Declaration*>());
 }
 
 
@@ -38,18 +56,18 @@ void ScopeStack::Exit()
 }
 
 
-SyntaxTreeNode* ScopeStack::Define(std::string_view name, SyntaxTreeNode* node)
+Declaration* ScopeStack::Define(std::string_view name, Declaration* node)
 {
-	std::map<std::string_view, SyntaxTreeNode*>& front {_stackMap.front()};
+	std::map<std::string_view, Declaration*>& front {_stackMap.front()};
 	if (front.count(name) == 0) return front[name];
 	front.insert(std::pair(name, node));
 	return nullptr;
 }
 
 
-SyntaxTreeNode* ScopeStack::Lookup(std::string_view name)
+Declaration* ScopeStack::Lookup(std::string_view name)
 {
-	for (std::map<std::string_view, SyntaxTreeNode*> scope : _stackMap)
+	for (std::map<std::string_view, Declaration*> scope : _stackMap)
 		if (scope.count(name)) return scope[name];
 	return nullptr;
 }

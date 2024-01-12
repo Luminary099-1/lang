@@ -37,6 +37,22 @@ void SyntaxTreeNode::PrintMaybe(
 }
 
 
+Identifier::Identifier(std::string& id)
+	: _id{id}
+{}
+
+
+void Identifier::Print(std::ostream& os, std::string_view indent, int depth)
+{
+	os << "ID = "sv << _id;
+}
+
+
+Declaration::Declaration(Identifier* name)
+	: _name{name}
+{}
+
+
 const std::unique_ptr<Type> Type::_void(new Type("void"s));
 const std::unique_ptr<Type> Type::_int(new Type("int"s));
 const std::unique_ptr<Type> Type::_bool(new Type("bool"s));

@@ -48,12 +48,15 @@ bool BinaryExpr::Scope(ScopeStack& ss, TUBuffer& src)
 
 
 /**
- * @brief 
- * TODO:
- * @param src 
- * @param op 
- * @param expr 
- * @param is_left 
+ * @brief Prints the error message associated with incorrectly typed operand
+ * expressions for binary operators.
+ * 
+ * @param src The buffer of the source file expressing this AST.
+ * @param op The TokenInfo of the operator in question.
+ * @param expr The incorrectly typed operand expression.
+ * @param is_left true if the passed operand is the left operand; false
+ * otherwise.
+ * @param expected The name of the expected type.
  */
 void ExpectedBinaryType(TUBuffer& src, TokenInfo& op, Expression* expr,
 	bool is_left, std::string_view expected)
@@ -64,6 +67,7 @@ void ExpectedBinaryType(TUBuffer& src, TokenInfo& op, Expression* expr,
 		<< expr->_type->_name << '\n';
 	HighlightError(std::cerr, src, op);
 }
+
 
 bool BinaryExpr::Validate(ValidateData& dat)
 {
@@ -112,8 +116,8 @@ bool BinaryExpr::Validate(ValidateData& dat)
 			if (_argl->_type != _argr->_type)
 			{
 				std::cerr << '(' << _row << ", "sv << _col
-					<< "): Expected operands of matching types, found: "
-					<< _argl->_type->_name << ", "sv
+					<< "): Expected operands of matching types, found: "sv
+					<< _argl->_type->_name << " and "sv
 					<< _argr->_type->_name << '\n';
 				HighlightError(std::cerr, dat._src, *this);
 			}
@@ -144,9 +148,8 @@ bool BinaryExpr::Validate(ValidateData& dat)
 void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "BinaryExpression(Op = "sv << GetOpText(_op) << ", "sv;
-	_type->Print(os, indent, depth);
-	os << "):\n"sv;
+	os << "BinaryExpression(Op = "sv << GetOpText(_op) << ", Type = "sv
+		<< _type->_name << "):\n"sv;
 	++ depth;
 	PrintIndent(os, indent, depth);
 	os << "Left Operand =\n"sv;
@@ -204,9 +207,8 @@ bool PreExpr::Validate(ValidateData& dat)
 void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "PreExpression(Op = "sv << GetOpText(_op) << ", "sv;
-	_type->Print(os, indent, depth);
-	os << "):\n"sv;
+	os << "PreExpression(Op = "sv << GetOpText(_op)
+		<< ", Type = "sv << _type->_name << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
 	os << "Operand =\n"sv;
 	PrintMaybe(_arg.get(), os, indent, ++ depth);
@@ -256,16 +258,15 @@ bool PostExpr::Validate(ValidateData& dat)
 void PostExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "PostExpression(Op = "sv << GetOpText(_op) << ", "sv;
-	_type->Print(os, indent, depth);
-	os << "):\n"sv;
+	os << "PostExpression(Op = "sv << GetOpText(_op)
+		<< ", Type = "sv << _type->_name << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
 	os << "Operand =\n"sv;
 	PrintMaybe(_arg.get(), os, indent, ++ depth);
 }
 
 
-Invocation::Invocation(std::string name, ArgList& args)
+Invocation::Invocation(Identifier* name, ArgList& args)
 	: _name{name}, _args{std::move(args)}
 {
 	std::reverse(_args.begin(), _args.end());
@@ -275,12 +276,12 @@ Invocation::Invocation(std::string name, ArgList& args)
 bool Invocation::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	bool success {true};
-	_def = dynamic_cast<Function*>(ss.Lookup(_name));
+	_def = dynamic_cast<Function*>(ss.Lookup(_name->_id));
 	if (_def == nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Unkown function: " << _name << '\n';
-		HighlightError(std::cerr, src, *this);
+			<< "): Unkown function: "sv << _name->_id << '\n';
+		HighlightError(std::cerr, src, *_name);
 		success = false;
 	}
 
@@ -298,8 +299,9 @@ bool Invocation::Validate(ValidateData& dat)
 	if (_args.size() != _def->_params.size())
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Incorrect number of arguments. Expected "sv
-			<< expected_args << ", found "sv << _args.size() << ".\n"sv;
+			<< "): Incorrect number of arguments in call to "sv
+			<< _name->_id << ". Expected "sv << expected_args
+			<< ", found "sv << _args.size() << ".\n"sv;
 		HighlightError(std::cerr, dat._src, *this);
 		return false;
 	}
@@ -314,7 +316,7 @@ bool Invocation::Validate(ValidateData& dat)
 		{
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Expected "sv << expected_type->_name << " for argument"sv
-				<< i + 1 << " in call to "sv << _name << ", found: "sv
+				<< i + 1 << " in call to "sv << _name->_id << ", found: "sv
 				<< given_type->_name << '\n';
 			HighlightError(std::cerr, dat._src, *_args[i]);
 		}
@@ -328,9 +330,8 @@ bool Invocation::Validate(ValidateData& dat)
 void Invocation::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "InvokeExpression(Function = "sv << _name << ", "sv;
-	_type->Print(os, indent, depth);
-	os << "):\n"sv;
+	os << "InvokeExpression(Function = "sv << _name->_id
+		<< ", Type = "sv << _type->_name << "):\n"sv;
 	++ depth;
 	for (size_t i {0}; i < _args.size(); ++ i)
 	{

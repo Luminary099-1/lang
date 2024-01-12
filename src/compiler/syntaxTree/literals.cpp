@@ -7,16 +7,14 @@
 using namespace std::string_view_literals;
 
 
-Identifier::Identifier(std::string& value)
+Variable::Variable(std::string& value)
 	: _value{value}
 {}
 
 
-bool Identifier::Scope(ScopeStack& ss, TUBuffer& src)
+bool Variable::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	_def = ss.Lookup(_value);
-	// TODO: Ideally, Param and VariableDef would extend a common type.
-	// VariableDef's current role is more appropriately called VariableDefInit.
 	if (_def != nullptr && dynamic_cast<Function*>(_def) != nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
@@ -28,10 +26,10 @@ bool Identifier::Scope(ScopeStack& ss, TUBuffer& src)
 }
 
 
-void Identifier::Print(std::ostream& os, std::string_view indent, int depth)
+void Variable::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "Identifier(Name = "sv << _value << ")\n"sv;
+	os << "Variable(ID = "sv << _value << ")\n"sv;
 }
 
 

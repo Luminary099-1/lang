@@ -12,21 +12,23 @@ struct Literal
 
 
 // Represents identifiers.
-struct Identifier
+struct Variable
 	: public Literal
 {
 	std::string _value;		// The identifier's name.
 	SyntaxTreeNode* _def;	// The AST node that defines this variable.
 
 	/**
-	 * @brief Construct a new Identifier object.
+	 * @brief Construct a new Variable object.
 	 * 
 	 * @param value The identifier's name.
 	 */
-	Identifier(std::string& value);
+	Variable(std::string& value);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the identifier itself.
 };
 
 
@@ -44,6 +46,8 @@ struct IntLiteral
 	IntLiteral(int& value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the value itself.
 };
 
 
@@ -61,6 +65,8 @@ struct BoolLiteral
 	BoolLiteral(bool& value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the value itself.
 };
 
 
@@ -78,4 +84,6 @@ struct StrLiteral
 	StrLiteral(std::string& value);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the value itself.
 };

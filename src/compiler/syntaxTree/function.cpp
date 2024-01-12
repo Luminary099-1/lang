@@ -8,17 +8,14 @@
 using namespace std::string_view_literals;
 
 
-Parameter::Parameter()
-{}
-
-
-Parameter::Parameter(Type* type, std::string name)
-	: _type{type}, _name{name}
+Parameter::Parameter(Type* type, Identifier* name)
+	: Declaration{name}, _type{type}
 {}
 
 
 bool Parameter::Scope(ScopeStack& ss, TUBuffer& src)
 {
+	// TODO: This doesn't look right...
 	return _type->Scope(ss, src);
 }
 
@@ -26,16 +23,15 @@ bool Parameter::Scope(ScopeStack& ss, TUBuffer& src)
 void Parameter::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "Parameter("sv;
-	_type->Print(os, indent, depth);
-	os << ", Name = "sv << _name << ")\n"sv;
+	os << "Parameter(ID = "sv << _name->_id
+		<< ", Type = "sv << _type->_name << ")\n"sv;
 }
 
 
 Function::Function(
-	Type* type, std::string name, ParamList& params, StmtList body)
-	: _type{type}, _name{name}, _params{std::move(params)}
-		, _body{std::move(body)}
+	Identifier* name, ParamList& params, Type* type, StmtList body)
+	: Declaration{name}, _params{std::move(params)}
+		, _type{type}, _body{std::move(body)}
 {
 	std::reverse(_params.begin(), _params.end());
 	std::reverse(_body.begin(), _body.end());
@@ -45,15 +41,15 @@ Function::Function(
 bool Function::Scope(ScopeStack& ss, TUBuffer& src)
 {
 	bool success {true};
-	TokenInfo* pre_def {dynamic_cast<TokenInfo*>(ss.Define(_name, this))}; // Trusting this for now.
+	Declaration* pre_def {ss.Define(_name->_id, this)};
 	if (pre_def != nullptr)
 	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Symbol collision: "sv << _name
-			<< "\n# The following on line"sv << _row << ":\n";
-		HighlightError(std::cerr, src, *this);
-		std::cerr << "# Redefines on line "sv << pre_def->_row << ":\n";
-		HighlightError(std::cerr, src, *pre_def);
+		std::cerr << '(' << _name->_row << ", "sv << _name->_col
+			<< "): Symbol collision: "sv << _name->_id
+			<< "\n# The following on line "sv << _name->_row << ":\n"sv;
+		HighlightError(std::cerr, src, *_name);
+		std::cerr << "# Redefines on line "sv << pre_def->_name->_row << ":\n"sv;
+		HighlightError(std::cerr, src, *pre_def->_name);
 		success = false;
 	}
 
@@ -78,7 +74,7 @@ bool Function::Validate(ValidateData& dat)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Non-void function does not return in all control paths: \n"sv
-			<< _name << '\n';
+			<< _name->_id << '\n';
 		HighlightError(std::cerr, dat._src, *this);
 		success = false;
 	}
@@ -90,14 +86,14 @@ bool Function::Validate(ValidateData& dat)
 void Function::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "Function(Name = "sv << _name << "):\n"sv;
+	os << "Function(ID = "sv << _name->_id
+		<< ", Type = "sv << _type->_name << "):\n"sv;
 	++ depth;
 	for (size_t i {0}; i < _params.size(); ++ i)
 	{
 		PrintIndent(os, indent, depth);
-		os << "Parameters[" << i << "](Name = "sv << _params[i]->_name << ", "sv;
-		_type->Print(os, indent, depth);
-		os << ")\n"sv;
+		os << "Parameters["sv << i << "](ID = "sv << _params[i]->_name->_id
+			<< ", Type = "sv << _params[i]->_type->_name << ")\n"sv;
 	}
 	for (size_t i {0}; i < _body.size(); ++ i)
 		_body[i]->Print(os, indent, depth);

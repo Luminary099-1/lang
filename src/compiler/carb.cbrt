@@ -110,15 +110,18 @@ global: var_def_stmt
 %class type: Type*
 type: ID
 	{
-		$ = ${0};
-		$$ = Type::Create($0);
+		Type* t {Type::Create($0)};
+		t->SetSymbolInfo(${0});
+		$$ = t;
 	}
 
 %class function_def: Function*
 function_def: ID LPAREN param_list RPAREN RARROW type LCURLY statements RCURLY
 	{
-		Function* fn {new Function($5, $0, std::move($2), std::move($7))};
-		fn->SetSymbolInfo(${1});
+		Identifier* id {new Identifier($0)};
+		id->SetSymbolInfo(${0});
+		Function* fn {new Function(id, std::move($2), $5, std::move($7))};
+		fn->SetMergedInfo(${0}, ${5});
 		$$ = fn;
 	}
 
@@ -145,8 +148,10 @@ param_list_tail:
 %class param: Parameter*
 param: type ID
 	{
-		Parameter* param {new Parameter($0, $1)};
-		param->SetSymbolInfo(${1});
+		Identifier* id {new Identifier($1)};
+		id->SetSymbolInfo(${1});
+		Parameter* param {new Parameter($0, id)};
+		param->SetMergedInfo(${0}, ${1});
 		$$ = param;
 	}
 
@@ -166,9 +171,17 @@ statement: if_stmt
 
 %class compound_stmt: CompoundStmt*
 compound_stmt: LCURLY statements RCURLY
-	{ $$ = new CompoundStmt(std::move($1), nullptr); }
+	{
+		CompoundStmt* stmt {new CompoundStmt(std::move($1), nullptr)};
+		stmt->SetMergedInfo(${0}, ${2});
+		$$ = stmt;
+	}
 compound_stmt: LCURLY statements LARROW expression RCURLY
-	{ $$ = new CompoundStmt(std::move($1), $3); }
+	{
+		CompoundStmt* stmt {new CompoundStmt(std::move($1), $3)};
+		stmt->SetMergedInfo(${0}, ${4});
+		$$ = stmt;
+	}
 
 %class statements: StmtList
 statements: statement statements
@@ -183,8 +196,10 @@ statements:
 %class var_def_stmt: VariableDef*
 var_def_stmt: type ID ASSIGN expression SEMICOL
 	{
-		VariableDef* def {new VariableDef($0, $1, $3)};
-		def->SetSymbolInfo(${1});
+		Identifier* id {new Identifier($1)};
+		id->SetSymbolInfo(${1});
+		VariableDef* def {new VariableDef($0, id, $3)};
+		def->SetSymbolInfo(${2});
 		$$ = def;
 	}
 
@@ -203,38 +218,72 @@ expression: logic_or_expr
 %class assignment_expr: AssignmentExpr*
 assignment_expr: ID ASSIGN expression
 	{
-		AssignmentExpr* expr {new AssignmentExpr($0, $2)};
-		expr->SetSymbolInfo(${0});
+		Identifier* id {new Identifier($0)};
+		id->SetSymbolInfo(${0});
+		AssignmentExpr* expr {new AssignmentExpr(id, $2)};
+		expr->SetSymbolInfo(${1});
 		$$ = expr;
 	}
 
 %class for_expr: ForExpr*
 for_expr: FOR LPAREN expr_maybe SEMICOL expr_maybe SEMICOL expr_maybe RPAREN statement
-	{ $$ = new ForExpr($2, $4, $6, $8); }
+	{
+		ForExpr* expr {new ForExpr($2, $4, $6, $8)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 
 %class loop_expr: LoopExpr*
 loop_expr: LOOP statement
-	{ $$ = new LoopExpr($1); }
+	{
+		LoopExpr* expr {new LoopExpr($1)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 
 %class while_expr: WhileExpr*
 while_expr: WHILE LPAREN expression RPAREN statement
-	{ $$ = new WhileExpr($2, $4); }
+	{
+		WhileExpr* expr {new WhileExpr($2, $4)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 
 %class break_stmt: BreakStmt*
 break_stmt: BREAK expr_maybe SEMICOL
-	{ $$ = new BreakStmt($1); }
+	{
+		BreakStmt* brk {new BreakStmt($1)};
+		brk->SetSymbolInfo(${0});
+		$$ = brk;
+	}
 break_stmt: BREAK LPAREN DECIMAL RPAREN expr_maybe SEMICOL
-	{ $$ = new BreakStmt($4, $2); }
+	{ 
+		BreakStmt* brk {new BreakStmt($4, $2)};
+		brk->SetSymbolInfo(${0});
+		$$ = brk;
+	}
 
 %class return_stmt: ReturnStmt*
 return_stmt: RETURN expr_maybe SEMICOL
-	{ $$ = new ReturnStmt($1); }
+	{
+		ReturnStmt* ret {new ReturnStmt($1)};
+		ret->SetSymbolInfo(${0});
+		$$ = ret;
+	}
 
 %class if_stmt: IfStmt*
 if_stmt: IF LPAREN expression RPAREN statement
-	{ $$ = new IfStmt($2, $4, nullptr); }
+	{
+		IfStmt* stmt {new IfStmt($2, $4, nullptr)};
+		stmt->SetSymbolInfo(${0});
+		$$ = stmt;
+	}
 if_stmt: IF LPAREN expression RPAREN statement ELSE statement
-	{ $$ = new IfStmt($2, $4, $6); }
+	{
+		IfStmt* stmt {new IfStmt($2, $4, $6)};
+		stmt->SetSymbolInfo(${0});
+		$$ = stmt;
+	}
 
 %class expr_maybe: Expression*
 expr_maybe: expression
@@ -248,8 +297,10 @@ primary_expr: LPAREN expression RPAREN
 	{ $$ = $1; }
 primary_expr: ID LPAREN arg_list RPAREN
 	{
-		Invocation* inv {new Invocation($0, std::move($2))};
-		inv->SetSymbolInfo(${0});
+		Identifier* id {new Identifier($0)};
+		id->SetSymbolInfo(${0});
+		Invocation* inv {new Invocation(id, std::move($2))};
+		inv->SetMergedInfo(${0}, ${3});
 		$$ = inv;
 	}
 primary_expr: literal
@@ -467,7 +518,7 @@ logic_or_expr: logic_or_expr LOR logic_and_expr
 %class literal: Literal*
 literal: ID
 	{
-		Identifier* id {new Identifier($0)};
+		Variable* id {new Variable($0)};
 		id->SetSymbolInfo(${0});
 		$$ = id;
 	}

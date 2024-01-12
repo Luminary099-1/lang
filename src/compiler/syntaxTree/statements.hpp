@@ -13,7 +13,7 @@ using StmtList = std::vector<std::unique_ptr<Statement>>;
 
 // Base class to represent statements.
 struct Statement
-	: public SyntaxTreeNode
+	: public virtual SyntaxTreeNode
 {
 	bool _hasReturn {false};	// Indicates whether all control paths return.
 
@@ -30,18 +30,20 @@ struct Statement
 	 */
 	static bool
 		ValidateAndGetReturn(StmtList& stmts, ValidateData& dat, bool& success);
+
+	// TokenInfo should refer to the entire statement in extending classes.
 };
 
 
-// Base class to represent expressions.
+// Abstract expression.
 struct Expression
-	: public Statement, public TokenInfo
+	: public Statement
 {
 	Type* _type {Type::Create("void")};	// The expression's type.
 };
 
 
-// Represents expressions like loops that can be broken.
+// Abstract representation of expressions that can be broken.
 struct Breakable
 	: public Expression
 {};
@@ -49,30 +51,31 @@ struct Breakable
 
 // Represents a variable definition (including initialization).
 struct VariableDef
-	: public Statement, public TokenInfo
+	: public virtual Statement, public Declaration
 {
 	Type* _type;						// The variable's type.
-	std::string _name;					// The variable's symbolic name.
 	std::unique_ptr<Expression> _init;	// The variable's initializer.
 
 	/**
 	 * @brief Construct a new VariableDef object.
 	 * 
 	 * @param type The variable's type.
-	 * @param name The variable's name.
+	 * @param name The variable's identifier.
 	 * @param init The variable's initialization expression.
 	 */
-	VariableDef(Type* type, std::string name, Expression* init);
+	VariableDef(Type* type, Identifier* name, Expression* init);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the equal symbol.
 };
 
 
 // Represents a break statement.
 struct BreakStmt
-	: public Expression
+	: public Statement
 {
 	int _levels {1};					// The number of statements to break.
 	Breakable* _target {nullptr};		// The targetted breakable expression.
@@ -89,11 +92,13 @@ struct BreakStmt
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the break keyword.
 };
 
 
 struct ReturnStmt
-	: public Expression
+	: public Statement
 {
 	std::unique_ptr<Expression> _expr;	// An optional return expression.
 
@@ -107,6 +112,8 @@ struct ReturnStmt
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the return keyword.
 };
 
 
@@ -130,4 +137,6 @@ struct CompoundStmt
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the inclusive span between curly braces.
 };

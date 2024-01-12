@@ -13,6 +13,7 @@
 
 // Base class for nodes of the AST.
 struct SyntaxTreeNode
+	: public virtual TokenInfo
 {
 	/**
 	 * @brief Accumulates all symbols definitions into the specified scope stack
@@ -73,9 +74,38 @@ struct SyntaxTreeNode
 };
 
 
+struct Identifier
+	: public SyntaxTreeNode
+{
+	std::string _id;	// The name associated with this node.
+
+	/**
+	 * @brief Construct a new Identifier object.
+	 * 
+	 * @param id The name to be associated with this node.
+	 */
+	Identifier(std::string& id);
+
+	// Prints inline in the format "ID = <type_name>".
+	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the ID itself, assigned by the parser.
+};
+
+
+// Represents any node which defines a symbol.
+struct Declaration
+	: public virtual SyntaxTreeNode
+{
+	std::unique_ptr<Identifier> _name;	// The declared identifier.
+
+	Declaration(Identifier* name);
+};
+
+
 // Represents a type in the program.
 struct Type
-	: public SyntaxTreeNode, public TokenInfo
+	: public SyntaxTreeNode
 {
 protected:
 	static const std::unique_ptr<Type> _void;	// Void singleton.

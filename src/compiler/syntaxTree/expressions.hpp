@@ -61,6 +61,8 @@ struct BinaryExpr
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the operator symbol.
 };
 
 
@@ -101,6 +103,8 @@ struct PreExpr
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the operator symbol.
 };
 
 
@@ -137,6 +141,8 @@ struct PostExpr
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the operator symbol.
 };
 
 
@@ -147,9 +153,9 @@ struct Invocation
 	// Stores the arguments passed to a function.
 	using ArgList = std::vector<std::unique_ptr<Expression>>;
 
-	std::string _name;	// The called function's symbolic name.
-	Function* _def;		// The node defining the call.
-	ArgList _args;		// The arguments specified by the call.
+	std::unique_ptr<Identifier> _name;	// The called function's identifier.
+	Function* _def;						// The node defining the call.
+	ArgList _args;						// The arguments specified by the call.
 
 	/**
 	 * @brief Construct a new Invocation object.
@@ -158,9 +164,11 @@ struct Invocation
 	 * @param args The arguments specified by the function call. Assumed to be
 	 * in reverse order after being parsed.
 	 */
-	Invocation(std::string name, ArgList& args);
+	Invocation(Identifier* name, ArgList& args);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the span of the ID to the closing parentheses.
 };

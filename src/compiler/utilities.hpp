@@ -4,9 +4,13 @@
 #include <map>
 #include <ostream>
 #include <string_view>
+#include <vector>
 
 // Forward declarations to avoid use of cyclic includes.
+struct Breakable;
+struct Declaration;
 struct Function;
+struct Identifier;
 struct SyntaxTreeNode;
 struct Type;
 
@@ -29,6 +33,15 @@ struct TokenInfo
 	 * this.
 	 */
 	void SetSymbolInfo(TokenInfo info);
+
+	/**
+	 * @brief Copies the fields defined by this struct from two other instance
+	 * such that the interval represented spans the intervals of both inputs.
+	 * 
+	 * @param i1 An instance of TokenInfo.
+	 * @param i2 An instance of TokenInfo.
+	 */
+	void SetMergedInfo(TokenInfo& i1, TokenInfo& i2);
 };
 
 
@@ -55,7 +68,7 @@ struct ScopeStack
 {
 protected:
 	// A stack of scopes that map identifiers to AST definitions.
-	std::forward_list<std::map<std::string_view, SyntaxTreeNode*>> _stackMap;
+	std::forward_list<std::map<std::string_view, Declaration*>> _stackMap;
 
 public:
 	/**
@@ -74,10 +87,10 @@ public:
 	 * 
 	 * @param name The symbol's identifier (name).
 	 * @param node The AST node referred to by the symbol.
-	 * @return A pointer to the already defined AST node referred to by name. If
-	 * there isn't a name collision, nullptr is returned.
+	 * @return The AST node that defines the symbol. If no such symbol is
+	 * defined, nullptr is returned.
 	 */
-	SyntaxTreeNode* Define(std::string_view name, SyntaxTreeNode* node);
+	Declaration* Define(std::string_view name, Declaration* node);
 
 	/**
 	 * @brief Returns a pointer to the AST node referred to by the specfied
@@ -85,10 +98,10 @@ public:
 	 * the symbol will be returned.
 	 * 
 	 * @param name The symbol's identifier (name).
-	 * @return SyntaxTreeNode* A pointer to the AST node of the already defined
-	 * symbol. If no such symbol is define, nullptr is returned.
+	 * @return The AST node that defines the symbol. If no such symbol is
+	 * defined, nullptr is returned.
 	 */
-	SyntaxTreeNode* Lookup(std::string_view name);
+	Declaration* Lookup(std::string_view name);
 };
 
 
@@ -97,7 +110,7 @@ struct ValidateData
 	// The TUBuffer for the source file expressing this AST.
 	TUBuffer& _src;
 	// Tree stack containing the chain of breakable predecessor AST nodes.
-	std::forward_list<SyntaxTreeNode*>& _bs;
+	std::vector<Breakable*>& _bs;
 	// The current function definition.
 	Function* _curFunc;
 };

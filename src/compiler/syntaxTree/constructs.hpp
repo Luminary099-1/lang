@@ -11,21 +11,23 @@
 struct AssignmentExpr
 	: public Expression
 {
-	std::string _name;					// The variable being assigned to.
-	VariableDef* _def;					// The AST node declaring the assignee.
+	std::unique_ptr<Identifier> _name;	// The variable's identifier.
+	VariableDef* _def;					// The AST node declaring the variable.
 	std::unique_ptr<Expression> _expr;	// The expression being assigned.
 
 	/**
 	 * @brief Construct a new AssignmentExpr object.
 	 * 
-	 * @param name The name of the variable being assigned.
+	 * @param name The variable's identifier.
 	 * @param expr The expression being assigned to the variable.
 	 */
-	AssignmentExpr(std::string name, Expression* expr);
+	AssignmentExpr(Identifier* name, Expression* expr);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the equal symbol.
 };
 
 
@@ -49,6 +51,8 @@ struct IfStmt
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+	
+	// TokenInfo refers to the if keyword.
 };
 
 
@@ -74,6 +78,8 @@ struct ForExpr
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the for keyword.
 };
 
 
@@ -93,6 +99,8 @@ struct LoopExpr
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the loop keyword.
 };
 
 
@@ -114,4 +122,6 @@ struct WhileExpr
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
+
+	// TokenInfo refers to the while keyword.
 };
