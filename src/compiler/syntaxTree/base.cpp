@@ -53,6 +53,23 @@ Declaration::Declaration(Identifier* name)
 {}
 
 
+bool Declaration::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	Declaration* pre_def {ss.Define(_name->_id, this)};
+	if (pre_def != nullptr)
+	{
+		std::cerr << '(' << _name->_row << ", "sv << _name->_col
+			<< "): Symbol collision: "sv << _name->_id
+			<< "\n# The following on line "sv << _name->_row << ":\n"sv;
+		HighlightError(std::cerr, src, *_name);
+		std::cerr << "# Redefines on line "sv << pre_def->_name->_row << ":\n"sv;
+		HighlightError(std::cerr, src, *pre_def->_name);
+		return false;
+	}
+	return true;
+}
+
+
 const std::unique_ptr<Type> Type::_void(new Type("void"s));
 const std::unique_ptr<Type> Type::_int(new Type("int"s));
 const std::unique_ptr<Type> Type::_bool(new Type("bool"s));

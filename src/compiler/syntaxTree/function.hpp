@@ -23,7 +23,6 @@ struct Parameter
 	 */
 	Parameter(Type* type, Identifier* name);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the span of the parameter's type and name.

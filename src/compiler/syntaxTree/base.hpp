@@ -99,7 +99,14 @@ struct Declaration
 {
 	std::unique_ptr<Identifier> _name;	// The declared identifier.
 
+	/**
+	 * @brief Construct a new Declaration object.
+	 * 
+	 * @param name The identifier associated with the declaration.
+	 */
 	Declaration(Identifier* name);
+
+	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 };
 
 

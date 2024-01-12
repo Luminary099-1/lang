@@ -13,13 +13,6 @@ Parameter::Parameter(Type* type, Identifier* name)
 {}
 
 
-bool Parameter::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	// TODO: This doesn't look right...
-	return _type->Scope(ss, src);
-}
-
-
 void Parameter::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -40,18 +33,7 @@ Function::Function(
 
 bool Function::Scope(ScopeStack& ss, TUBuffer& src)
 {
-	bool success {true};
-	Declaration* pre_def {ss.Define(_name->_id, this)};
-	if (pre_def != nullptr)
-	{
-		std::cerr << '(' << _name->_row << ", "sv << _name->_col
-			<< "): Symbol collision: "sv << _name->_id
-			<< "\n# The following on line "sv << _name->_row << ":\n"sv;
-		HighlightError(std::cerr, src, *_name);
-		std::cerr << "# Redefines on line "sv << pre_def->_name->_row << ":\n"sv;
-		HighlightError(std::cerr, src, *pre_def->_name);
-		success = false;
-	}
+	bool success {Declaration::Scope(ss, src)};
 
 	ss.Enter();
 	for (size_t i {0}; i < _params.size(); ++ i)
