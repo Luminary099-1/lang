@@ -5,6 +5,7 @@
 
 #include <iostream>
 
+using namespace std::string_literals;
 using namespace std::string_view_literals;
 
 
@@ -49,6 +50,7 @@ bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src)
 	ss.Enter();
 	for (size_t i {0}; i < _stmts.size(); ++ i)
 		success = _stmts[i]->Scope(ss, src) && success;
+	if (_expr != nullptr) success = _expr->Scope(ss, src) && success;
 	ss.Exit();
 	return success;
 }
@@ -144,7 +146,8 @@ BreakStmt::BreakStmt(Expression* expr, int levels)
 
 bool BreakStmt::Scope(ScopeStack &ss, TUBuffer &src)
 {
-	return _expr->Scope(ss, src);
+	if (_expr != nullptr) return _expr->Scope(ss, src);
+	else return true;
 }
 
 
@@ -159,20 +162,29 @@ bool BreakStmt::Validate(ValidateData& dat)
 		HighlightError(std::cerr, dat._src, *this);
 		return false;
 	}
-
 	_target = dat._bs[_levels - 1];
+
 	const Type* existing {_target->_type};
-	Type* given {_expr->_type};
-	if (!existing->IsVoid() && *existing != *given)
+	if (!existing->IsVoid())
 	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected break expression of type "sv << existing->_name
-			<< ", found: "sv << given->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
-		return false;
+		if (_expr == nullptr)
+		{
+			std::cerr << '(' << _row << ", "sv << _col
+				<< "): Expected break expression, none provided.\n"sv;
+			HighlightError(std::cerr, dat._src, *this);
+			return false;
+		}
+		else if (*_expr->_type != *existing)
+		{
+			std::cerr << '(' << _row << ", "sv << _col
+				<< "): Expected break expression of type "sv << existing->_name
+				<< ", found: "sv << existing->_name << '\n';
+			HighlightError(std::cerr, dat._src, *this);
+			return false;
+		}
 	}
-	
-	_target->_type = given;
+	else if (_expr != nullptr) _target->_type = _expr->_type;
+
 	return success;
 }
 
@@ -192,7 +204,8 @@ ReturnStmt::ReturnStmt(Expression* expr)
 
 bool ReturnStmt::Scope(ScopeStack &ss, TUBuffer &src)
 {
-	return _expr->Scope(ss, src);
+	if (_expr != nullptr) return _expr->Scope(ss, src);
+	else return true;
 }
 
 
@@ -210,12 +223,29 @@ bool ReturnStmt::Validate(ValidateData& dat)
 	}
 
 	const Type* expected {dat._curFunc->_type};
-	const Type* given {_expr->_type};
-	if (*given != *expected)
+	if (!expected->IsVoid())
+	{
+		if (_expr == nullptr)
+		{
+			std::cerr << '(' << _row << ", "sv << _col
+				<< "): Return from a function of type "sv
+				<< expected->_name << " is missing a return expression.\n"sv;
+			HighlightError(std::cerr, dat._src, *this);
+			return false;
+		}
+		else if (*_expr->_type != *expected)
+		{
+			std::cerr << '(' << _row << ", "sv << _col
+				<< "): Expected return expression of type "sv << expected->_name
+				<< ", found: "sv << expected->_name << '\n';
+			HighlightError(std::cerr, dat._src, *this);
+			return false;
+		}
+	}
+	else if (_expr != nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected return value of type "sv << expected->_name
-			<< ", found: "sv << given->_name << '\n';
+			<< "): Unexpected return expression from a void function.\n"sv;
 		HighlightError(std::cerr, dat._src, *this);
 		return false;
 	}

@@ -37,7 +37,7 @@ struct IfStmt
 {
 	std::unique_ptr<Expression> _cond;	// A conditional expression.
 	std::unique_ptr<Statement> _body;	// The statement executed on true.
-	std::unique_ptr<Statement> _alt;	// The optional else case.
+	std::unique_ptr<Statement> _alt;	// The else case. Optional.
 
 	/**
 	 * @brief Construct a new IfStmt object;
@@ -60,9 +60,9 @@ struct IfStmt
 struct ForExpr
 	: public Breakable
 {
-	std::unique_ptr<Expression> _init;	// Runs before the loop.
-	std::unique_ptr<Expression> _cond;	// Tests before iterations.
-	std::unique_ptr<Expression> _inc;	// Runs after the condition.
+	std::unique_ptr<Expression> _init;	// Runs before the loop. Optional.
+	std::unique_ptr<Expression> _cond;	// Tests before iterations. Optional.
+	std::unique_ptr<Expression> _inc;	// Runs after the condition. Optional.
 	std::unique_ptr<Statement> _body;	// Executed each iteration.
 
 	/**

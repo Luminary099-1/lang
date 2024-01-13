@@ -153,10 +153,10 @@ void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
 	++ depth;
 	PrintIndent(os, indent, depth);
 	os << "Left Operand =\n"sv;
-	PrintMaybe(_argl.get(), os, indent, depth + 1);
+	_argl->Print(os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
 	os << "Right Operand =\n"sv;
-	PrintMaybe(_argr.get(), os, indent, depth + 1);
+	_argr->Print(os, indent, depth + 1);
 }
 
 
@@ -211,7 +211,7 @@ void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
 		<< ", Type = "sv << _type->_name << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
 	os << "Operand =\n"sv;
-	PrintMaybe(_arg.get(), os, indent, ++ depth);
+	_arg->Print(os, indent, ++ depth);
 }
 
 
@@ -262,7 +262,7 @@ void PostExpr::Print(std::ostream& os, std::string_view indent, int depth)
 		<< ", Type = "sv << _type->_name << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
 	os << "Operand =\n"sv;
-	PrintMaybe(_arg.get(), os, indent, ++ depth);
+	_arg->Print(os, indent, ++ depth);
 }
 
 

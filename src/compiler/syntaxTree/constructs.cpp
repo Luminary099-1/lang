@@ -63,7 +63,8 @@ bool IfStmt::Scope(ScopeStack& ss, TUBuffer& src)
 	// Kinda ugly to avoid short-circuit evaluation.
 	bool success {_cond->Scope(ss, src)};
 	success = _body->Scope(ss, src) && success;
-	return _alt->Scope(ss, src) && success;
+	if (_alt != nullptr) return _alt->Scope(ss, src) && success;
+	return success;
 }
 
 
@@ -71,8 +72,12 @@ bool IfStmt::Validate(ValidateData& dat)
 {
 	bool success {_cond->Validate(dat)};
 	success = _body->Validate(dat) && success;
-	success = _alt->Validate(dat) && success;
-	_hasReturn = _body->_hasReturn && (_alt != nullptr || _alt->_hasReturn);
+	if (_alt != nullptr)
+	{
+		success = _alt->Validate(dat) && success;
+		_hasReturn = _body->_hasReturn && _alt->_hasReturn;
+	}
+	else _hasReturn = _body->_hasReturn;
 
 	if (!_cond->_type->IsBool())
 	{
@@ -111,9 +116,10 @@ ForExpr::ForExpr(
 
 bool ForExpr::Scope(ScopeStack& ss, TUBuffer& src)
 {
-	bool success {_init->Scope(ss, src)};
-	success = _cond->Scope(ss, src) && success;
-	success = _inc->Scope(ss, src) && success;
+	bool success {true};
+	if (_init != nullptr) success = _init->Scope(ss, src) && success;
+	if (_cond != nullptr) success = _cond->Scope(ss, src) && success;
+	if (_inc != nullptr) success = _inc->Scope(ss, src) && success;
 	return _body->Scope(ss, src) && success;
 }
 
@@ -121,9 +127,10 @@ bool ForExpr::Scope(ScopeStack& ss, TUBuffer& src)
 bool ForExpr::Validate(ValidateData& dat)
 {
 	dat._bs.push_back(this);
-	bool success {_init->Validate(dat)};
-	success = _cond->Validate(dat) && success;
-	success = _inc->Validate(dat) && success;
+	bool success {true};
+	if (_init != nullptr) success = _init->Validate(dat) && success;
+	if (_cond != nullptr) success = _cond->Validate(dat) && success;
+	if (_inc != nullptr) success = _inc->Validate(dat) && success;
 	success = _body->Validate(dat) && success;
 	dat._bs.pop_back();
 	_hasReturn = _body->_hasReturn;

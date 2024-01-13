@@ -122,7 +122,7 @@ struct CompoundStmt
 	: public Expression
 {
 	StmtList _stmts;					// This node's children statements.
-	std::unique_ptr<Expression> _expr;	// An optional return expression.
+	std::unique_ptr<Expression> _expr;	// An evaluation expression. Optional.
 	
 	/**
 	 * @brief Construct a new CompoundStmt object.
