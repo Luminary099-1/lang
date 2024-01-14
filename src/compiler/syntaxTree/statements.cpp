@@ -139,8 +139,8 @@ void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-BreakStmt::BreakStmt(Expression* expr, int levels)
-	: _expr{expr}, _levels{levels}
+BreakStmt::BreakStmt(Expression* expr, IntLiteral* count)
+	: _expr{expr}, _count{count}
 {}
 
 
@@ -154,15 +154,16 @@ bool BreakStmt::Scope(ScopeStack &ss, TUBuffer &src)
 bool BreakStmt::Validate(ValidateData& dat)
 {
 	bool success {_expr->Validate(dat)};
+	const int count {(_count == nullptr) ? 0 : _count->_value};
 
-	if (dat._bs.size() < _levels)
+	if (dat._bs.size() < count)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Break count exceeds breakable depth: "sv << _levels << '\n';
+			<< "): Break count exceeds breakable depth: "sv << count << '\n';
 		HighlightError(std::cerr, dat._src, *this);
 		return false;
 	}
-	_target = dat._bs[_levels - 1];
+	_target = dat._bs[count - 1];
 
 	const Type* existing {_target->_type};
 	if (!existing->IsVoid())
@@ -192,7 +193,8 @@ bool BreakStmt::Validate(ValidateData& dat)
 void BreakStmt::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "BreakStatement(Levels = "sv << _levels << "):\n"sv;
+	os << "BreakStatement(Levels = "sv
+		<< ((_count == nullptr) ? 0 : _count->_value) << "):\n"sv;
 	PrintMaybe(_expr.get(), os, indent, ++ depth);
 }
 

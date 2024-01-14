@@ -7,18 +7,31 @@
 using namespace std::string_view_literals;
 
 
-Variable::Variable(std::string& value)
-	: _value{value}
+Literal::Literal(std::string_view literal_name, std::string& raw_value)
+	: _literalName{literal_name}, _rawValue{raw_value}
+{}
+
+
+void Literal::Print(
+	std::ostream& os, std::string_view indent, int depth)
+{
+	PrintIndent(os, indent, depth);
+	os << _literalName << " = "sv << _rawValue << '\n';
+}
+
+
+Variable::Variable(std::string& name)
+	: Literal{"Variable"sv, name}
 {}
 
 
 bool Variable::Scope(ScopeStack& ss, TUBuffer& src)
 {
-	_def = ss.Lookup(_value);
+	_def = ss.Lookup(_rawValue);
 	if (_def != nullptr && dynamic_cast<Function*>(_def) != nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Unkown symbol: " << _value << '\n';
+			<< "): Unkown symbol: " << _rawValue << '\n';
 		HighlightError(std::cerr, src, *this);
 		return false;
 	}
@@ -26,44 +39,48 @@ bool Variable::Scope(ScopeStack& ss, TUBuffer& src)
 }
 
 
-void Variable::Print(std::ostream& os, std::string_view indent, int depth)
-{
-	PrintIndent(os, indent, depth);
-	os << "Variable(ID = "sv << _value << ")\n"sv;
-}
-
-
-IntLiteral::IntLiteral(int& value)
-	: _value{value}
+IntLiteral::IntLiteral(std::string& value)
+	: Literal{"IntLiteral"sv, value}
 {}
 
 
-void IntLiteral::Print(std::ostream& os, std::string_view indent, int depth)
+bool IntLiteral::Validate(ValidateData& dat)
 {
-	PrintIndent(os, indent, depth);
-	os << "IntegerLiteral(Value = "sv << _value << ")\n"sv;
+	try
+	{
+		_value = std::stoi(_rawValue);
+	}
+	catch (const std::out_of_range& e)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Ingeger literal is out of range of u32: "sv
+			<< _rawValue << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		return false;
+	}
+	return true;
 }
 
 
-BoolLiteral::BoolLiteral(bool& value)
-	: _value{value}
+BoolLiteral::BoolLiteral(std::string& value)
+	: Literal{"BoolLiteral"sv, value}
 {}
 
 
-void BoolLiteral::Print(std::ostream& os, std::string_view indent, int depth)
+bool BoolLiteral::Validate(ValidateData& dat)
 {
-	PrintIndent(os, indent, depth);
-	os << "BooleanLiteral(Value = "sv << _value << ")\n"sv;
+	_value = (_rawValue == "true"sv) ? true : false;
+	return true;
 }
 
 
 StrLiteral::StrLiteral(std::string& value)
-	: _value{value}
+	: Literal{"StrLiteral"sv, value}
 {}
 
 
-void StrLiteral::Print(std::ostream& os, std::string_view indent, int depth)
+bool StrLiteral::Validate(ValidateData& dat)
 {
-	PrintIndent(os, indent, depth);
-	os << "StringLiteral(Value = "sv << _value << ")\n"sv;
+	_value = _rawValue.substr(1, _rawValue.length() - 2);
+	return true;
 }

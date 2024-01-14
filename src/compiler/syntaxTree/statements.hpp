@@ -77,17 +77,17 @@ struct VariableDef
 struct BreakStmt
 	: public Statement
 {
-	int _levels {1};					// The number of statements to break.
 	Breakable* _target {nullptr};		// The targetted breakable expression.
-	std::unique_ptr<Expression> _expr;	// An optional return expression.
+	std::unique_ptr<Expression> _expr;	// Yield expression. Optional.
+	std::unique_ptr<IntLiteral> _count;	// The break count literal. Optional.
 
 	/**
 	 * @brief Construct a new BreakStmt object.
 	 * 
-	 * @param expr The number of statements to break.
-	 * @param levels The expression to be returned.
+	 * @param expr Yield expression. Optional.
+	 * @param cout The number of expressions to break. Optional.
 	 */
-	BreakStmt(Expression* expr, int levels = 1);
+	BreakStmt(Expression* expr, IntLiteral* count);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;

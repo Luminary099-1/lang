@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <string>
+#include <string_view>
 #include <utility>
 
 %no_externc
@@ -69,20 +70,19 @@ MATCH: match;
 FOR: for;
 LOOP: loop;
 WHILE: while;
-TRUE: true;
-FALSE: false;
+BOOLEAN: true|false { $$ = std::string($text); }
 BREAK: break;
 RETURN: return;
-DECIMAL: [0-9]+ { $$ = std::atoi($text); }
-ID: [a-zA-Z_][a-zA-Z0-9_]* { $$ = $text; }
-STRING: \".*\" { $$ = $text; }
+INTEGER: [0-9]+ { $$ = std::string($text); }
+LEVELS: [0-9]+ { $$ = std::string($text); }
+ID: [a-zA-Z_][a-zA-Z0-9_]* { $$ = std::string($text); }
+STRING: \".*\" { $$ = std::string($text); }
 
 %token ASSIGN SEMICOL COMMA PLUS MINUS ASTERISK SLASH PERCENT INC DEC AND OR XOR COMP SHR SHL LAND
-%token LOR DENY EQ NE GT LT GE LE LPAREN RPAREN LCURLY RCURLY LARROW RARROW DECIMAL ID STRING IF
-%token ELSE MATCH FOR LOOP WHILE TRUE FALSE BREAK RETURN
+%token LOR DENY EQ NE GT LT GE LE LPAREN RPAREN LCURLY RCURLY LARROW RARROW INTEGER LEVELS ID STRING
+%token IF ELSE MATCH FOR LOOP WHILE BOOLEAN BREAK RETURN
 
-%type DECIMAL: int
-%class ID STRING: std::string
+%class BOOLEAN INTEGER LEVELS ID STRING: std::string
 /* Not sure what else to put here for now. */
 %token_type int
 
@@ -91,7 +91,7 @@ STRING: \".*\" { $$ = $text; }
 %nt statements var_def_stmt expression assignment_expr if_stmt for_expr loop_expr while_expr
 %nt break_stmt return_stmt expr_maybe primary_expr arg_list arg_list_tail pre_expr
 %nt multiplicative_expr additive_expr shift_expr relative_expr absolute_expr bit_and_expr
-%nt bit_xor_expr bit_or_expr logic_and_expr logic_or_expr literal boolean
+%nt bit_xor_expr bit_or_expr logic_and_expr logic_or_expr literal int_literal
 
 
 %grammar%
@@ -252,11 +252,11 @@ while_expr: WHILE LPAREN expression RPAREN statement
 %class break_stmt: BreakStmt*
 break_stmt: BREAK expr_maybe SEMICOL
 	{
-		BreakStmt* brk {new BreakStmt($1)};
+		BreakStmt* brk {new BreakStmt($1, nullptr)};
 		brk->SetSymbolInfo(${0});
 		$$ = brk;
 	}
-break_stmt: BREAK LPAREN DECIMAL RPAREN expr_maybe SEMICOL
+break_stmt: BREAK LPAREN int_literal RPAREN expr_maybe SEMICOL
 	{ 
 		BreakStmt* brk {new BreakStmt($4, $2)};
 		brk->SetSymbolInfo(${0});
@@ -522,13 +522,11 @@ literal: ID
 		id->SetSymbolInfo(${0});
 		$$ = id;
 	}
-literal: DECIMAL
+literal: int_literal
 	{
-		IntLiteral* lit {new IntLiteral($0)};
-		lit->SetSymbolInfo(${0});
-		$$ = lit;
+		$$ = $0;
 	}
-literal: boolean
+literal: BOOLEAN
 	{
 		BoolLiteral* lit {new BoolLiteral($0)};
 		lit->SetSymbolInfo(${0});
@@ -541,16 +539,13 @@ literal: STRING
 		$$ = lit;
 	}
 
-%type boolean: bool
-boolean: TRUE
+
+%class int_literal: IntLiteral*
+int_literal: INTEGER
 	{
-		$ = ${0};
-		$$ = true;
-	}
-boolean: FALSE
-	{
-		$ = ${0};
-		$$ = false;
+		IntLiteral* lit {new IntLiteral($0)};
+		lit->SetSymbolInfo(${0});
+		$$ = lit;
 	}
 
 
@@ -579,8 +574,8 @@ boolean: FALSE
 %prefer primary_expr: ID * LPAREN arg_list RPAREN
 %over literal: ID *
 
-%prefer break_stmt: BREAK LPAREN DECIMAL * RPAREN expr_maybe SEMICOL
-%over literal: DECIMAL *
+%prefer break_stmt: BREAK LPAREN int_literal * RPAREN expr_maybe SEMICOL
+%over literal: int_literal *
 
 %prefer type: ID *
 %over literal: ID *
