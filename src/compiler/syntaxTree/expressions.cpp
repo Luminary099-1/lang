@@ -1,342 +1,186 @@
-#include "expressions.hpp"
+#include "common.hpp"
 
 #include <iostream>
-#include <utility>
 
 using namespace std::string_view_literals;
 
 
-BinaryExpr::BinaryExpr(Expression* argl, Expression* argr, Ops op)
-	: _argl{argl}, _argr{argr}, _op{op}
+AssignmentExpr::AssignmentExpr(Identifier* name, Expression* expr)
+	: _name{name}, _expr{expr}
 {}
 
 
-std::string_view BinaryExpr::GetOpText(Ops op)
+bool AssignmentExpr::Scope(ScopeStack& ss, TUBuffer& src)
 {
-	switch (op)
-	{
-		case Ops::LAND:		return "&&"sv;
-		case Ops::LOR:		return "||"sv;
-		case Ops::AND:		return "&"sv;
-		case Ops::XOR:		return "^"sv;
-		case Ops::OR:		return "|"sv;
-		case Ops::Eq:		return "=="sv;
-		case Ops::NE:		return "!="sv;
-		case Ops::LT:		return "<"sv;
-		case Ops::LE:		return "<="sv;
-		case Ops::GT:		return ">"sv;
-		case Ops::GE:		return ">="sv;
-		case Ops::LShift:	return "<<"sv;
-		case Ops::RShift:	return ">>"sv;
-		case Ops::Add:		return "+"sv;
-		case Ops::Sub:		return "-"sv;
-		case Ops::Mul:		return "*"sv;
-		case Ops::Div:		return "/"sv;
-		case Ops::Mod:		return "%"sv;
-	}
-
-	return ""sv; // Shouldn't ever reach this but the compiler complains.
-}
-
-
-bool BinaryExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	// Kinda ugly to avoid short-circuit evaluation.
-	bool success {_argl->Scope(ss, src)};
-	return _argr->Scope(ss, src) && success;
-}
-
-
-/**
- * @brief Prints the error message associated with incorrectly typed operand
- * expressions for binary operators.
- * 
- * @param src The buffer of the source file expressing this AST.
- * @param op The TokenInfo of the operator in question.
- * @param expr The incorrectly typed operand expression.
- * @param is_left true if the passed operand is the left operand; false
- * otherwise.
- * @param expected The name of the expected type.
- */
-void ExpectedBinaryType(TUBuffer& src, TokenInfo& op, Expression* expr,
-	bool is_left, std::string_view expected)
-{
-	std::cerr << '(' << op._row << ", "sv << op._col << "): Expected "sv
-		<< ((is_left) ? "left"sv : "right"sv)
-		<< " operand of type "sv << expected << ", found: "sv
-		<< expr->_type->_name << '\n';
-	HighlightError(std::cerr, src, op);
-}
-
-
-bool BinaryExpr::Validate(ValidateData& dat)
-{
-	bool success {_argl->Validate(dat)};
-	success = _argr->Validate(dat) && success;
-
-	switch (_op)
-	{
-		// Operands must both be Booleans.
-		case Ops::LAND:	case Ops::LOR:
-			if (!_argl->_type->IsBool())
-			{
-				ExpectedBinaryType(
-					dat._src, *this, _argl.get(), true, "bool"sv);
-				success = false;
-			}
-			if (!_argr->_type->IsBool())
-			{
-				ExpectedBinaryType(
-					dat._src, *this, _argr.get(), false, "bool"sv);
-				success = false;
-			}
-			_type = _argl->_type;
-			break;
-
-		// Operands must both be integers.
-		case Ops::AND:		case Ops::XOR:		case Ops::OR:
-		case Ops::LShift:	case Ops::RShift:	case Ops::Mod:
-			if (!_argl->_type->IsInt())
-			{
-				ExpectedBinaryType(dat._src, *this, _argl.get(), true, "int"sv);
-				success = false;
-			}
-			if (!_argr->_type->IsInt())
-			{
-				ExpectedBinaryType(
-					dat._src, *this, _argr.get(), false, "bool"sv);
-				success = false;
-			}
-			_type = _argl->_type;
-			break;
-
-		// Operands must be the same type.
-		case Ops::Eq:		case Ops::NE:		case Ops::GT:
-		case Ops::LT:		case Ops::LE:		case Ops::GE:
-			if (_argl->_type != _argr->_type)
-			{
-				std::cerr << '(' << _row << ", "sv << _col
-					<< "): Expected operands of matching types, found: "sv
-					<< _argl->_type->_name << " and "sv
-					<< _argr->_type->_name << '\n';
-				HighlightError(std::cerr, dat._src, *this);
-			}
-			_type = Type::Create("bool");
-			break;
-
-		// Operands must be numbers.
-		case Ops::Add:	case Ops::Sub:
-		case Ops::Mul:	case Ops::Div:
-			if (!_argl->_type->IsInt())
-			{
-				ExpectedBinaryType(dat._src, *this, _argl.get(), true, "int"sv);
-				success = false;
-			}
-			if (!_argr->_type->IsInt())
-			{
-				ExpectedBinaryType(
-					dat._src, *this, _argr.get(), false, "bool"sv);
-				success = false;
-			}
-			_type = _argl->_type;
-			break;
-	}
-	return success;
-}
-
-
-void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
-{
-	PrintIndent(os, indent, depth);
-	os << "BinaryExpression(Op = "sv << GetOpText(_op) << ", Type = "sv
-		<< _type->_name << "):\n"sv;
-	++ depth;
-	PrintIndent(os, indent, depth);
-	os << "Left Operand =\n"sv;
-	_argl->Print(os, indent, depth + 1);
-	PrintIndent(os, indent, depth);
-	os << "Right Operand =\n"sv;
-	_argr->Print(os, indent, depth + 1);
-}
-
-
-PreExpr::PreExpr(Expression* arg, Ops op)
-	: _arg{arg}, _op{op}
-{}
-
-
-std::string_view PreExpr::GetOpText(Ops op)
-{
-	switch (op)
-	{
-		case Ops::Pos: 		return "+"sv;
-		case Ops::Neg: 		return "-"sv;
-		case Ops::Inc: 		return "++"sv;
-		case Ops::Dec: 		return "--"sv;
-		case Ops::Deny: 	return "!"sv;
-		case Ops::Comp: 	return "~"sv;
-	}
-
-	return ""sv; // Shouldn't ever reach this but the compiler complains.
-}
-
-
-bool PreExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	return _arg->Scope(ss, src);
-}
-
-
-bool PreExpr::Validate(ValidateData& dat)
-{
-	bool success {_arg->Validate(dat)};
-
-	if (!_arg->_type->IsInt())
-	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected operand of type int, found: "sv
-			<< _arg->_type->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
-		success = false;
-	}
-	_type = _arg->_type;
-	return success;
-}
-
-
-void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
-{
-	PrintIndent(os, indent, depth);
-	os << "PreExpression(Op = "sv << GetOpText(_op)
-		<< ", Type = "sv << _type->_name << "):\n"sv;
-	PrintIndent(os, indent, ++ depth);
-	os << "Operand =\n"sv;
-	_arg->Print(os, indent, ++ depth);
-}
-
-
-PostExpr::PostExpr(Expression* arg, Ops op)
-	: _arg{arg}, _op{op}
-{}
-
-
-std::string_view PostExpr::GetOpText(Ops op)
-{
-	switch (op)
-	{
-		case Ops::Inc: return "++"sv;
-		case Ops::Dec: return "--"sv;
-	}
-
-	return ""sv; // Shouldn't ever reach this but the compiler complains.
-}
-
-
-bool PostExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	return _arg->Scope(ss, src);
-}
-
-
-bool PostExpr::Validate(ValidateData& dat)
-{
-	bool success {_arg->Validate(dat)};
-
-	if (!_arg->_type->IsInt())
-	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected operand of type int, found: "sv
-			<< _arg->_type->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
-		success = false;
-	}
-	_type = _arg->_type;
-	return success;
-}
-
-
-void PostExpr::Print(std::ostream& os, std::string_view indent, int depth)
-{
-	PrintIndent(os, indent, depth);
-	os << "PostExpression(Op = "sv << GetOpText(_op)
-		<< ", Type = "sv << _type->_name << "):\n"sv;
-	PrintIndent(os, indent, ++ depth);
-	os << "Operand =\n"sv;
-	_arg->Print(os, indent, ++ depth);
-}
-
-
-Invocation::Invocation(Identifier* name, ArgList& args)
-	: _name{name}, _args{std::move(args)}
-{
-	std::reverse(_args.begin(), _args.end());
-}
-
-
-bool Invocation::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	bool success {true};
-	_def = dynamic_cast<Function*>(ss.Lookup(_name->_id));
+	bool success {_expr->Scope(ss, src)};
+	_def = dynamic_cast<VariableDef*>(ss.Lookup(_name->_id));
 	if (_def == nullptr)
 	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Unkown function: "sv << _name->_id << '\n';
+		std::cerr << '(' << _name->_row << ", "sv << _name->_col
+			<< "): Unkown variable: "sv << _name->_id << '\n';
 		HighlightError(std::cerr, src, *_name);
 		success = false;
 	}
-
-	for (size_t i {0}; i < _args.size(); ++ i)
-		success = _args[i]->Scope(ss, src) && success;
-
 	return success;
 }
 
 
-bool Invocation::Validate(ValidateData& dat)
+bool AssignmentExpr::Validate(ValidateData& dat)
 {
+	bool success {_expr->Validate(dat)};
+
 	_type = _def->_type;
-	size_t expected_args {_def->_params.size()};
-	if (_args.size() != _def->_params.size())
+	if (*_type != *_expr->_type)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Incorrect number of arguments in call to "sv
-			<< _name->_id << ". Expected "sv << expected_args
-			<< ", found "sv << _args.size() << ".\n"sv;
+			<< "): Expected assignment expression of type "sv << _type->_name
+			<< ", found: "sv << _expr->_type->_name << '\n';
 		HighlightError(std::cerr, dat._src, *this);
-		return false;
-	}
-
-	bool success {true};
-	for (size_t i {0}; i < expected_args; ++ i)
-	{
-		success = success && _args[i]->Validate(dat);
-		Type* expected_type {_def->_params[i]->_type};
-		Type* given_type {_args[i]->_type};
-		if (*given_type != *expected_type)
-		{
-			std::cerr << '(' << _row << ", "sv << _col
-				<< "): Expected "sv << expected_type->_name << " for argument"sv
-				<< i + 1 << " in call to "sv << _name->_id << ", found: "sv
-				<< given_type->_name << '\n';
-			HighlightError(std::cerr, dat._src, *_args[i]);
-		}
 		success = false;
 	}
-
+	
 	return success;
 }
 
 
-void Invocation::Print(std::ostream& os, std::string_view indent, int depth)
+void AssignmentExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "InvokeExpression(Function = "sv << _name->_id
-		<< ", Type = "sv << _type->_name << "):\n"sv;
+	os << "AssignmentExpression(ID) = "sv << _name->_id << "):\n"sv;
+	PrintIndent(os, indent, ++ depth);
+	os << "Expression =\n"sv;
+	PrintMaybe(_expr.get(), os, indent, ++ depth);
+}
+
+
+ForExpr::ForExpr(
+	Expression* init, Expression* cond, Expression* inc, Statement* body)
+	: _init{init}, _cond{cond}, _inc{inc}, _body{body}
+{}
+
+
+bool ForExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	bool success {true};
+	if (_init != nullptr) success = _init->Scope(ss, src) && success;
+	if (_cond != nullptr) success = _cond->Scope(ss, src) && success;
+	if (_inc != nullptr) success = _inc->Scope(ss, src) && success;
+	return _body->Scope(ss, src) && success;
+}
+
+
+bool ForExpr::Validate(ValidateData& dat)
+{
+	dat._bs.push_back(this);
+	bool success {true};
+	if (_init != nullptr) success = _init->Validate(dat) && success;
+	if (_cond != nullptr) success = _cond->Validate(dat) && success;
+	if (_inc != nullptr) success = _inc->Validate(dat) && success;
+	success = _body->Validate(dat) && success;
+	dat._bs.pop_back();
+	_hasReturn = _body->_hasReturn;
+	return success;
+}
+
+
+void ForExpr::Print(std::ostream& os, std::string_view indent, int depth)
+{
+	PrintIndent(os, indent, depth);
+	os << "ForExpression("sv;
+	_type->Print(os, indent, depth);
+	os << "):\n";
 	++ depth;
-	for (size_t i {0}; i < _args.size(); ++ i)
+	PrintIndent(os, indent, depth);
+	os << "Initialize =\n"sv;
+	_init->Print(os, indent, depth + 1);
+	PrintIndent(os, indent, depth);
+	os << "Condition =\n"sv;
+	_cond->Print(os, indent, depth + 1);
+	PrintIndent(os, indent, depth);
+	os << "Increment =\n"sv;
+	_inc->Print(os, indent, depth + 1);
+	PrintIndent(os, indent, depth);
+	os << "Body =\n"sv;
+	_body->Print(os, indent, depth + 1);
+}
+
+
+LoopExpr::LoopExpr(Statement* body)
+	: _body{body}
+{}
+
+
+bool LoopExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	return _body->Scope(ss, src);
+}
+
+
+bool LoopExpr::Validate(ValidateData& dat)
+{
+	dat._bs.push_back(this);
+	bool success {_body->Validate(dat)};
+	dat._bs.pop_back();
+	_hasReturn = _body->_hasReturn;
+	return success;
+}
+
+
+void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
+{
+	PrintIndent(os, indent, depth);
+	os << "LoopExpression("sv;
+	_type->Print(os, indent, depth);
+	os << "):\n";
+	PrintIndent(os, indent, ++ depth);
+	os << "Body =:\n"sv;
+	_body->Print(os, indent, ++ depth);
+}
+
+
+WhileExpr::WhileExpr(Expression* cond, Statement* body)
+	: _cond{cond}, _body{body}
+{}
+
+
+bool WhileExpr::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	bool success {_cond->Scope(ss, src)};
+	return _body->Scope(ss, src) && success;
+}
+
+
+bool WhileExpr::Validate(ValidateData& dat)
+{
+	dat._bs.push_back(this);
+	bool success {_cond->Validate(dat)};
+	return _body->Validate(dat) && success;
+	dat._bs.pop_back();
+	_hasReturn = _body->_hasReturn;
+
+	if (!_cond->_type->IsBool())
 	{
-		PrintIndent(os, indent, depth);
-		os << "Arg["sv << i << "] =\n"sv;
-		_args[i]->Print(os, indent, depth + 1);
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected while loop condition of type bool, found: "sv
+			<< _cond->_type->_name << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		success = false;
 	}
+	return success;
+}
+
+
+void WhileExpr::Print(std::ostream& os, std::string_view indent, int depth)
+{
+	PrintIndent(os, indent, depth);
+	os << "WhileExpression("sv;
+	_type->Print(os, indent, depth);
+	os << "):\n";
+	++ depth;
+	PrintIndent(os, indent, depth);
+	os << "Condition =\n"sv;
+	_cond->Print(os, indent, depth + 1);
+	PrintIndent(os, indent, depth);
+	os << "Body =\n"sv;
+	_body->Print(os, indent, depth + 1);
 }

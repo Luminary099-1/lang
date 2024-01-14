@@ -1,9 +1,9 @@
-#include "statements.hpp"
+#include "common.hpp"
 
-#include "constructs.hpp"
-#include "function.hpp"
+#include "globals.hpp"
 
 #include <iostream>
+#include <utility>
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -34,62 +34,6 @@ bool Statement::ValidateAndGetReturn(
 		return false;
 	}
 	return true;
-}
-
-
-CompoundStmt::CompoundStmt(StmtList stmts, Expression* expr)
-	: _stmts{std::move(stmts)}, _expr{expr}
-{
-	std::reverse(_stmts.begin(), _stmts.end());
-}
-
-
-bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	bool success {true};
-	ss.Enter();
-	for (size_t i {0}; i < _stmts.size(); ++ i)
-		success = _stmts[i]->Scope(ss, src) && success;
-	if (_expr != nullptr) success = _expr->Scope(ss, src) && success;
-	ss.Exit();
-	return success;
-}
-
-
-bool CompoundStmt::Validate(ValidateData& dat)
-{
-	bool success {true};
-	_hasReturn = Statement::ValidateAndGetReturn(_stmts, dat, success);
-	if (_expr != nullptr)
-	{
-		_type = _expr->_type;
-		if (_hasReturn)
-		{
-			std::cerr << '(' << _expr->_row << ", "sv << _expr->_col
-				<< "): Evaluation never occurs as it appears after a "sv 
-				<< "return statement."sv;
-			HighlightError(std::cerr, dat._src, *_expr);
-			success = false;
-		}
-	}
-
-	return success;
-}
-
-
-void CompoundStmt::Print(
-	std::ostream& os, std::string_view indent, int depth)
-{
-	PrintIndent(os, indent, depth);
-	os << "CompoundStatement:\n"sv;
-	++ depth;
-	for (size_t i {0}; i < _stmts.size(); ++ i)
-	{
-		PrintIndent(os, indent, depth);
-		os << "Statement["sv << i << "] ->\n"sv;
-		_stmts[i]->Print(os, indent, depth + 1);
-	}
-	PrintMaybe(_expr.get(), os, indent, depth);
 }
 
 
@@ -136,6 +80,61 @@ void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)
 	os << "VariableInitialization(ID = "sv << _name->_id << ", Type = "sv
 		<< _type->_name << "):\n"sv;
 	_init->Print(os, indent, ++ depth);
+}
+
+
+IfStmt::IfStmt(Expression* cond, Statement* body, Statement* alt)
+	: _cond{cond}, _body{body}, _alt{alt}
+{}
+
+
+bool IfStmt::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	// Kinda ugly to avoid short-circuit evaluation.
+	bool success {_cond->Scope(ss, src)};
+	success = _body->Scope(ss, src) && success;
+	if (_alt != nullptr) return _alt->Scope(ss, src) && success;
+	return success;
+}
+
+
+bool IfStmt::Validate(ValidateData& dat)
+{
+	bool success {_cond->Validate(dat)};
+	success = _body->Validate(dat) && success;
+	if (_alt != nullptr)
+	{
+		success = _alt->Validate(dat) && success;
+		_hasReturn = _body->_hasReturn && _alt->_hasReturn;
+	}
+	else _hasReturn = _body->_hasReturn;
+
+	if (!_cond->_type->IsBool())
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected if statement condition of type bool, found: "sv
+			<< _cond->_type->_name << '\n';
+		HighlightError(std::cerr, dat._src, *this);
+		success = false;
+	}
+	return success;
+}
+
+
+void IfStmt::Print(std::ostream& os, std::string_view indent, int depth)
+{
+	PrintIndent(os, indent, depth);
+	os << "IfExpression:\n"sv;
+	++ depth;
+	PrintIndent(os, indent, depth);
+	os << "Condition =\n"sv;
+	_cond->Print(os, indent, depth + 1);
+	PrintIndent(os, indent, depth);
+	os << "Body =\n"sv;
+	_body->Print(os, indent, depth + 1);
+	PrintIndent(os, indent, depth);
+	os << "Else =\n"sv;
+	PrintMaybe(_alt.get(), os, indent, depth + 1);
 }
 
 
@@ -261,4 +260,60 @@ void ReturnStmt::Print(std::ostream& os, std::string_view indent, int depth)
 	PrintIndent(os, indent, depth);
 	os << "ReturnStatement:\n"sv;
 	PrintMaybe(_expr.get(), os, indent, ++ depth);
+}
+
+
+CompoundStmt::CompoundStmt(StmtList stmts, Expression* expr)
+	: _stmts{std::move(stmts)}, _expr{expr}
+{
+	std::reverse(_stmts.begin(), _stmts.end());
+}
+
+
+bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src)
+{
+	bool success {true};
+	ss.Enter();
+	for (size_t i {0}; i < _stmts.size(); ++ i)
+		success = _stmts[i]->Scope(ss, src) && success;
+	if (_expr != nullptr) success = _expr->Scope(ss, src) && success;
+	ss.Exit();
+	return success;
+}
+
+
+bool CompoundStmt::Validate(ValidateData& dat)
+{
+	bool success {true};
+	_hasReturn = Statement::ValidateAndGetReturn(_stmts, dat, success);
+	if (_expr != nullptr)
+	{
+		_type = _expr->_type;
+		if (_hasReturn)
+		{
+			std::cerr << '(' << _expr->_row << ", "sv << _expr->_col
+				<< "): Evaluation never occurs as it appears after a "sv 
+				<< "return statement."sv;
+			HighlightError(std::cerr, dat._src, *_expr);
+			success = false;
+		}
+	}
+
+	return success;
+}
+
+
+void CompoundStmt::Print(
+	std::ostream& os, std::string_view indent, int depth)
+{
+	PrintIndent(os, indent, depth);
+	os << "CompoundStatement:\n"sv;
+	++ depth;
+	for (size_t i {0}; i < _stmts.size(); ++ i)
+	{
+		PrintIndent(os, indent, depth);
+		os << "Statement["sv << i << "] ->\n"sv;
+		_stmts[i]->Print(os, indent, depth + 1);
+	}
+	PrintMaybe(_expr.get(), os, indent, depth);
 }

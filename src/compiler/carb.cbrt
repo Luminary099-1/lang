@@ -1,9 +1,6 @@
 #include "./syntaxTree/base.hpp"
-#include "./syntaxTree/function.hpp"
-#include "./syntaxTree/statements.hpp"
-#include "./syntaxTree/expressions.hpp"
-#include "./syntaxTree/constructs.hpp"
-#include "./syntaxTree/literals.hpp"
+#include "./syntaxTree/common.hpp"
+#include "./syntaxTree/globals.hpp"
 
 #include <cstdlib>
 #include <string>

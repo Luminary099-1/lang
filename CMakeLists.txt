@@ -16,10 +16,10 @@ add_executable(compiler
 	src/compiler/utilities.cpp
 	src/compiler/parse.cpp
 	src/compiler/syntaxTree/base.cpp
-	src/compiler/syntaxTree/constructs.cpp
 	src/compiler/syntaxTree/expressions.cpp
-	src/compiler/syntaxTree/function.cpp
+	src/compiler/syntaxTree/globals.cpp
 	src/compiler/syntaxTree/literals.cpp
+	src/compiler/syntaxTree/operators.cpp
 	src/compiler/syntaxTree/statements.cpp
 )
 set_property(TARGET compiler PROPERTY CXX_STANDARD 17)
