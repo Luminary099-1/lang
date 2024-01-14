@@ -41,33 +41,3 @@ void TokenInfo::SetMergedInfo(TokenInfo& i1, TokenInfo& i2)
 	_off	= first._off;
 	_endOff	= second._endOff;
 }
-
-
-void ScopeStack::Enter()
-{
-	_stackMap.push_front(std::map<std::string_view, Declaration*>());
-}
-
-
-void ScopeStack::Exit()
-{
-	_stackMap.front().clear();
-	_stackMap.pop_front();
-}
-
-
-Declaration* ScopeStack::Define(std::string_view name, Declaration* node)
-{
-	std::map<std::string_view, Declaration*>& front {_stackMap.front()};
-	if (front.count(name) == 0) return front[name];
-	front.insert(std::pair(name, node));
-	return nullptr;
-}
-
-
-Declaration* ScopeStack::Lookup(std::string_view name)
-{
-	for (std::map<std::string_view, Declaration*> scope : _stackMap)
-		if (scope.count(name)) return scope[name];
-	return nullptr;
-}

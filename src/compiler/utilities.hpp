@@ -6,14 +6,6 @@
 #include <string_view>
 #include <vector>
 
-// Forward declarations to avoid use of cyclic includes.
-struct Breakable;
-struct Declaration;
-struct Function;
-struct Identifier;
-struct SyntaxTreeNode;
-struct Type;
-
 
 // Stores the information necessary to locate a token in the TU buffer.
 struct TokenInfo
@@ -61,56 +53,3 @@ struct TUBuffer
  * @param info The token to highlight from the line.
  */
 void HighlightError(std::ostream& os, TUBuffer& src, TokenInfo& info);
-
-
-// A data structure to store program symbols in a scope hierarchy.
-struct ScopeStack
-{
-protected:
-	// A stack of scopes that map identifiers to AST definitions.
-	std::forward_list<std::map<std::string_view, Declaration*>> _stackMap;
-
-public:
-	/**
-	 * @brief Begin a new scope in the scope stack.
-	 */
-	void Enter();
-
-	/**
-	 * @brief Exit the current scope in the scope stack.
-	 */
-	void Exit();
-
-	/**
-	 * @brief Attempts to define a new symbol in the scope stack in the current
-	 * scope.
-	 * 
-	 * @param name The symbol's identifier (name).
-	 * @param node The AST node referred to by the symbol.
-	 * @return The AST node that defines the symbol. If no such symbol is
-	 * defined, nullptr is returned.
-	 */
-	Declaration* Define(std::string_view name, Declaration* node);
-
-	/**
-	 * @brief Returns a pointer to the AST node referred to by the specfied
-	 * symbol, if it exists in any scope. The most recently defined instance of
-	 * the symbol will be returned.
-	 * 
-	 * @param name The symbol's identifier (name).
-	 * @return The AST node that defines the symbol. If no such symbol is
-	 * defined, nullptr is returned.
-	 */
-	Declaration* Lookup(std::string_view name);
-};
-
-
-struct ValidateData
-{
-	// The TUBuffer for the source file expressing this AST.
-	TUBuffer& _src;
-	// Tree stack containing the chain of breakable predecessor AST nodes.
-	std::vector<Breakable*>& _bs;
-	// The current function definition.
-	Function* _curFunc;
-};
