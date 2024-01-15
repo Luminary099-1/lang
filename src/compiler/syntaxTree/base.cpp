@@ -44,14 +44,30 @@ uint32_t GenerateData::NextLabel()
 
 void GenerateData::LabelOut(uint32_t label)
 {
-	_os << "L_"sv << label << '\n';
+	*_os << "L_"sv << label << ":\n"sv;
 }
 
 
 uint32_t GenerateData::OutAndNextLabel()
 {
-	_os << "L_"sv << _nextLabel << '\n';
+	*_os << "L_"sv << _nextLabel << ":\n"sv;
 	return _nextLabel ++;
+}
+
+
+void GenerateData::Defer()
+{
+	_stash.emplace();
+	_os = &_stash.top();
+}
+
+
+void GenerateData::Resume()
+{
+	_dest << _stash.top().rdbuf();
+	_stash.pop();
+	if (_stash.size() != 0) _os = &_stash.top();
+	else _os = &_dest;
 }
 
 

@@ -2,12 +2,14 @@
 
 #include "../utilities.hpp"
 
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <list>
 #include <map>
 #include <ostream>
 #include <set>
+#include <stack>
 #include <vector>
 
 
@@ -71,32 +73,57 @@ struct ValidateData
 };
 
 
-// Storess the data necessary to generate code.
+// Storess the data necessary to generate code and provides some utilities.
 struct GenerateData
 {
-	uint32_t _nextLabel {0};
-	std::ostream& _os;
+	// Integer type to represent label IDs for the assembly output.
+	using LabelType = uint32_t;
+	// Integer type to represent byte offsets for the assembly output.
+	using OffsetType = uint32_t;
+
+protected:
+	std::ostream& _dest;	// The stream to write the assembly program to.
+	std::stack<std::stringstream> 
+		_stash;				// Separate streams to write deferred output to.
+
+public:
+	std::ostream* _os;			// The stream receiving assembly output.
+	LabelType _nextLabel {0};	// The next available label ID.
+	LabelType _curFunc;			// The label ID of the current function.
+
+	// Maps declarations stored on the stack to their offsets from the FP.
+	std::map<Declaration*, OffsetType> _offsets;
 
 	/**
-	 * @return uint32_t The ID of the next label.
+	 * @return The ID of the next label.
 	 */
-	uint32_t NextLabel();
-
+	LabelType NextLabel();
 
 	/**
 	 * @brief Outputs the specified label to the stream.
 	 * 
 	 * @param label The ID of the label to print.
 	 */
-	void LabelOut(uint32_t label);
-
+	void LabelOut(LabelType label);
 
 	/**
 	 * @brief Returns the ID of the next label and outputs it to the stream.
 	 * 
-	 * @return uint32_t The ID of the next label.
+	 * @return The ID of the next label.
 	 */
-	uint32_t OutAndNextLabel();
+	LabelType OutAndNextLabel();
+
+	/**
+	 * @brief Deferrs output written to _os and stores it in a separate stream.
+	 * _os is replaced with a temporary buffer.
+	 */
+	void Defer();
+
+	/**
+	 * @brief Writes the most recently deferred output to the previous buffer
+	 * and restores that buffer to _os.
+	 */
+	void Resume();
 };
 
 
