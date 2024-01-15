@@ -147,6 +147,12 @@ bool BinaryExpr::Validate(ValidateData& dat)
 }
 
 
+void BinaryExpr::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -206,6 +212,12 @@ bool PreExpr::Validate(ValidateData& dat)
 }
 
 
+void PreExpr::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -254,6 +266,12 @@ bool PostExpr::Validate(ValidateData& dat)
 	}
 	_type = _arg->_type;
 	return success;
+}
+
+
+void PostExpr::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
 }
 
 
@@ -326,6 +344,12 @@ bool Invocation::Validate(ValidateData& dat)
 	}
 
 	return success;
+}
+
+
+void Invocation::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
 }
 
 

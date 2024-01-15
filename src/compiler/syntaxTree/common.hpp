@@ -10,6 +10,8 @@
 using namespace std::string_view_literals;
 
 
+// The following is implemented in statements.cpp ==============================
+
 struct Statement;	// Forward declaration.
 
 // Stores a list of statements.
@@ -71,6 +73,7 @@ struct VariableDef
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the equal symbol.
@@ -96,6 +99,7 @@ struct IfStmt
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 	
 	// TokenInfo refers to the if keyword.
@@ -123,6 +127,7 @@ struct BreakStmt
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the break keyword.
@@ -143,6 +148,7 @@ struct ReturnStmt
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the return keyword.
@@ -168,11 +174,14 @@ struct CompoundStmt
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the inclusive span between curly braces.
 };
 
+
+// The following is implemented in operators.cpp ===============================
 
 // Represents a binary expression.
 struct BinaryExpr
@@ -224,6 +233,7 @@ struct BinaryExpr
 	
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the operator symbol.
@@ -266,6 +276,7 @@ struct PreExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the operator symbol.
@@ -304,6 +315,7 @@ struct PostExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the operator symbol.
@@ -332,11 +344,14 @@ struct Invocation
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the span of the ID to the closing parentheses.
 };
 
+
+// The following is implemented in expressions.cpp =============================
 
 // Represents an assignment expression.
 struct AssignmentExpr
@@ -356,6 +371,7 @@ struct AssignmentExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the equal symbol.
@@ -367,7 +383,7 @@ struct ForExpr
 	: public Breakable
 {
 	std::unique_ptr<Expression> _init;	// Runs before the loop. Optional.
-	std::unique_ptr<Expression> _cond;	// Tests before iterations. Optional.
+	std::unique_ptr<Expression> _cond;	// Tested before iterations. Optional.
 	std::unique_ptr<Expression> _inc;	// Runs after the condition. Optional.
 	std::unique_ptr<Statement> _body;	// Executed each iteration.
 
@@ -383,6 +399,7 @@ struct ForExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the for keyword.
@@ -404,6 +421,7 @@ struct LoopExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the loop keyword.
@@ -414,7 +432,7 @@ struct LoopExpr
 struct WhileExpr
 	: public Breakable
 {
-	std::unique_ptr<Expression> _cond;	// Tests before iterations.
+	std::unique_ptr<Expression> _cond;	// Tested before iterations.
 	std::unique_ptr<Statement> _body;	// Executed each iteration.
 
 	/**
@@ -427,11 +445,14 @@ struct WhileExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the while keyword.
 };
 
+
+// The following is implemented in literals.cpp ================================
 
 // Base class to represent literals.
 struct Literal
@@ -467,6 +488,7 @@ struct Variable
 	 */
 	Variable(std::string& name);
 
+	void Generate(GenerateData& dat) override;
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 
 	// TokenInfo refers to the identifier itself.
@@ -487,6 +509,7 @@ struct IntLiteral
 	IntLiteral(std::string& value);
 
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 
 	// TokenInfo refers to the value itself.
 };
@@ -506,6 +529,7 @@ struct BoolLiteral
 	BoolLiteral(std::string& value);
 
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 
 	// TokenInfo refers to the value itself.
 };
@@ -525,6 +549,7 @@ struct StrLiteral
 	StrLiteral(std::string& value);
 
 	bool Validate(ValidateData& dat) override;
+	void Generate(GenerateData& dat) override;
 
 	// TokenInfo refers to the value itself.
 };

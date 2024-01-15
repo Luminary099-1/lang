@@ -39,6 +39,12 @@ bool Variable::Scope(ScopeStack& ss, TUBuffer& src)
 }
 
 
+void Variable::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 IntLiteral::IntLiteral(std::string& value)
 	: Literal{"IntLiteral"sv, value}
 {}
@@ -62,6 +68,12 @@ bool IntLiteral::Validate(ValidateData& dat)
 }
 
 
+void IntLiteral::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 BoolLiteral::BoolLiteral(std::string& value)
 	: Literal{"BoolLiteral"sv, value}
 {}
@@ -74,6 +86,12 @@ bool BoolLiteral::Validate(ValidateData& dat)
 }
 
 
+void BoolLiteral::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 StrLiteral::StrLiteral(std::string& value)
 	: Literal{"StrLiteral"sv, value}
 {}
@@ -83,4 +101,10 @@ bool StrLiteral::Validate(ValidateData& dat)
 {
 	_value = _rawValue.substr(1, _rawValue.length() - 2);
 	return true;
+}
+
+
+void StrLiteral::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
 }

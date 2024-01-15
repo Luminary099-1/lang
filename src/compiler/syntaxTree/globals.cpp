@@ -21,6 +21,12 @@ void Parameter::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
+void Parameter::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 Function::Function(
 	Identifier* name, ParamList& params, Type* type, StmtList body)
 	: Declaration{name}, _params{std::move(params)}
@@ -62,6 +68,12 @@ bool Function::Validate(ValidateData& dat)
 	}
 
 	return success;
+}
+
+
+void Function::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
 }
 
 

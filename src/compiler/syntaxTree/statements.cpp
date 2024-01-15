@@ -74,6 +74,12 @@ bool VariableDef::Validate(ValidateData& dat)
 }
 
 
+void VariableDef::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -118,6 +124,12 @@ bool IfStmt::Validate(ValidateData& dat)
 		success = false;
 	}
 	return success;
+}
+
+
+void IfStmt::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
 }
 
 
@@ -189,6 +201,12 @@ bool BreakStmt::Validate(ValidateData& dat)
 }
 
 
+void BreakStmt::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 void BreakStmt::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -255,6 +273,12 @@ bool ReturnStmt::Validate(ValidateData& dat)
 }
 
 
+void ReturnStmt::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 void ReturnStmt::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -300,6 +324,12 @@ bool CompoundStmt::Validate(ValidateData& dat)
 	}
 
 	return success;
+}
+
+
+void CompoundStmt::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
 }
 
 

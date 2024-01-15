@@ -59,6 +59,7 @@ public:
 };
 
 
+// Stores the data necessary to perform validation.
 struct ValidateData
 {
 	// The TUBuffer for the source file expressing this AST.
@@ -67,6 +68,35 @@ struct ValidateData
 	std::vector<Breakable*>& _bs;
 	// The current function definition.
 	Function* _curFunc;
+};
+
+
+// Storess the data necessary to generate code.
+struct GenerateData
+{
+	uint32_t _nextLabel {0};
+	std::ostream& _os;
+
+	/**
+	 * @return uint32_t The ID of the next label.
+	 */
+	uint32_t NextLabel();
+
+
+	/**
+	 * @brief Outputs the specified label to the stream.
+	 * 
+	 * @param label The ID of the label to print.
+	 */
+	void LabelOut(uint32_t label);
+
+
+	/**
+	 * @brief Returns the ID of the next label and outputs it to the stream.
+	 * 
+	 * @return uint32_t The ID of the next label.
+	 */
+	uint32_t OutAndNextLabel();
 };
 
 
@@ -95,6 +125,14 @@ struct SyntaxTreeNode
 	 * @return true if the validation discovered no errors; false otherwise.
 	 */
 	virtual bool Validate(ValidateData& dat);
+
+	/**
+	 * @brief Generates the output assembly described by the AST.
+	 * 
+	 * @param dat An instance of ValidateData to store the state of the
+	 * generation.
+	 */
+	virtual void Generate(GenerateData& dat);
 
 	/**
 	 * @brief Prints a textual representation of this AST node to the specified

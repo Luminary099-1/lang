@@ -36,15 +36,42 @@ Declaration* ScopeStack::Lookup(std::string_view name)
 }
 
 
+uint32_t GenerateData::NextLabel()
+{
+	return _nextLabel ++;
+}
+
+
+void GenerateData::LabelOut(uint32_t label)
+{
+	_os << "L_"sv << label << '\n';
+}
+
+
+uint32_t GenerateData::OutAndNextLabel()
+{
+	_os << "L_"sv << _nextLabel << '\n';
+	return _nextLabel ++;
+}
+
+
 bool SyntaxTreeNode::Scope(ScopeStack& ss, TUBuffer& src)
 {
+	// Take no action and assume success by default.
 	return true;
 }
 
 
 bool SyntaxTreeNode::Validate(ValidateData& dat)
 {
+	// Take no action and assume success by default.
 	return true;
+}
+
+
+void SyntaxTreeNode::Generate(GenerateData& dat)
+{
+	// Take no action by default.
 }
 
 

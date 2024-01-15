@@ -43,6 +43,12 @@ bool AssignmentExpr::Validate(ValidateData& dat)
 }
 
 
+void AssignmentExpr::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 void AssignmentExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -80,6 +86,12 @@ bool ForExpr::Validate(ValidateData& dat)
 	dat._bs.pop_back();
 	_hasReturn = _body->_hasReturn;
 	return success;
+}
+
+
+void ForExpr::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
 }
 
 
@@ -126,6 +138,12 @@ bool LoopExpr::Validate(ValidateData& dat)
 }
 
 
+void LoopExpr::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
+}
+
+
 void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -167,6 +185,12 @@ bool WhileExpr::Validate(ValidateData& dat)
 		success = false;
 	}
 	return success;
+}
+
+
+void WhileExpr::Generate(GenerateData& dat)
+{
+	// TODO: Implement this.
 }
 
 
