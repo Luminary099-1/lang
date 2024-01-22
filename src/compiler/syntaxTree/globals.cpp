@@ -21,9 +21,9 @@ void Parameter::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-void Parameter::Generate(GenerateData& dat)
+void Parameter::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	dat._lastSize = _type->GetSize();
 }
 
 
@@ -34,6 +34,27 @@ Function::Function(
 {
 	std::reverse(_params.begin(), _params.end());
 	std::reverse(_body.begin(), _body.end());
+}
+
+
+void Function::AllocateParams(GenData& dat)
+{
+	constexpr size_t reg_count {8}; // The number of parameter registers.
+	
+	// Map the first 7 arguments to x0-x7.
+	for (size_t i {0}; i < std::min(_params.size(), reg_count); ++ i)
+		dat._locations.emplace(
+			std::pair(_params[i].get(), GenData::VarLocation(false, i)) );
+
+	BytesT stack_off {0}; // The offset before the FP.
+	// Maps the arguments after the first 7 to the stack before the FP.
+	for (size_t i {_params.size() - 1}; i >= reg_count; -- i)
+	{
+		Parameter* param {_params[i].get()};
+		stack_off += dat._lastSize;
+		dat._locations.emplace(
+			std::pair(param, GenData::VarLocation(true, stack_off)) );
+	}
 }
 
 
@@ -71,9 +92,49 @@ bool Function::Validate(ValidateData& dat)
 }
 
 
-void Function::Generate(GenerateData& dat)
+void Function::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	AllocateParams(dat);
+
+	// Determine the frame size and capture procedure body output:
+	BytesT frame_size {0};
+	BytesT max_compound_size {0};
+	std::stringstream bos; // Temporary output for the body.
+	for (size_t i {0}; i < _body.size(); ++ i)
+	{
+		Statement* child {_body[i].get()};
+		child->Generate(dat, bos);
+		if (dynamic_cast<CompoundStmt*>(child) != nullptr
+			&& dat._lastSize > max_compound_size)
+			max_compound_size = dat._lastSize;
+		else frame_size += dat._lastSize;
+	}
+	// Add the largest compound sub-frame size and space for saved registers.
+	frame_size += max_compound_size + (12 * 8);
+	frame_size &= 16;	// Round to the nearest 16 bytes.
+
+	// Procedure header:
+	os << _name << ":\n"	// Procedure call label.
+		"\tstp\tfp,\tlr,\t[sp, "sv << -frame_size << "]!\n"
+		"\tmov\tfp,\tsp\n"
+		"\tstp\tx19,\tx20,\t[fp, 16]\n"
+		"\tstp\tx21,\tx22,\t[fp, 32]\n"
+		"\tstp\tx23,\tx24,\t[fp, 48]\n"
+		"\tstp\tx25,\tx26,\t[fp, 64]\n"
+		"\tstp\tx27,\tx28,\t[fp, 80]\n"sv;
+
+	// Output the body's code:
+	os << bos.rdbuf();
+
+	// Procedure footer:
+	os << "r_"sv << _name << ":\n"	// Procedure return label.
+		"\tldp\tx19,\tx20,\t[fp, 16]\n"
+		"\tldp\tx21,\tx22,\t[fp, 32]\n"
+		"\tldp\tx23,\tx24,\t[fp, 48]\n"
+		"\tldp\tx25,\tx26,\t[fp, 64]\n"
+		"\tldp\tx27,\tx28,\t[fp, 80]\n"
+		"\tldp\tfp,\tlr\t[sp],\t"sv << frame_size << '\n'
+		<< "\tret\n"sv;
 }
 
 

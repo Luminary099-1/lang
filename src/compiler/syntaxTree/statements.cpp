@@ -74,7 +74,7 @@ bool VariableDef::Validate(ValidateData& dat)
 }
 
 
-void VariableDef::Generate(GenerateData& dat)
+void VariableDef::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -127,7 +127,7 @@ bool IfStmt::Validate(ValidateData& dat)
 }
 
 
-void IfStmt::Generate(GenerateData& dat)
+void IfStmt::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -201,7 +201,7 @@ bool BreakStmt::Validate(ValidateData& dat)
 }
 
 
-void BreakStmt::Generate(GenerateData& dat)
+void BreakStmt::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -273,7 +273,7 @@ bool ReturnStmt::Validate(ValidateData& dat)
 }
 
 
-void ReturnStmt::Generate(GenerateData& dat)
+void ReturnStmt::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -327,9 +327,22 @@ bool CompoundStmt::Validate(ValidateData& dat)
 }
 
 
-void CompoundStmt::Generate(GenerateData& dat)
+void CompoundStmt::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	// Determine the sub-frame size and generate code from the children.
+	BytesT frame_size {0};
+	BytesT max_compound_size {0};
+	for (size_t i {0}; i < _stmts.size(); ++ i)
+	{
+		Statement* child {_stmts[i].get()};
+		child->Generate(dat, os);
+		if (dynamic_cast<CompoundStmt*>(child) != nullptr
+			&& dat._lastSize > max_compound_size)
+			max_compound_size = dat._lastSize;
+		else frame_size += dat._lastSize;
+	}
+	// Add the largest compound sub-frame size and return the value.
+	dat._lastSize = frame_size + max_compound_size;
 }
 
 

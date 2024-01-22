@@ -73,7 +73,7 @@ struct VariableDef
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the equal symbol.
@@ -99,7 +99,7 @@ struct IfStmt
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 	
 	// TokenInfo refers to the if keyword.
@@ -127,7 +127,7 @@ struct BreakStmt
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the break keyword.
@@ -148,7 +148,7 @@ struct ReturnStmt
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the return keyword.
@@ -174,7 +174,7 @@ struct CompoundStmt
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the inclusive span between curly braces.
@@ -233,7 +233,7 @@ struct BinaryExpr
 	
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the operator symbol.
@@ -276,7 +276,7 @@ struct PreExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the operator symbol.
@@ -315,7 +315,7 @@ struct PostExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the operator symbol.
@@ -344,7 +344,7 @@ struct Invocation
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the span of the ID to the closing parentheses.
@@ -371,7 +371,7 @@ struct AssignmentExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the equal symbol.
@@ -399,7 +399,7 @@ struct ForExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the for keyword.
@@ -421,7 +421,7 @@ struct LoopExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the loop keyword.
@@ -445,7 +445,7 @@ struct WhileExpr
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the while keyword.
@@ -488,7 +488,7 @@ struct Variable
 	 */
 	Variable(std::string& name);
 
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 
 	// TokenInfo refers to the identifier itself.
@@ -509,7 +509,7 @@ struct IntLiteral
 	IntLiteral(std::string& value);
 
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 
 	// TokenInfo refers to the value itself.
 };
@@ -529,7 +529,7 @@ struct BoolLiteral
 	BoolLiteral(std::string& value);
 
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 
 	// TokenInfo refers to the value itself.
 };
@@ -549,7 +549,7 @@ struct StrLiteral
 	StrLiteral(std::string& value);
 
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 
 	// TokenInfo refers to the value itself.
 };

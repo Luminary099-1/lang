@@ -13,6 +13,10 @@
 #include <vector>
 
 
+// The type of data sizes and offsets.
+using BytesT = uint64_t;
+
+
 // Forward declarations.
 struct Breakable;
 struct Declaration;
@@ -74,56 +78,53 @@ struct ValidateData
 
 
 // Storess the data necessary to generate code and provides some utilities.
-struct GenerateData
+struct GenData
 {
 	// Integer type to represent label IDs for the assembly output.
-	using LabelType = uint32_t;
-	// Integer type to represent byte offsets for the assembly output.
-	using OffsetType = uint32_t;
+	using IDT = uint32_t;
 
-protected:
-	std::ostream& _dest;	// The stream to write the assembly program to.
-	std::stack<std::stringstream> 
-		_stash;				// Separate streams to write deferred output to.
+	// Indicates where a variable is located in memory.
+	struct VarLocation
+	{
+		bool _onStack;	// True if the variable is stack allocated.
+		BytesT _off;	// The register ID or the stack frame offset.
 
-public:
-	std::ostream* _os;			// The stream receiving assembly output.
-	LabelType _nextLabel {0};	// The next available label ID.
-	LabelType _curFunc;			// The label ID of the current function.
+		/**
+		 * @brief Construct a new VarLocation object.
+		 * 
+		 * @param on_stack True if the variable is stack allocated.
+		 * @param off The register ID or the stack frame offset.
+		 */
+		VarLocation(bool on_stack, BytesT off);
+	};
 
-	// Maps declarations stored on the stack to their offsets from the FP.
-	std::map<Declaration*, OffsetType> _offsets;
+	IDT _nextLabel {0};		// The next available label ID.
+	// Procedure memory organization:
+	BytesT _lastSize {0};	// The size of declarations made by children.
+
+	// Maps declarations stored on the stack to their locations in memory..
+	std::map<Declaration*, VarLocation> _locations;
 
 	/**
 	 * @return The ID of the next label.
 	 */
-	LabelType NextLabel();
+	IDT NextLabel();
 
 	/**
 	 * @brief Outputs the specified label to the stream.
 	 * 
+	 * @param os The output stream to write the label to.
 	 * @param label The ID of the label to print.
 	 */
-	void LabelOut(LabelType label);
+	void LabelOut(std::ostream& os, IDT label);
 
 	/**
 	 * @brief Returns the ID of the next label and outputs it to the stream.
 	 * 
+	 * @param os The output stream to write the label to.
 	 * @return The ID of the next label.
 	 */
-	LabelType OutAndNextLabel();
-
-	/**
-	 * @brief Deferrs output written to _os and stores it in a separate stream.
-	 * _os is replaced with a temporary buffer.
-	 */
-	void Defer();
-
-	/**
-	 * @brief Writes the most recently deferred output to the previous buffer
-	 * and restores that buffer to _os.
-	 */
-	void Resume();
+	IDT OutAndNextLabel(std::ostream& os);
 };
 
 
@@ -158,8 +159,9 @@ struct SyntaxTreeNode
 	 * 
 	 * @param dat An instance of ValidateData to store the state of the
 	 * generation.
+	 * @param os The output stream to write the program output to.
 	 */
-	virtual void Generate(GenerateData& dat);
+	virtual void Generate(GenData& dat, std::ostream& os);
 
 	/**
 	 * @brief Prints a textual representation of this AST node to the specified
@@ -249,6 +251,8 @@ protected:
 	// The set of fundamental types.
 	static const std::set<const Type*> _fundamentals;
 
+	BytesT _size {0};	// The type's instance size in bytes.
+
 	// Default constructor.
 	Type();
 
@@ -256,8 +260,10 @@ protected:
 	 * @brief Construct a new Type object.
 	 * 
 	 * @param type_name The type's symbolic name.
+	 * @param size The type's instance size in bytes.
 	 */
-	Type(std::string& type_name);
+	Type(std::string& type_name, BytesT size = 0);
+
 
 public:
 	std::string _name;					// The type's name.
@@ -291,6 +297,11 @@ public:
 	 * @return true if this is the fundamental type string; false otherwise.
 	 */
 	const bool IsString() const;
+
+	/**
+	 * @return The type's instance size in bytes.
+	 */
+	const BytesT GetSize() const;
 
 	// Equality operator overload.
 	friend bool operator==(const Type& lhs, const Type& rhs);

@@ -43,7 +43,7 @@ bool AssignmentExpr::Validate(ValidateData& dat)
 }
 
 
-void AssignmentExpr::Generate(GenerateData& dat)
+void AssignmentExpr::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -89,7 +89,7 @@ bool ForExpr::Validate(ValidateData& dat)
 }
 
 
-void ForExpr::Generate(GenerateData& dat)
+void ForExpr::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -138,7 +138,7 @@ bool LoopExpr::Validate(ValidateData& dat)
 }
 
 
-void LoopExpr::Generate(GenerateData& dat)
+void LoopExpr::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -188,7 +188,7 @@ bool WhileExpr::Validate(ValidateData& dat)
 }
 
 
-void WhileExpr::Generate(GenerateData& dat)
+void WhileExpr::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }

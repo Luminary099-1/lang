@@ -39,7 +39,7 @@ bool Variable::Scope(ScopeStack& ss, TUBuffer& src)
 }
 
 
-void Variable::Generate(GenerateData& dat)
+void Variable::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -68,7 +68,7 @@ bool IntLiteral::Validate(ValidateData& dat)
 }
 
 
-void IntLiteral::Generate(GenerateData& dat)
+void IntLiteral::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -86,7 +86,7 @@ bool BoolLiteral::Validate(ValidateData& dat)
 }
 
 
-void BoolLiteral::Generate(GenerateData& dat)
+void BoolLiteral::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -104,7 +104,7 @@ bool StrLiteral::Validate(ValidateData& dat)
 }
 
 
-void StrLiteral::Generate(GenerateData& dat)
+void StrLiteral::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }

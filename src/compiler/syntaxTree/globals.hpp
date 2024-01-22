@@ -24,7 +24,7 @@ struct Parameter
 	Parameter(Type* type, Identifier* name);
 
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 
 	// TokenInfo refers to the span of the parameter's type and name.
 };
@@ -53,9 +53,16 @@ struct Function
 	 */
 	Function(Identifier* name, ParamList& params, Type* type, StmtList body);
 
+	/**
+	 * @brief 
+	 * 
+	 * @param dat 
+	 */
+	void AllocateParams(GenData& dat);
+
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
-	void Generate(GenerateData& dat) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the span from the name to the closing parentheses.

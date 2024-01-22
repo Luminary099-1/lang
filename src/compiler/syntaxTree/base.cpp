@@ -36,38 +36,27 @@ Declaration* ScopeStack::Lookup(std::string_view name)
 }
 
 
-uint32_t GenerateData::NextLabel()
+GenData::VarLocation::VarLocation(bool on_stack, BytesT off)
+	: _onStack{on_stack}, _off{off}
+{}
+
+
+GenData::IDT GenData::NextLabel()
 {
 	return _nextLabel ++;
 }
 
 
-void GenerateData::LabelOut(uint32_t label)
+void GenData::LabelOut(std::ostream& os, IDT label)
 {
-	*_os << "L_"sv << label << ":\n"sv;
+	os << "L_"sv << label << ":\n"sv;
 }
 
 
-uint32_t GenerateData::OutAndNextLabel()
+GenData::IDT GenData::OutAndNextLabel(std::ostream& os)
 {
-	*_os << "L_"sv << _nextLabel << ":\n"sv;
+	os << "L_"sv << _nextLabel << ":\n"sv;
 	return _nextLabel ++;
-}
-
-
-void GenerateData::Defer()
-{
-	_stash.emplace();
-	_os = &_stash.top();
-}
-
-
-void GenerateData::Resume()
-{
-	_dest << _stash.top().rdbuf();
-	_stash.pop();
-	if (_stash.size() != 0) _os = &_stash.top();
-	else _os = &_dest;
 }
 
 
@@ -85,7 +74,7 @@ bool SyntaxTreeNode::Validate(ValidateData& dat)
 }
 
 
-void SyntaxTreeNode::Generate(GenerateData& dat)
+void SyntaxTreeNode::Generate(GenData& dat, std::ostream& os)
 {
 	// Take no action by default.
 }
@@ -143,10 +132,10 @@ bool Declaration::Scope(ScopeStack& ss, TUBuffer& src)
 }
 
 
-const std::unique_ptr<Type> Type::_void(new Type("void"s));
-const std::unique_ptr<Type> Type::_int(new Type("int"s));
-const std::unique_ptr<Type> Type::_bool(new Type("bool"s));
-const std::unique_ptr<Type> Type::_string(new Type("string"s));
+const std::unique_ptr<Type> Type::_void(	new Type("void"s,	0));
+const std::unique_ptr<Type> Type::_int(		new Type("int"s,	4));
+const std::unique_ptr<Type> Type::_bool(	new Type("bool"s,	1));
+const std::unique_ptr<Type> Type::_string(	new Type("string"s,	8));
 
 
 const std::map<std::string_view, Type*> Type::_namedFundamentals
@@ -171,8 +160,8 @@ Type::Type()
 {}
 
 
-Type::Type(std::string& type_name)
-	: _name{type_name}
+Type::Type(std::string& type_name, BytesT size)
+	: _name{type_name}, _size{size}
 {}
 
 
@@ -204,6 +193,12 @@ const bool Type::IsBool() const
 const bool Type::IsString() const
 {
 	return this == _string.get();
+}
+
+
+const BytesT Type::GetSize() const
+{
+	return _size;
 }
 
 

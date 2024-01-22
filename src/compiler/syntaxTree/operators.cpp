@@ -147,7 +147,7 @@ bool BinaryExpr::Validate(ValidateData& dat)
 }
 
 
-void BinaryExpr::Generate(GenerateData& dat)
+void BinaryExpr::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -212,7 +212,7 @@ bool PreExpr::Validate(ValidateData& dat)
 }
 
 
-void PreExpr::Generate(GenerateData& dat)
+void PreExpr::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -269,7 +269,7 @@ bool PostExpr::Validate(ValidateData& dat)
 }
 
 
-void PostExpr::Generate(GenerateData& dat)
+void PostExpr::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
@@ -347,7 +347,7 @@ bool Invocation::Validate(ValidateData& dat)
 }
 
 
-void Invocation::Generate(GenerateData& dat)
+void Invocation::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
 }
