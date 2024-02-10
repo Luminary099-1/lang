@@ -1,6 +1,7 @@
 #include "base.hpp"
 
 #include <iostream>
+#include <numeric>
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -36,27 +37,66 @@ Declaration* ScopeStack::Lookup(std::string_view name)
 }
 
 
-GenData::VarLocation::VarLocation(bool on_stack, BytesT off)
-	: _onStack{on_stack}, _off{off}
+Location::Location()
 {}
 
 
-GenData::IDT GenData::NextLabel()
+Location::Location(Place place, Type* type)
+	: _place{place}, _type{type}
+{}
+
+
+Location Location::CreateGlobal(Type* type, IDT label)
+{
+	Location loc (Place::Global, type);
+	loc._val._label = label;
+	return loc;
+}
+
+
+Location Location::CreateRegister(Type* type, RegT reg)
+{
+	Location loc (Place::Register, type);
+	loc._val._reg = reg;
+	return loc;
+}
+
+
+Location Location::CreateLocal(Type* type, BytesT offset)
+{
+	Location loc (Place::Local, type);
+	loc._val._offset = offset;
+	return loc;
+}
+
+
+IDT GenData::NextLabel()
 {
 	return _nextLabel ++;
 }
 
 
-void GenData::LabelOut(std::ostream& os, IDT label)
+void GenData::GeneratePop(Type* type, RegT reg, std::ostream& os)
 {
-	os << "L_"sv << label << ":\n"sv;
+	switch (type->GetSize())
+	{
+		case 1:	os << "\tldrb\tw"sv << reg << ",\t[sp]\t1\n"sv;	break;
+		case 2:	os << "\tldrh\tw"sv << reg << ",\t[sp]\t2\n"sv;	break;
+		case 4:	os << "\tldr\tw"sv << reg << ",\t[sp]\t4\n"sv;	break;
+		case 8:	os << "\tldr\tx"sv << reg << ",\t[sp]\t8\n"sv;	break;
+	}
 }
 
 
-GenData::IDT GenData::OutAndNextLabel(std::ostream& os)
+void GenData::GeneratePush(Type* type, RegT reg, std::ostream& os)
 {
-	os << "L_"sv << _nextLabel << ":\n"sv;
-	return _nextLabel ++;
+	switch (type->GetSize())
+	{
+		case 1:	os << "\tstrb\tw"sv << reg << ",\t[sp, -1]!\n"sv;	break;
+		case 2:	os << "\tstrh\tw"sv << reg << ",\t[sp, -2]!\n"sv;	break;
+		case 4:	os << "\tstr\tw"sv << reg << ",\t[sp, -4]!\n"sv;	break;
+		case 8:	os << "\tstr\tx"sv << reg << ",\t[sp, -8]!\n"sv;	break;
+	}
 }
 
 
@@ -212,6 +252,47 @@ bool operator==(const Type& lhs, const Type& rhs)
 bool operator!=(const Type& lhs, const Type& rhs)
 {
 	return !(lhs == rhs);
+}
+
+void Type::GenerateAccess(
+	GenData& dat, Location loc, bool do_load, std::ostream& os)
+{
+	RegT ior {dat._safeRegs.top()};
+	if (loc._place == Location::Place::Register)
+	{
+		const char s {(_size <= 4) ? 'w' : 'x'};
+		const RegT vr {loc._val._reg};
+		if (do_load) os << "\tmov\t"sv << s << ior << ",\t"sv << s << vr << '\n';
+		else os << "\tmov\t"sv << s << vr << ",\t"sv << s << ior << '\n';
+	}
+	else
+	{
+		RegT ar;
+		if (loc._place == Location::Place::Global)
+		{
+			dat._safeRegs.pop();
+			ar = dat._safeRegs.top();
+			os << "\tadrp\tx"sv << ar << "\t,L_"sv << loc._val._label
+				<< "\n\tadd\tx"sv << ar << ",\tx"sv << ar << ",\t:lo12:L_"sv
+				<< loc._val._label << '\n';
+		}
+
+		os << '\t' << ((do_load) ? 'l' : 's');
+		switch (_size)
+		{
+			case 1:	os << "drb\tw"sv;	break;
+			case 2:	os << "drh\tw"sv;	break;
+			case 4:	os << "dr\tw"sv;	break;
+			case 8:	os << "dr\tx"sv;	break;
+		}
+		os << ior;
+		if (loc._place == Location::Place::Global)
+		{
+			os << ",\t[x"sv << ar << "]\n"sv;
+			dat._safeRegs.push(ar);
+		}
+		else os << ",\t[fp, "sv << loc._val._offset << "]\n"sv;
+	}
 }
 
 

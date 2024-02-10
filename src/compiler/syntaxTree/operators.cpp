@@ -2,6 +2,7 @@
 
 #include "globals.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <utility>
 
@@ -143,13 +144,86 @@ bool BinaryExpr::Validate(ValidateData& dat)
 			_type = _argl->_type;
 			break;
 	}
+
+	_hasCall = _argl->_hasCall || _argr->_hasCall;
+	_evalWeight = std::max(
+		static_cast<RegT>(_argl->_evalWeight + 1), _argr->_evalWeight);
+	if (_op == Ops::Mod) ++ _evalWeight;
 	return success;
 }
 
 
 void BinaryExpr::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	static const std::map<Ops, std::string_view> mnems
+	{
+		{Ops::LAND, "and"sv},	{Ops::AND, "and"sv},
+		{Ops::LOR, "orr"sv},	{Ops::OR, "orr"sv},
+		{Ops::XOR, "eor"sv},	{Ops::Eq, "eq"sv},
+		{Ops::NE, "ne"sv},		{Ops::LT, "lt"sv},
+		{Ops::LE, "le"sv},		{Ops::GT, "gt"sv},
+		{Ops::GE, "ge"sv},		{Ops::LShift, "lsl"sv},
+		{Ops::RShift, "lsr"sv},	{Ops::Add, "add"sv},
+		{Ops::Sub, "sub"sv},	{Ops::Mul, "mul"sv},
+		{Ops::Div, "sdiv"sv}
+	};
+
+	_argl->Generate(dat, os);
+	const RegT out_r {dat._safeRegs.top()};
+	RegT lr {out_r};
+	RegT rr {out_r};
+	if (_argr->_hasCall || _argr->_evalWeight > dat._safeRegs.size())
+	{
+		dat.GeneratePush(_argl->_type, lr, os);
+		_argr->Generate(dat, os);
+		dat._safeRegs.pop();
+		lr = dat._safeRegs.top();
+		dat.GeneratePop(_argl->_type, lr, os);
+	}
+	else
+	{
+		dat._safeRegs.pop();
+		rr = dat._safeRegs.top();
+		_argr->Generate(dat, os);
+	}
+
+	switch (_op)
+	{
+		case Ops::LAND:	case Ops::AND:	case Ops::LOR:	case Ops::OR:
+		case Ops::XOR:	case Ops::Add:	case Ops::Sub:	case Ops::Mul:
+		case Ops::Div:
+			os << '\t' << mnems.at(_op)
+				<< "\tw"sv << out_r << ",\tw"sv << lr << ",\tw"sv << rr << '\n';
+			break;
+		
+		case Ops::LShift:	case Ops::RShift:
+			os << '\t' << mnems.at(_op)
+				<< "\tw"sv << lr << ",\tw"sv << rr << '\n';
+			break;
+
+		case Ops::Eq:	case Ops::NE:	case Ops::LT:
+		case Ops::LE:	case Ops::GT:	case Ops::GE:
+		{
+			char s {(_type->GetSize() <= 4) ? 'w' : 'x'};
+			os << "\tcmp\t"sv << s << lr << ",\t" << s << rr << "\n\t"sv
+				<< "cset\t"sv << s << out_r << ",\t"sv << mnems.at(_op) << '\n';
+			break;
+		}
+
+		case Ops::Mod:
+		{
+			dat._safeRegs.pop();
+			RegT tr {dat._safeRegs.top()};
+			os << "\tudiv\tw"sv << tr << ",\tw"sv << lr << ",\tw"sv << rr
+				<< "\n\tmsub\tw"sv << out_r << ",\tw"sv << tr << ",\tw"sv << rr
+				<< ",\tw"sv << lr << '\n';
+			dat._safeRegs.push(tr);
+			break;
+		}
+	}
+
+	dat._safeRegs.push(lr);
+	dat._safeRegs.push(rr);
 }
 
 
@@ -207,7 +281,10 @@ bool PreExpr::Validate(ValidateData& dat)
 		HighlightError(std::cerr, dat._src, *this);
 		success = false;
 	}
+
 	_type = _arg->_type;
+	_hasCall = _arg->_hasCall;
+	_evalWeight = _arg->_evalWeight;
 	return success;
 }
 
@@ -215,6 +292,7 @@ bool PreExpr::Validate(ValidateData& dat)
 void PreExpr::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
+	// FIXME: These operations can incorrectly be applied to rvalues.
 }
 
 
@@ -264,7 +342,10 @@ bool PostExpr::Validate(ValidateData& dat)
 		HighlightError(std::cerr, dat._src, *this);
 		success = false;
 	}
+
 	_type = _arg->_type;
+	_hasCall = _arg->_hasCall;
+	_evalWeight = std::max(static_cast<RegT>(2), _arg->_evalWeight);
 	return success;
 }
 
@@ -272,6 +353,7 @@ bool PostExpr::Validate(ValidateData& dat)
 void PostExpr::Generate(GenData& dat, std::ostream& os)
 {
 	// TODO: Implement this.
+	// FIXME: These operations can incorrectly be applied to rvalues.
 }
 
 
@@ -290,6 +372,7 @@ Invocation::Invocation(Identifier* name, ArgList& args)
 	: _name{name}, _args{std::move(args)}
 {
 	std::reverse(_args.begin(), _args.end());
+	_hasCall = true;
 }
 
 
@@ -315,8 +398,8 @@ bool Invocation::Scope(ScopeStack& ss, TUBuffer& src)
 bool Invocation::Validate(ValidateData& dat)
 {
 	_type = _def->_type;
-	size_t expected_args {_def->_params.size()};
-	if (_args.size() != _def->_params.size())
+	const size_t expected_args {_def->_params.size()}; // Bigger than _evalIndex.
+	if (_args.size() != expected_args)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Incorrect number of arguments in call to "sv
@@ -325,22 +408,25 @@ bool Invocation::Validate(ValidateData& dat)
 		HighlightError(std::cerr, dat._src, *this);
 		return false;
 	}
+	_evalWeight = static_cast<RegT>(expected_args - 1);
 
 	bool success {true};
 	for (size_t i {0}; i < expected_args; ++ i)
 	{
-		success = success && _args[i]->Validate(dat);
+		Expression* arg {_args[i].get()};
+		success = success && arg->Validate(dat);
 		Type* expected_type {_def->_params[i]->_type};
-		Type* given_type {_args[i]->_type};
+		Type* given_type {arg->_type};
 		if (*given_type != *expected_type)
 		{
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Expected "sv << expected_type->_name << " for argument"sv
 				<< i + 1 << " in call to "sv << _name->_id << ", found: "sv
 				<< given_type->_name << '\n';
-			HighlightError(std::cerr, dat._src, *_args[i]);
+			HighlightError(std::cerr, dat._src, *arg);
+			success = false;
 		}
-		success = false;
+		_hasCall = _hasCall || arg->_hasCall;
 	}
 
 	return success;

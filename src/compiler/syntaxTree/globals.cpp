@@ -21,12 +21,6 @@ void Parameter::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-void Parameter::Generate(GenData& dat, std::ostream& os)
-{
-	dat._lastSize = _type->GetSize();
-}
-
-
 Function::Function(
 	Identifier* name, ParamList& params, Type* type, StmtList body)
 	: Declaration{name}, _params{std::move(params)}
@@ -37,24 +31,30 @@ Function::Function(
 }
 
 
-void Function::AllocateParams(GenData& dat)
+BytesT Function::AllocateParams(GenData& dat)
 {
 	constexpr size_t reg_count {8}; // The number of parameter registers.
 	
 	// Map the first 7 arguments to x0-x7.
 	for (size_t i {0}; i < std::min(_params.size(), reg_count); ++ i)
-		dat._locations.emplace(
-			std::pair(_params[i].get(), GenData::VarLocation(false, i)) );
-
-	BytesT stack_off {0}; // The offset before the FP.
-	// Maps the arguments after the first 7 to the stack before the FP.
-	for (size_t i {_params.size() - 1}; i >= reg_count; -- i)
 	{
 		Parameter* param {_params[i].get()};
-		stack_off += dat._lastSize;
-		dat._locations.emplace(
-			std::pair(param, GenData::VarLocation(true, stack_off)) );
+		Location loc
+			{Location::CreateRegister(param->_type, static_cast<RegT>(i))};
+		dat._locations.emplace(std::pair(param, loc));
 	}
+
+	BytesT frame_off {0}; // The offset before the FP.
+	// Maps the arguments after the first 7 to the stack before the FP.
+	for (size_t i {reg_count}; i < _params.size(); ++ i)
+	{
+		Parameter* param {_params[i].get()};
+		Location loc {Location::CreateLocal(param->_type, frame_off)};
+		dat._locations.emplace(std::pair(param, loc));
+		frame_off += param->_type->GetSize();
+	}
+
+	return frame_off;
 }
 
 
@@ -88,33 +88,32 @@ bool Function::Validate(ValidateData& dat)
 		success = false;
 	}
 
+	dat._curFunc = nullptr;
 	return success;
 }
 
 
 void Function::Generate(GenData& dat, std::ostream& os)
 {
-	AllocateParams(dat);
+	dat._strings.clear();
+	dat._stackParamSizes[this] = AllocateParams(dat);
 
-	// Determine the frame size and capture procedure body output:
-	BytesT frame_size {0};
-	BytesT max_compound_size {0};
-	std::stringstream bos; // Temporary output for the body.
-	for (size_t i {0}; i < _body.size(); ++ i)
-	{
-		Statement* child {_body[i].get()};
-		child->Generate(dat, bos);
-		if (dynamic_cast<CompoundStmt*>(child) != nullptr
-			&& dat._lastSize > max_compound_size)
-			max_compound_size = dat._lastSize;
-		else frame_size += dat._lastSize;
-	}
-	// Add the largest compound sub-frame size and space for saved registers.
-	frame_size += max_compound_size + (12 * 8);
-	frame_size &= 16;	// Round to the nearest 16 bytes.
+	// Generate defferred output for the body:
+	dat._isGlobal = false;
+	std::stringstream dos; // Deferred output for the body.
+	for (size_t i {0}; i < _body.size(); ++ i) _body[i]->Generate(dat, dos);
+	dat._isGlobal = true;
+
+	// Allocate space for callee-saved registers and round to 16 bytes.
+	BytesT frame_size {(dat._frameSize + 12 * 8) & -16};
+
+	// Output string constants:
+	for (std::pair<IDT, std::string> c : dat._strings)
+		os << "S_"sv << c.first << ":\t.string\t\""sv << c.second << "\"\n"sv;
 
 	// Procedure header:
-	os << _name << ":\n"	// Procedure call label.
+	os << ".balign\t4"
+		<< "F_"sv << _name << ":\n"	// Procedure call label.
 		"\tstp\tfp,\tlr,\t[sp, "sv << -frame_size << "]!\n"
 		"\tmov\tfp,\tsp\n"
 		"\tstp\tx19,\tx20,\t[fp, 16]\n"
@@ -124,10 +123,10 @@ void Function::Generate(GenData& dat, std::ostream& os)
 		"\tstp\tx27,\tx28,\t[fp, 80]\n"sv;
 
 	// Output the body's code:
-	os << bos.rdbuf();
+	os << dos.rdbuf();
 
 	// Procedure footer:
-	os << "r_"sv << _name << ":\n"	// Procedure return label.
+	os << "R_"sv << _name << ":\n"	// Procedure return label.
 		"\tldp\tx19,\tx20,\t[fp, 16]\n"
 		"\tldp\tx21,\tx22,\t[fp, 32]\n"
 		"\tldp\tx23,\tx24,\t[fp, 48]\n"

@@ -41,7 +41,8 @@ bool Variable::Scope(ScopeStack& ss, TUBuffer& src)
 
 void Variable::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	const RegT out_reg {dat._safeRegs.top()};
+	_type->GenerateAccess(dat, dat._locations[_def], true, os);
 }
 
 
@@ -52,10 +53,7 @@ IntLiteral::IntLiteral(std::string& value)
 
 bool IntLiteral::Validate(ValidateData& dat)
 {
-	try
-	{
-		_value = std::stoi(_rawValue);
-	}
+	try { _value = std::stoi(_rawValue); }
 	catch (const std::out_of_range& e)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
@@ -70,7 +68,7 @@ bool IntLiteral::Validate(ValidateData& dat)
 
 void IntLiteral::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	os << "\tmov\tw"sv << dat._safeRegs.top() << ",\t"sv << _value << '\n';
 }
 
 
@@ -88,7 +86,7 @@ bool BoolLiteral::Validate(ValidateData& dat)
 
 void BoolLiteral::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	os << "\tmov\tw"sv << dat._safeRegs.top() << ",\t"sv << _value << '\n';
 }
 
 
@@ -106,5 +104,8 @@ bool StrLiteral::Validate(ValidateData& dat)
 
 void StrLiteral::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	// TODO: Handle string allocation in the primary location allocation mechanism?
+	const IDT label {dat.NextLabel()};
+	dat._strings[label] = _value;
+	os << "\tadr\tx"sv << dat._safeRegs.top() << ",\tS_" << label << '\n';
 }

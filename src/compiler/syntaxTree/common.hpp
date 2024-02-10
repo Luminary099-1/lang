@@ -22,6 +22,9 @@ struct Statement
 	: public virtual SyntaxTreeNode
 {
 	bool _hasReturn {false};	// Indicates whether all control paths return.
+	bool _hasCall {false};		// This expression calls a function.
+	// The number of temporary intermediate values needed to evaluate.
+	uint8_t _evalWeight {1};
 
 	/**
 	 * @brief Determines whether the passed list of statements contains a
@@ -32,10 +35,12 @@ struct Statement
 	 * validation.
 	 * @param success Reference to a Boolean that will be updated with the
 	 * success of the validations performed. A false value will not be set true.
+	 * @param eval_weight A pointer to _evalWeight of the parent owning the
+	 * stmts parameter.
 	 * @return true if the statements return in a valid way; false otherwise.
 	 */
-	static bool
-		ValidateAndGetReturn(StmtList& stmts, ValidateData& dat, bool& success);
+	static bool ValidateAndGetReturn(StmtList& stmts, ValidateData& dat,
+		bool& success, RegT* eval_weight = nullptr);
 
 	// TokenInfo should refer to the entire statement in extending classes.
 };
@@ -45,7 +50,7 @@ struct Statement
 struct Expression
 	: public Statement
 {
-	Type* _type {Type::Create("void")};	// The expression's type.
+	Type* _type {Type::Create("void")};	// This expression's type.
 };
 
 
@@ -137,6 +142,7 @@ struct BreakStmt
 struct ReturnStmt
 	: public Statement
 {
+	Function* _target;					// The enclosing function.
 	std::unique_ptr<Expression> _expr;	// An optional return expression.
 
 	/**
@@ -475,11 +481,11 @@ struct Literal
 };
 
 
-// Represents identifiers.
+// Represents variables.
 struct Variable
 	: public Literal
 {
-	SyntaxTreeNode* _def;	// The AST node that defines this variable.
+	Declaration* _def;	// The AST node that defines this variable.
 
 	/**
 	 * @brief Construct a new Variable object.
@@ -488,8 +494,8 @@ struct Variable
 	 */
 	Variable(std::string& name);
 
-	void Generate(GenData& dat, std::ostream& os) override;
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
+	void Generate(GenData& dat, std::ostream& os) override;
 
 	// TokenInfo refers to the identifier itself.
 };

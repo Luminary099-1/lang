@@ -8,6 +8,7 @@
 #include <list>
 #include <map>
 #include <ostream>
+#include <queue>
 #include <set>
 #include <stack>
 #include <vector>
@@ -15,6 +16,10 @@
 
 // The type of data sizes and offsets.
 using BytesT = uint64_t;
+// Integer type to represent label IDs for the assembly output.
+using IDT = uint32_t;
+// Integer type to encode register designations.
+using RegT = uint8_t;
 
 
 // Forward declarations.
@@ -73,37 +78,106 @@ struct ValidateData
 	// Tree stack containing the chain of breakable predecessor AST nodes.
 	std::vector<Breakable*>& _bs;
 	// The current function definition.
-	Function* _curFunc;
+	Function* _curFunc {nullptr};
+};
+
+
+// Forward declaration.
+struct Type;
+
+
+// Represents the storage location of variables or other data.
+struct Location
+{
+	friend class Type;
+
+protected:
+	// Indicated the type of storage location represented.
+	enum class Place
+	{
+		Global,		// Memory-backed, global.
+		Register,	// Register-backed.
+		Local		// Memory-backed, relative to FP.
+	};
+
+	Type* _type {nullptr};	// Type of the data stored in the location.
+	Place _place;			// The type of location represented.
+
+	union
+	{
+		IDT _label;		// Assembly label ID of this location's definition.
+		RegT _reg;		// ID of the register represented by this location.
+		BytesT _offset;	// FP-relative offset represented by this location.
+	}
+	_val; // Stores information necessary for each variant.
+
+	/**
+	 * @brief Construct a new Location object.
+	 * 
+	 * @param place 
+	 * @param type 
+	 */
+	Location(Place place, Type* type);
+
+public:
+	// Default constructor.
+	Location();
+
+	/**
+	 * @brief Factory function to create a new Location object representing a
+	 * global variable.
+	 * 
+	 * @param type The stored data's type.
+	 * @param label ID of the storage definitions of this location.
+	 * @return A new instance of Location.
+	 */
+	static Location CreateGlobal(Type* type, IDT label);
+
+	/**
+	 * @brief Factory function to create a new Location object representing a
+	 * register-backed variable.
+	 * 
+	 * @param type The stored data's type.
+	 * @param reg Designation of the register represented by this location.
+	 * @return A new instance of Location.
+	 */
+	static Location CreateRegister(Type* type, RegT reg);
+
+	/**
+	 * @brief Factory function to create a new Location object representing a
+	 * memory-backed variable relative to FP.
+	 * 
+	 * @param type The stored data's type.
+	 * @param offset FP-relative offset represented by this location.
+	 * @return A new instance of Location.
+	 */
+	static Location CreateLocal(Type* type, BytesT offset);
 };
 
 
 // Storess the data necessary to generate code and provides some utilities.
 struct GenData
 {
-	// Integer type to represent label IDs for the assembly output.
-	using IDT = uint32_t;
+protected:
+	IDT _nextLabel {0};		// Next available label ID.
+	
+public:
+	std::ostream* _initOS;	// Stream for global initialization code.
+	bool _isGlobal {true};	// Indicates the current node is a global.
+	BytesT _frameSize {0};	// Accumulates the size of the current sub-frame.
 
-	// Indicates where a variable is located in memory.
-	struct VarLocation
-	{
-		bool _onStack;	// True if the variable is stack allocated.
-		BytesT _off;	// The register ID or the stack frame offset.
-
-		/**
-		 * @brief Construct a new VarLocation object.
-		 * 
-		 * @param on_stack True if the variable is stack allocated.
-		 * @param off The register ID or the stack frame offset.
-		 */
-		VarLocation(bool on_stack, BytesT off);
-	};
-
-	IDT _nextLabel {0};		// The next available label ID.
-	// Procedure memory organization:
-	BytesT _lastSize {0};	// The size of declarations made by children.
-
-	// Maps declarations stored on the stack to their locations in memory..
-	std::map<Declaration*, VarLocation> _locations;
+	// Maps global variable declarations to their assembly declaration labels.
+	std::map<Type*, IDT> _globalVars;
+	// Maps declarations stored on the stack to their locations in memory.
+	std::map<Declaration*, Location> _locations;
+	// Maps breakable statements to their exit label IDs.
+	std::map<Breakable*, IDT> _breakLabels;
+	// Maps functions to the total size of their stack allocated parameters.
+	std::map<Function*, BytesT> _stackParamSizes;
+	// Maps string constant label IDs to their values.
+	std::map<IDT, std::string> _strings;
+	// Stores the callee saved registers.
+	std::priority_queue<RegT> _safeRegs;
 
 	/**
 	 * @return The ID of the next label.
@@ -111,20 +185,22 @@ struct GenData
 	IDT NextLabel();
 
 	/**
-	 * @brief Outputs the specified label to the stream.
+	 * @brief 
 	 * 
-	 * @param os The output stream to write the label to.
-	 * @param label The ID of the label to print.
+	 * @param type 
+	 * @param reg 
+	 * @param os 
 	 */
-	void LabelOut(std::ostream& os, IDT label);
+	void GeneratePop(Type* type, RegT reg, std::ostream& os);
 
 	/**
-	 * @brief Returns the ID of the next label and outputs it to the stream.
+	 * @brief 
 	 * 
-	 * @param os The output stream to write the label to.
-	 * @return The ID of the next label.
+	 * @param type 
+	 * @param reg 
+	 * @param os 
 	 */
-	IDT OutAndNextLabel(std::ostream& os);
+	void GeneratePush(Type* type, RegT reg, std::ostream& os);
 };
 
 
@@ -308,6 +384,17 @@ public:
 
 	// Inequality operator overload.
 	friend bool operator!=(const Type& lhs, const Type& rhs);
+
+	/**
+	 * @brief 
+	 * 
+	 * @param dat 
+	 * @param loc The data's location.
+	 * @param do_load 
+	 * @param os Output stream to write the program output to.
+	 */
+	void
+	GenerateAccess(GenData& dat, Location loc, bool do_load, std::ostream& os);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	// Prints inline in the format "Type = <type_name>".

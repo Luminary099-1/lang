@@ -2,7 +2,9 @@
 
 #include "globals.hpp"
 
+#include <algorithm>
 #include <iostream>
+#include <sstream>
 #include <utility>
 
 using namespace std::string_literals;
@@ -10,16 +12,18 @@ using namespace std::string_view_literals;
 
 
 bool Statement::ValidateAndGetReturn(
-	StmtList &stmts, ValidateData& dat, bool& success)
+	StmtList &stmts, ValidateData& dat, bool& success, RegT* eval_weight)
 {
 	const size_t stmts_len {stmts.size()};
 	if (stmts_len == 0) return false;
 
 	Statement* cur {nullptr};
 	Statement* last_ret {stmts[stmts_len - 1].get()};
+	RegT max_weight {0};
 	for (size_t i {0}; i < stmts_len; ++ i)
 	{
 		cur = stmts[i].get();
+		max_weight = std::max(cur->_evalWeight, max_weight);
 		success = cur->Validate(dat) && success;
 		if (cur->_hasReturn) last_ret = cur;
 	}
@@ -33,6 +37,8 @@ bool Statement::ValidateAndGetReturn(
 		success = false;
 		return false;
 	}
+
+	if (eval_weight != nullptr) *eval_weight = max_weight;
 	return true;
 }
 
@@ -70,13 +76,30 @@ bool VariableDef::Validate(ValidateData& dat)
 		return false;
 	}
 
+	_evalWeight = _init->_evalWeight;
 	return success;
 }
 
 
 void VariableDef::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	Location loc;
+
+	if (dat._isGlobal)
+	{
+		_init->Generate(dat, *dat._initOS);
+		const IDT label {dat.NextLabel()};
+		loc = Location::CreateGlobal(_type, label);
+		dat._globalVars[this->_type] = label;
+	}
+	else
+	{
+		_init->Generate(dat, os);
+		loc = Location::CreateLocal(_type, dat._frameSize);
+		dat._frameSize += _type->GetSize();
+	}
+
+	_type->GenerateAccess(dat, dat._locations[this], false, os);
 }
 
 
@@ -123,13 +146,22 @@ bool IfStmt::Validate(ValidateData& dat)
 		HighlightError(std::cerr, dat._src, *this);
 		success = false;
 	}
+
+	_evalWeight = std::max(_cond->_evalWeight, _body->_evalWeight);
+	_evalWeight = std::max(_alt->_evalWeight, _evalWeight);
 	return success;
 }
 
 
 void IfStmt::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	_cond->Generate(dat, os);
+	const RegT in_reg {dat._safeRegs.top()};
+	const IDT after_body = dat.NextLabel();
+	os << "\tcbz\tw"sv << in_reg << ",\tL_"sv << after_body << '\n';
+	_body->Generate(dat, os);
+	os << "L_"sv << after_body << ":\n"sv;
+	_alt->Generate(dat, os);
 }
 
 
@@ -164,8 +196,8 @@ bool BreakStmt::Scope(ScopeStack &ss, TUBuffer &src)
 
 bool BreakStmt::Validate(ValidateData& dat)
 {
-	bool success {_expr->Validate(dat)};
-	const int count {(_count == nullptr) ? 0 : _count->_value};
+	const int count {(_count == nullptr) ? 1 : _count->_value};
+	// TODO: Verify that hte count shouldn't be negative.
 
 	if (dat._bs.size() < count)
 	{
@@ -177,33 +209,43 @@ bool BreakStmt::Validate(ValidateData& dat)
 	_target = dat._bs[count - 1];
 
 	const Type* existing {_target->_type};
-	if (!existing->IsVoid())
+	if (_expr != nullptr)
 	{
-		if (_expr == nullptr)
-		{
-			std::cerr << '(' << _row << ", "sv << _col
-				<< "): Expected break expression, none provided.\n"sv;
-			HighlightError(std::cerr, dat._src, *this);
-			return false;
-		}
-		else if (*_expr->_type != *existing)
+		bool success {_expr->Validate(dat)};
+		_evalWeight = _expr->_evalWeight;
+		if (existing->IsVoid()) _target->_type = _expr->_type;
+		else if (*existing != *_expr->_type)
 		{
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Expected break expression of type "sv << existing->_name
 				<< ", found: "sv << existing->_name << '\n';
 			HighlightError(std::cerr, dat._src, *this);
-			return false;
+			success = false;
 		}
+		return success;
 	}
-	else if (_expr != nullptr) _target->_type = _expr->_type;
-
-	return success;
+	else if (!existing->IsVoid())
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Expected break expression, none provided.\n"sv;
+		HighlightError(std::cerr, dat._src, *this);
+		return false;
+	}
+	else return true;
 }
 
 
 void BreakStmt::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	if (_expr != nullptr)
+	{
+		_expr->Generate(dat, os);
+		const RegT reg {dat._safeRegs.top()}; // This should work fine.
+		const char s {(_expr->_type->GetSize() <= 4) ? 'w' : 'x'};
+		os << "\tmov\t"sv << s << reg << ",\t"sv << s << reg << '\n';
+	}
+
+	os << "\tb\tL_"sv << dat._breakLabels[_target] << '\n';
 }
 
 
@@ -218,7 +260,9 @@ void BreakStmt::Print(std::ostream& os, std::string_view indent, int depth)
 
 ReturnStmt::ReturnStmt(Expression* expr)
 	: _expr{expr}
-{}
+{
+	_hasReturn = true;
+}
 
 
 bool ReturnStmt::Scope(ScopeStack &ss, TUBuffer &src)
@@ -229,10 +273,7 @@ bool ReturnStmt::Scope(ScopeStack &ss, TUBuffer &src)
 
 
 bool ReturnStmt::Validate(ValidateData& dat)
-{
-	bool success {_expr->Validate(dat)};
-	_hasReturn = true;
-	
+{	
 	if (dat._curFunc == nullptr)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
@@ -241,10 +282,12 @@ bool ReturnStmt::Validate(ValidateData& dat)
 		return false;
 	}
 
+	_target = dat._curFunc;
+
 	const Type* expected {dat._curFunc->_type};
-	if (!expected->IsVoid())
+	if (_expr == nullptr)
 	{
-		if (_expr == nullptr)
+		if (!expected->IsVoid())
 		{
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Return from a function of type "sv
@@ -252,30 +295,43 @@ bool ReturnStmt::Validate(ValidateData& dat)
 			HighlightError(std::cerr, dat._src, *this);
 			return false;
 		}
+	}
+	else
+	{
+		bool success {_expr->Validate(dat)};
+		_evalWeight = _expr->_evalWeight;
+		if (expected->IsVoid())
+		{
+			std::cerr << '(' << _row << ", "sv << _col
+				<< "): Unexpected return expression in a void function.\n"sv;
+			HighlightError(std::cerr, dat._src, *this);
+			success = false;
+		}
 		else if (*_expr->_type != *expected)
 		{
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Expected return expression of type "sv << expected->_name
 				<< ", found: "sv << expected->_name << '\n';
 			HighlightError(std::cerr, dat._src, *this);
-			return false;
+			success = false;
 		}
+		return success;
 	}
-	else if (_expr != nullptr)
-	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Unexpected return expression from a void function.\n"sv;
-		HighlightError(std::cerr, dat._src, *this);
-		return false;
-	}
-
-	return success;
+	return true;
 }
 
 
 void ReturnStmt::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	if (_expr != nullptr)
+	{
+		_expr->Generate(dat, os);
+		if (_expr->_type->GetSize() > 4) os << "\tmov\tx0,\tx"sv;
+		else os << "\tmov\tw0,\tw"sv;
+		os << dat._safeRegs.top() << '\n';
+	}
+
+	os << "\tb\tR_"sv << _target->_name << '\n';
 }
 
 
@@ -309,10 +365,13 @@ bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src)
 bool CompoundStmt::Validate(ValidateData& dat)
 {
 	bool success {true};
-	_hasReturn = Statement::ValidateAndGetReturn(_stmts, dat, success);
+	_hasReturn
+		= Statement::ValidateAndGetReturn(_stmts, dat, success, &_evalWeight);
 	if (_expr != nullptr)
 	{
 		_type = _expr->_type;
+		_hasCall = _expr->_hasCall;
+		_evalWeight = std::max(_expr->_evalWeight, _evalWeight);
 		if (_hasReturn)
 		{
 			std::cerr << '(' << _expr->_row << ", "sv << _expr->_col
@@ -329,20 +388,17 @@ bool CompoundStmt::Validate(ValidateData& dat)
 
 void CompoundStmt::Generate(GenData& dat, std::ostream& os)
 {
-	// Determine the sub-frame size and generate code from the children.
-	BytesT frame_size {0};
-	BytesT max_compound_size {0};
-	for (size_t i {0}; i < _stmts.size(); ++ i)
-	{
-		Statement* child {_stmts[i].get()};
-		child->Generate(dat, os);
-		if (dynamic_cast<CompoundStmt*>(child) != nullptr
-			&& dat._lastSize > max_compound_size)
-			max_compound_size = dat._lastSize;
-		else frame_size += dat._lastSize;
-	}
-	// Add the largest compound sub-frame size and return the value.
-	dat._lastSize = frame_size + max_compound_size;
+	const BytesT prev_frame_size {dat._frameSize};
+
+	std::stringstream dos; // Deferred output for the children.
+	for (size_t i {0}; i < _stmts.size(); ++ i) _stmts[i]->Generate(dat, dos);
+
+	const BytesT sub_frame_size {dat._frameSize - prev_frame_size};
+	os << "\tsub\tsp,\tsp,\t"sv << sub_frame_size << '\n';
+	os << dos.rdbuf();
+	os << "\tadd\tsp,\tsp,\t"sv << sub_frame_size << '\n';
+	
+	dat._frameSize = prev_frame_size;
 }
 
 
