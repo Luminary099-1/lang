@@ -95,8 +95,9 @@ void VariableDef::Generate(GenData& dat, std::ostream& os)
 	else
 	{
 		_init->Generate(dat, os);
-		loc = Location::CreateLocal(_type, dat._frameSize);
 		dat._frameSize += _type->GetSize();
+		loc = Location::CreateLocal(
+			_type, dat._isSubFrame ? -dat._frameSize : dat._frameSize);
 	}
 
 	_type->GenerateAccess(dat, dat._locations[this], false, os);
@@ -197,7 +198,6 @@ bool BreakStmt::Scope(ScopeStack &ss, TUBuffer &src)
 bool BreakStmt::Validate(ValidateData& dat)
 {
 	const int count {(_count == nullptr) ? 1 : _count->_value};
-	// TODO: Verify that hte count shouldn't be negative.
 
 	if (dat._bs.size() < count)
 	{
@@ -389,6 +389,13 @@ bool CompoundStmt::Validate(ValidateData& dat)
 void CompoundStmt::Generate(GenData& dat, std::ostream& os)
 {
 	const BytesT prev_frame_size {dat._frameSize};
+	bool is_first_sub_frame {false};
+	if (!dat._isSubFrame)
+	{
+		is_first_sub_frame = true;
+		dat._isSubFrame = true;
+		dat._frameSize = 0;
+	}
 
 	std::stringstream dos; // Deferred output for the children.
 	for (size_t i {0}; i < _stmts.size(); ++ i) _stmts[i]->Generate(dat, dos);
@@ -398,7 +405,11 @@ void CompoundStmt::Generate(GenData& dat, std::ostream& os)
 	os << dos.rdbuf();
 	os << "\tadd\tsp,\tsp,\t"sv << sub_frame_size << '\n';
 	
-	dat._frameSize = prev_frame_size;
+	if (is_first_sub_frame)
+	{
+		dat._isSubFrame = false;
+		dat._frameSize = prev_frame_size;
+	}
 }
 
 

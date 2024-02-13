@@ -13,7 +13,7 @@
 struct Parameter
 	: public Declaration
 {
-	Type* _type {nullptr};				// The parameter's type.
+	Type* _type {nullptr}; // The parameter's type.
 
 	/**
 	 * @brief Construct a new Parameter object.
@@ -36,9 +36,9 @@ struct Function
 	// Stores the parameters expressed in the function definition.
 	using ParamList = std::vector<std::unique_ptr<Parameter>>;
 
-	Type* _type {nullptr};				// The function's return type.
-	ParamList _params;					// The function's parameters.
-	StmtList _body;						// The function's body statements.
+	Type* _type {nullptr};	// The function's return type.
+	ParamList _params;		// The function's parameters.
+	StmtList _body;			// The function's body statements.
 
 	/**
 	 * @brief Construct a new Function object.
@@ -53,11 +53,16 @@ struct Function
 	Function(Identifier* name, ParamList& params, Type* type, StmtList body);
 
 	/**
-	 * @brief 
+	 * @brief Determine the storage allocations for arguments for this
+	 * function's parameters.
 	 * 
-	 * @param dat 
+	 * Implements the algorithm for te marshalling of parameters described in
+	 * the ARM64 Procedure Call Standard (aapcs64), a part of the ARM ABI.
+	 * 
+	 * @param dat Instance of GenData with the appropriate context for this
+	 * opperation.
 	 */
-	BytesT AllocateParams(GenData& dat);
+	BytesT MarshalParams(GenData& dat);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;

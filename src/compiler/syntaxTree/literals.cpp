@@ -104,8 +104,10 @@ bool StrLiteral::Validate(ValidateData& dat)
 
 void StrLiteral::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Handle string allocation in the primary location allocation mechanism?
 	const IDT label {dat.NextLabel()};
 	dat._strings[label] = _value;
-	os << "\tadr\tx"sv << dat._safeRegs.top() << ",\tS_" << label << '\n';
+	RegT reg {dat._safeRegs.top()};
+	os << "\tadrp\tx"sv << reg << ",\tL_"sv << label
+		<< "\n\tadd\tx"sv << reg << ",\tx" << reg << ",\t:lo12:L_"sv << label
+		<< '\n';
 }

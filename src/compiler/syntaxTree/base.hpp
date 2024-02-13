@@ -15,7 +15,7 @@
 
 
 // The type of data sizes and offsets.
-using BytesT = uint64_t;
+using BytesT = int64_t;
 // Integer type to represent label IDs for the assembly output.
 using IDT = uint32_t;
 // Integer type to encode register designations.
@@ -95,9 +95,9 @@ protected:
 	// Indicated the type of storage location represented.
 	enum class Place
 	{
-		Global,		// Memory-backed, global.
-		Register,	// Register-backed.
-		Local		// Memory-backed, relative to FP.
+		Global,		// Global variable.
+		Register,	// Register-backed variable.
+		Local		// Local relative to the current sub-frame.
 	};
 
 	Type* _type {nullptr};	// Type of the data stored in the location.
@@ -164,7 +164,10 @@ protected:
 public:
 	std::ostream* _initOS;	// Stream for global initialization code.
 	bool _isGlobal {true};	// Indicates the current node is a global.
-	BytesT _frameSize {0};	// Accumulates the size of the current sub-frame.
+	// Indicates if locals should belong to the base frame.
+	bool _isSubFrame {false};
+	// Accumulates the size of the current sub-frame (absolute delta to FP).
+	BytesT _frameSize {0};
 
 	// Maps global variable declarations to their assembly declaration labels.
 	std::map<Type*, IDT> _globalVars;
@@ -233,8 +236,7 @@ struct SyntaxTreeNode
 	/**
 	 * @brief Generates the output assembly described by the AST.
 	 * 
-	 * @param dat An instance of ValidateData to store the state of the
-	 * generation.
+	 * @param dat An instance of GenData to store the state of the generation.
 	 * @param os The output stream to write the program output to.
 	 */
 	virtual void Generate(GenData& dat, std::ostream& os);
@@ -279,7 +281,7 @@ struct SyntaxTreeNode
 struct Identifier
 	: public SyntaxTreeNode
 {
-	std::string _id;	// The name associated with this node.
+	std::string _id; // The name associated with this node.
 
 	/**
 	 * @brief Construct a new Identifier object.
@@ -299,7 +301,7 @@ struct Identifier
 struct Declaration
 	: public virtual SyntaxTreeNode
 {
-	std::unique_ptr<Identifier> _name;	// The declared identifier.
+	std::unique_ptr<Identifier> _name; // The declared identifier.
 
 	/**
 	 * @brief Construct a new Declaration object.
@@ -326,8 +328,8 @@ protected:
 	static const std::map<std::string_view, Type*> _namedFundamentals;
 	// The set of fundamental types.
 	static const std::set<const Type*> _fundamentals;
-
-	BytesT _size {0};	// The type's instance size in bytes.
+	// The type's instance size in bytes.
+	BytesT _size {0};
 
 	// Default constructor.
 	Type();
@@ -375,6 +377,16 @@ public:
 	const bool IsString() const;
 
 	/**
+	 * @return true if this is an integral type; false otherwise.
+	 */
+	const bool IsIntegral() const;
+
+	/**
+	 * @return true if this is a pointer type; false otherwise.
+	 */
+	const bool IsPointer() const;
+
+	/**
 	 * @return The type's instance size in bytes.
 	 */
 	const BytesT GetSize() const;
@@ -386,15 +398,19 @@ public:
 	friend bool operator!=(const Type& lhs, const Type& rhs);
 
 	/**
-	 * @brief 
+	 * @brief Generates the output assembly necessary to load or store data to
+	 * the specified location. The source/destination register for the operation
+	 * will be the first available register in dat.
 	 * 
-	 * @param dat 
+	 * @param dat Instance of GenData with the appropriate context for this
+	 * opperation.
 	 * @param loc The data's location.
-	 * @param do_load 
+	 * @param load true if the access is to be a load operation; false for a
+	 * store operation.
 	 * @param os Output stream to write the program output to.
 	 */
 	void
-	GenerateAccess(GenData& dat, Location loc, bool do_load, std::ostream& os);
+	GenerateAccess(GenData& dat, Location loc, bool load, std::ostream& os);
 
 	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	// Prints inline in the format "Type = <type_name>".

@@ -78,7 +78,10 @@ IDT GenData::NextLabel()
 
 void GenData::GeneratePop(Type* type, RegT reg, std::ostream& os)
 {
-	switch (type->GetSize())
+	const BytesT size {type->GetSize()};
+	if (_isSubFrame) _frameSize -= size;
+
+	switch (size)
 	{
 		case 1:	os << "\tldrb\tw"sv << reg << ",\t[sp]\t1\n"sv;	break;
 		case 2:	os << "\tldrh\tw"sv << reg << ",\t[sp]\t2\n"sv;	break;
@@ -90,7 +93,10 @@ void GenData::GeneratePop(Type* type, RegT reg, std::ostream& os)
 
 void GenData::GeneratePush(Type* type, RegT reg, std::ostream& os)
 {
-	switch (type->GetSize())
+	const BytesT size {type->GetSize()};
+	if (_isSubFrame) _frameSize += size;
+
+	switch (size)
 	{
 		case 1:	os << "\tstrb\tw"sv << reg << ",\t[sp, -1]!\n"sv;	break;
 		case 2:	os << "\tstrh\tw"sv << reg << ",\t[sp, -2]!\n"sv;	break;
@@ -236,6 +242,18 @@ const bool Type::IsString() const
 }
 
 
+const bool Type::IsIntegral() const
+{
+	return this == _int.get() || this == _bool.get();
+}
+
+
+const bool Type::IsPointer() const
+{
+	return this == _string.get();
+}
+
+
 const BytesT Type::GetSize() const
 {
 	return _size;
@@ -254,30 +272,32 @@ bool operator!=(const Type& lhs, const Type& rhs)
 	return !(lhs == rhs);
 }
 
-void Type::GenerateAccess(
-	GenData& dat, Location loc, bool do_load, std::ostream& os)
+
+void
+Type::GenerateAccess(GenData& dat, Location loc, bool load, std::ostream& os)
 {
-	RegT ior {dat._safeRegs.top()};
+	RegT ior {dat._safeRegs.top()}; // Input/output register.
 	if (loc._place == Location::Place::Register)
 	{
 		const char s {(_size <= 4) ? 'w' : 'x'};
 		const RegT vr {loc._val._reg};
-		if (do_load) os << "\tmov\t"sv << s << ior << ",\t"sv << s << vr << '\n';
+		if (load) os << "\tmov\t"sv << s << ior << ",\t"sv << s << vr << '\n';
 		else os << "\tmov\t"sv << s << vr << ",\t"sv << s << ior << '\n';
 	}
 	else
 	{
-		RegT ar;
+		RegT ar; // Address register.
 		if (loc._place == Location::Place::Global)
 		{
 			dat._safeRegs.pop();
 			ar = dat._safeRegs.top();
+			dat._safeRegs.push(ar);
 			os << "\tadrp\tx"sv << ar << "\t,L_"sv << loc._val._label
 				<< "\n\tadd\tx"sv << ar << ",\tx"sv << ar << ",\t:lo12:L_"sv
 				<< loc._val._label << '\n';
 		}
 
-		os << '\t' << ((do_load) ? 'l' : 's');
+		os << '\t' << ((load) ? 'l' : 's');
 		switch (_size)
 		{
 			case 1:	os << "drb\tw"sv;	break;
@@ -287,10 +307,7 @@ void Type::GenerateAccess(
 		}
 		os << ior;
 		if (loc._place == Location::Place::Global)
-		{
 			os << ",\t[x"sv << ar << "]\n"sv;
-			dat._safeRegs.push(ar);
-		}
 		else os << ",\t[fp, "sv << loc._val._offset << "]\n"sv;
 	}
 }

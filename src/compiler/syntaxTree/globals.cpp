@@ -31,30 +31,55 @@ Function::Function(
 }
 
 
-BytesT Function::AllocateParams(GenData& dat)
+BytesT Function::MarshalParams(GenData& dat)
 {
-	constexpr size_t reg_count {8}; // The number of parameter registers.
-	
-	// Map the first 7 arguments to x0-x7.
-	for (size_t i {0}; i < std::min(_params.size(), reg_count); ++ i)
+	// Stage A:
+	RegT ngrn {0};		// Next General-purpose Register Number.
+	// RegT nsrn {0};	// Next SIMD and floating-point Register Number.
+	// RegT nprn {0};	// Next Scalable Predicate Register Number.
+	BytesT nsaa {0};	// Next Stacked Argument Address (relative to SP).
+
+	// Stage B - Unimplemented, appears irrelevant for now.
+
+	// Stage C:
+	for (size_t i {0}; i < _params.size(); ++ i)
 	{
-		Parameter* param {_params[i].get()};
-		Location loc
-			{Location::CreateRegister(param->_type, static_cast<RegT>(i))};
-		dat._locations.emplace(std::pair(param, loc));
+		const Parameter* param {_params[i].get()};
+		Type* p_type {param->_type};
+
+		// C1 - Unimplemented as there is no floating-point support yet.
+		// C2 - Unimplemented as there is no floating-point support yet.
+		// C3 - Unimplemented as there is no floating-point support yet.
+		// C4 - Unimplemented as there is no floating-point support yet.
+		// C5 - Unimplemented as there is no floating-point support yet.
+		// C6 - Unimplemented as there is no floating-point support yet.
+		// C7 - Unimplemented as there are no pure scalable types yet.
+		// C8 - Unimplemented as there are no pure scalable types yet.
+
+		// C9 - Allocate Integral or Pointer types of dword size or less:
+		if ((p_type->IsIntegral() || p_type->IsPointer())
+			&& p_type->GetSize() <= 8 && ngrn < 8)
+		{
+			Location loc {Location::CreateRegister(p_type, ngrn)};
+			++ ngrn;
+			continue; // The parameter is allocated.
+		}
+
+		// C10 - Unimplemented as there are no types with qword alignment yet.
+		// C11 - Unimplemented as there are no types with qword size yet.
+		// C12 - Unimplemented as there are no composite types yet.
+
+		ngrn = 8; // C13.
+		nsaa &= -8; // C14 - Partial: No types have qword natural alignment yet.
+
+		// C15 - Unimplemented as there are no composite types yet.
+
+		// C16 + 17: Add 16 bytes to accommodate FP and LR saving.
+		Location loc {Location::CreateLocal(p_type, nsaa + 16)};
+		nsaa += std::max(p_type->GetSize(), static_cast<BytesT>(8));
 	}
 
-	BytesT frame_off {0}; // The offset before the FP.
-	// Maps the arguments after the first 7 to the stack before the FP.
-	for (size_t i {reg_count}; i < _params.size(); ++ i)
-	{
-		Parameter* param {_params[i].get()};
-		Location loc {Location::CreateLocal(param->_type, frame_off)};
-		dat._locations.emplace(std::pair(param, loc));
-		frame_off += param->_type->GetSize();
-	}
-
-	return frame_off;
+	return nsaa;
 }
 
 
@@ -96,7 +121,7 @@ bool Function::Validate(ValidateData& dat)
 void Function::Generate(GenData& dat, std::ostream& os)
 {
 	dat._strings.clear();
-	dat._stackParamSizes[this] = AllocateParams(dat);
+	dat._stackParamSizes[this] = MarshalParams(dat);
 
 	// Generate defferred output for the body:
 	dat._isGlobal = false;
@@ -105,7 +130,8 @@ void Function::Generate(GenData& dat, std::ostream& os)
 	dat._isGlobal = true;
 
 	// Allocate space for callee-saved registers and round to 16 bytes.
-	BytesT frame_size {(dat._frameSize + 12 * 8) & -16};
+	const BytesT reg_save_off {dat._frameSize + 16}; // Locals + FP and LR.
+	const BytesT frame_size {(reg_save_off + 80) & -16}; // Callee-saved & round.
 
 	// Output string constants:
 	for (std::pair<IDT, std::string> c : dat._strings)
@@ -116,22 +142,22 @@ void Function::Generate(GenData& dat, std::ostream& os)
 		<< "F_"sv << _name << ":\n"	// Procedure call label.
 		"\tstp\tfp,\tlr,\t[sp, "sv << -frame_size << "]!\n"
 		"\tmov\tfp,\tsp\n"
-		"\tstp\tx19,\tx20,\t[fp, 16]\n"
-		"\tstp\tx21,\tx22,\t[fp, 32]\n"
-		"\tstp\tx23,\tx24,\t[fp, 48]\n"
-		"\tstp\tx25,\tx26,\t[fp, 64]\n"
-		"\tstp\tx27,\tx28,\t[fp, 80]\n"sv;
+		"\tstp\tx19,\tx20,\t[fp, "sv << (reg_save_off + 16) << "]\n"
+		"\tstp\tx21,\tx22,\t[fp, "sv << (reg_save_off + 32) << "]\n"
+		"\tstp\tx23,\tx24,\t[fp, "sv << (reg_save_off + 48) << "]\n"
+		"\tstp\tx25,\tx26,\t[fp, "sv << (reg_save_off + 64) << "]\n"
+		"\tstp\tx27,\tx28,\t[fp, "sv << (reg_save_off + 80) << "]\n"sv;
 
 	// Output the body's code:
 	os << dos.rdbuf();
 
 	// Procedure footer:
 	os << "R_"sv << _name << ":\n"	// Procedure return label.
-		"\tldp\tx19,\tx20,\t[fp, 16]\n"
-		"\tldp\tx21,\tx22,\t[fp, 32]\n"
-		"\tldp\tx23,\tx24,\t[fp, 48]\n"
-		"\tldp\tx25,\tx26,\t[fp, 64]\n"
-		"\tldp\tx27,\tx28,\t[fp, 80]\n"
+		"\tldp\tx19,\tx20,\t[fp, "sv << (reg_save_off + 16) << "]\n"
+		"\tldp\tx21,\tx22,\t[fp, "sv << (reg_save_off + 32) << "]\n"
+		"\tldp\tx23,\tx24,\t[fp, "sv << (reg_save_off + 48) << "]\n"
+		"\tldp\tx25,\tx26,\t[fp, "sv << (reg_save_off + 64) << "]\n"
+		"\tldp\tx27,\tx28,\t[fp, "sv << (reg_save_off + 80) << "]\n"
 		"\tldp\tfp,\tlr\t[sp],\t"sv << frame_size << '\n'
 		<< "\tret\n"sv;
 }
