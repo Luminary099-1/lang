@@ -1,9 +1,11 @@
 #include "parse.h"
 #include "syntaxTree/base.hpp"
+#include "syntaxTree/common.hpp"
 
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 using namespace std::string_view_literals;
@@ -129,6 +131,36 @@ bool validate(std::vector<SyntaxTreeNode*>& tu, ValidateData& dat)
 
 	for (SyntaxTreeNode* node : tu) node->Validate(dat) && success;
 	return success;
+}
+
+
+/**
+ * @brief Generates assembly output from the provided translation unit's AST.
+ * 
+ * @param tu AST to be generated.
+ */
+void generate(std::vector<SyntaxTreeNode*>& tu)
+{	
+	GenData dat;
+	// Output stream for global and static variable initialization assembly.
+	std::stringstream staticInit;
+	// Output stream for general assembly output.
+	std::stringstream primary;
+	for (SyntaxTreeNode* node : tu)
+	{
+		if (dynamic_cast<VariableDef*>(node) != nullptr)
+		node->Generate(dat, staticInit);
+		else node->Generate(dat, primary);
+	}
+
+	for (std::pair<const Type*, IDT> global : dat._globalVars)
+	{
+		// TODO: Output assembly allocation directives for global variables.
+	}
+
+	// TODO: Wrap the next line in the generation for the program entry routine.
+	std::cout << staticInit.rdbuf();
+	std::cout << primary.rdbuf();
 }
 
 
