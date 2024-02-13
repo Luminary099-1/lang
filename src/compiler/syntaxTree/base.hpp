@@ -73,12 +73,19 @@ public:
 // Stores the data necessary to perform validation.
 struct ValidateData
 {
-	// The TUBuffer for the source file expressing this AST.
+	// TUBuffer for the source file expressing this AST.
 	TUBuffer& _src;
-	// Tree stack containing the chain of breakable predecessor AST nodes.
-	std::vector<Breakable*>& _bs;
-	// The current function definition.
+	// Sack containing the chain of breakable predecessor AST nodes.
+	std::vector<Breakable*> _bs;
+	// Function definition currently being validated.
 	Function* _curFunc {nullptr};
+
+	/**
+	 * @brief Construct a new ValidateData object.
+	 * 
+	 * @param src A translation unit source file buffer.
+	 */
+	ValidateData(TUBuffer& src);
 };
 
 

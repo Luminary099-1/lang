@@ -37,6 +37,11 @@ Declaration* ScopeStack::Lookup(std::string_view name)
 }
 
 
+ValidateData::ValidateData(TUBuffer& src)
+	: _src{src}
+{}
+
+
 Location::Location()
 {}
 

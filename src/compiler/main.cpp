@@ -105,6 +105,33 @@ int readNodes(char* src_path, std::vector<SyntaxTreeNode*>& destTU)
 }
 
 
+/**
+ * @brief Validates the provided translation unit's AST. 
+ * 
+ * @param tu AST to be validated.
+ * @param dat Validation data initialized with the TUBuffer associated with the
+ * passed AST.
+ * @return true if the validation was successful; false otherwise.
+ */
+bool validate(std::vector<SyntaxTreeNode*>& tu, ValidateData& dat)
+{
+	bool success = true;
+	ScopeStack ss;
+	ss.Enter();
+
+	for (SyntaxTreeNode* node : tu) node->Scope(ss, dat._src) && success;
+	if (!success) return false;
+	else if (ss.Lookup("main"sv) == nullptr)
+	{
+		std::cerr << "The function 'main' is undefined.\n"sv;
+		return false;
+	}
+
+	for (SyntaxTreeNode* node : tu) node->Validate(dat) && success;
+	return success;
+}
+
+
 int main(int argc, char** argv)
 {
 	if (argc == 1)
