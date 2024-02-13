@@ -301,14 +301,24 @@ Type::GenerateAccess(GenData& dat, Location loc, bool load, std::ostream& os)
 				<< "\n\tadd\tx"sv << ar << ",\tx"sv << ar << ",\t:lo12:L_"sv
 				<< loc._val._label << '\n';
 		}
-
-		os << '\t' << ((load) ? 'l' : 's');
-		switch (_size)
+		
+		if (load && IsInt()) switch (_size)
 		{
-			case 1:	os << "drb\tw"sv;	break;
-			case 2:	os << "drh\tw"sv;	break;
-			case 4:	os << "dr\tw"sv;	break;
-			case 8:	os << "dr\tx"sv;	break;
+			case 1:	os << "\tldrwb\tw"sv;	break;
+			case 2:	os << "\tldrwh\tw"sv;	break;
+			case 4:	os << "\tldrsw\tw"sv;	break;
+			case 8:	os << "\tldr\tx"sv;		break;
+		}
+		else
+		{
+			os << '\t' << ((load) ? 'l' : 's');
+			switch (_size)
+			{
+				case 1:	os << "drb\tw"sv;	break;
+				case 2:	os << "drh\tw"sv;	break;
+				case 4:	os << "dr\tw"sv;	break;
+				case 8:	os << "dr\tx"sv;	break;
+			}
 		}
 		os << ior;
 		if (loc._place == Location::Place::Global)
