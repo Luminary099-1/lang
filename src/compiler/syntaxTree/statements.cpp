@@ -11,8 +11,8 @@ using namespace std::string_literals;
 using namespace std::string_view_literals;
 
 
-bool Statement::ValidateAndGetReturn(
-	StmtList &stmts, ValidateData& dat, bool& success, RegT* eval_weight)
+bool Statement::ValidateAndGetReturn(StmtList &stmts, ValidateData& dat,
+	bool& success, RegT* eval_weight, bool* has_call)
 {
 	const size_t stmts_len {stmts.size()};
 	if (stmts_len == 0) return false;
@@ -20,10 +20,12 @@ bool Statement::ValidateAndGetReturn(
 	Statement* cur {nullptr};
 	Statement* last_ret {stmts[stmts_len - 1].get()};
 	RegT max_weight {0};
+	bool makes_call {false};
 	for (size_t i {0}; i < stmts_len; ++ i)
 	{
 		cur = stmts[i].get();
 		max_weight = std::max(cur->_evalWeight, max_weight);
+		makes_call = makes_call || cur->_hasCall;
 		success = cur->Validate(dat) && success;
 		if (cur->_hasReturn) last_ret = cur;
 	}
@@ -39,6 +41,7 @@ bool Statement::ValidateAndGetReturn(
 	}
 
 	if (eval_weight != nullptr) *eval_weight = max_weight;
+	if (has_call != nullptr) *has_call = makes_call;
 	return true;
 }
 
@@ -87,7 +90,7 @@ void VariableDef::Generate(GenData& dat, std::ostream& os)
 
 	if (dat._isGlobal)
 	{
-		_init->Generate(dat, *dat._initOS);
+		_init->Generate(dat, os);
 		const IDT label {dat.NextLabel()};
 		loc = Location::CreateGlobal(_type, label);
 		dat._globalVars[this->_type] = label;
@@ -365,8 +368,8 @@ bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src)
 bool CompoundStmt::Validate(ValidateData& dat)
 {
 	bool success {true};
-	_hasReturn
-		= Statement::ValidateAndGetReturn(_stmts, dat, success, &_evalWeight);
+	_hasReturn = Statement::ValidateAndGetReturn(
+		_stmts, dat, success, &_evalWeight, &_hasCall);
 	if (_expr != nullptr)
 	{
 		_type = _expr->_type;

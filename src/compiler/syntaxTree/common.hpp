@@ -37,10 +37,12 @@ struct Statement
 	 * success of the validations performed. A false value will not be set true.
 	 * @param eval_weight A pointer to _evalWeight of the parent owning the
 	 * stmts parameter.
+	 * @param has_call A pointer to _hasCall of the parent owning the stmts
+	 * parameter.
 	 * @return true if the statements return in a valid way; false otherwise.
 	 */
 	static bool ValidateAndGetReturn(StmtList& stmts, ValidateData& dat,
-		bool& success, RegT* eval_weight = nullptr);
+		bool& success, RegT* eval_weight, bool* has_call);
 
 	// TokenInfo should refer to the entire statement in extending classes.
 };

@@ -89,16 +89,20 @@ struct ValidateData
 };
 
 
-// Forward declaration.
+// Forward declarations.
 struct Type;
+struct Invocation;
+struct Function;
 
 
 // Represents the storage location of variables or other data.
 struct Location
 {
+	// TODO: Address this nonsense by extracting subclasses?
 	friend class Type;
+	friend class Invocation;
+	friend class Function;
 
-protected:
 	// Indicated the type of storage location represented.
 	enum class Place
 	{
@@ -107,6 +111,7 @@ protected:
 		Local		// Local relative to the current sub-frame.
 	};
 
+protected:
 	Type* _type {nullptr};	// Type of the data stored in the location.
 	Place _place;			// The type of location represented.
 
@@ -121,8 +126,8 @@ protected:
 	/**
 	 * @brief Construct a new Location object.
 	 * 
-	 * @param place 
-	 * @param type 
+	 * @param place Storage type designated by this Location.
+	 * @param type Type of data stored in this Location.
 	 */
 	Location(Place place, Type* type);
 
@@ -159,6 +164,18 @@ public:
 	 * @return A new instance of Location.
 	 */
 	static Location CreateLocal(Type* type, BytesT offset);
+
+	/**
+	 * @return Returns the storage type designated by this Location.
+	 */
+	Place GetPlace();
+
+	/**
+	 * @brief Converts this stack argument Location for access as a callee to a
+	 * the corresponding location for access as a caller. Has no effect if this
+	 * location is not a local.
+	 */
+	void ReinterpretStack(BytesT stack_args_size);
 };
 
 
@@ -169,7 +186,6 @@ protected:
 	IDT _nextLabel {0};		// Next available label ID.
 	
 public:
-	std::ostream* _initOS;	// Stream for global initialization code.
 	bool _isGlobal {true};	// Indicates the current node is a global.
 	// Indicates if locals should belong to the base frame.
 	bool _isSubFrame {false};
@@ -180,6 +196,8 @@ public:
 	std::map<Type*, IDT> _globalVars;
 	// Maps declarations stored on the stack to their locations in memory.
 	std::map<Declaration*, Location> _locations;
+	// Maps parameters to their locations relative to the caller.
+	std::map<Parameter*, Location> _argLocations;
 	// Maps breakable statements to their exit label IDs.
 	std::map<Breakable*, IDT> _breakLabels;
 	// Maps functions to the total size of their stack allocated parameters.

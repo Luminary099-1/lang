@@ -36,9 +36,10 @@ struct Function
 	// Stores the parameters expressed in the function definition.
 	using ParamList = std::vector<std::unique_ptr<Parameter>>;
 
-	Type* _type {nullptr};	// The function's return type.
-	ParamList _params;		// The function's parameters.
-	StmtList _body;			// The function's body statements.
+	Type* _type {nullptr};	// This function's return type.
+	ParamList _params;		// This function's parameters.
+	StmtList _body;			// This function's body statements.
+	bool _hasCall;			// This function's body contains a function call.
 
 	/**
 	 * @brief Construct a new Function object.

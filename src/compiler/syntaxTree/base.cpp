@@ -75,6 +75,19 @@ Location Location::CreateLocal(Type* type, BytesT offset)
 }
 
 
+Location::Place Location::GetPlace()
+{
+	return _place;
+}
+
+
+void Location::ReinterpretStack(BytesT stack_args_size)
+{
+	if (_place != Place::Local) return;
+	_val._offset = _val._offset - stack_args_size - 16;
+}
+
+
 IDT GenData::NextLabel()
 {
 	return _nextLabel ++;

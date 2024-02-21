@@ -44,8 +44,9 @@ BytesT Function::MarshalParams(GenData& dat)
 	// Stage C:
 	for (size_t i {0}; i < _params.size(); ++ i)
 	{
-		const Parameter* param {_params[i].get()};
+		Parameter* param {_params[i].get()};
 		Type* p_type {param->_type};
+		Location loc;
 
 		// C1 - Unimplemented as there is no floating-point support yet.
 		// C2 - Unimplemented as there is no floating-point support yet.
@@ -60,9 +61,9 @@ BytesT Function::MarshalParams(GenData& dat)
 		if ((p_type->IsIntegral() || p_type->IsPointer())
 			&& p_type->GetSize() <= 8 && ngrn < 8)
 		{
-			Location loc {Location::CreateRegister(p_type, ngrn)};
+			loc = Location::CreateRegister(p_type, ngrn);
 			++ ngrn;
-			continue; // The parameter is allocated.
+			goto store_locations; // The parameter is allocated.
 		}
 
 		// C10 - Unimplemented as there are no types with qword alignment yet.
@@ -75,8 +76,12 @@ BytesT Function::MarshalParams(GenData& dat)
 		// C15 - Unimplemented as there are no composite types yet.
 
 		// C16 + 17: Add 16 bytes to accommodate FP and LR saving.
-		Location loc {Location::CreateLocal(p_type, nsaa + 16)};
+		loc = Location::CreateLocal(p_type, nsaa + 16);
 		nsaa += std::max(p_type->GetSize(), static_cast<BytesT>(8));
+
+	store_locations:
+		dat._argLocations[param] = loc;
+		dat._locations[param] = loc;
 	}
 
 	return nsaa;
@@ -101,7 +106,8 @@ bool Function::Validate(ValidateData& dat)
 {
 	bool success {true};
 	dat._curFunc = this;
-	const bool returns {Statement::ValidateAndGetReturn(_body, dat, success)};
+	const bool returns {Statement::ValidateAndGetReturn(
+		_body, dat, success, nullptr, &_hasCall)};
 	dat._curFunc = nullptr;
 
 	if (!_type->IsVoid() && !returns)
@@ -123,6 +129,22 @@ void Function::Generate(GenData& dat, std::ostream& os)
 	dat._strings.clear();
 	dat._stackParamSizes[this] = MarshalParams(dat);
 
+	// Deferred output for register argument remapping.
+	std::stringstream remap_os;
+	// Accumulates the size of remapped arguments.
+	BytesT remap_off {0};
+	// Remap register parameters to be locals if non-terminal:
+	if (_hasCall) for (size_t i {0}; i < _params.size(); ++ i)
+	{
+		Parameter* param {_params[i].get()};
+		Location old_loc {dat._locations[param]};
+		if (old_loc.GetPlace() != Location::Place::Register) continue;
+		dat._locations.erase(param);
+		remap_off += param->_type->GetSize();
+		dat.GeneratePush(param->_type, old_loc._val._reg, remap_os);
+		dat._locations[param] = Location::CreateLocal(param->_type, -remap_off);
+	}
+
 	// Generate defferred output for the body:
 	dat._isGlobal = false;
 	std::stringstream dos; // Deferred output for the body.
@@ -137,7 +159,7 @@ void Function::Generate(GenData& dat, std::ostream& os)
 	for (std::pair<IDT, std::string> c : dat._strings)
 		os << "S_"sv << c.first << ":\t.string\t\""sv << c.second << "\"\n"sv;
 
-	// Procedure header:
+	// Output procedure header:
 	os << ".balign\t4"
 		<< "F_"sv << _name << ":\n"	// Procedure call label.
 		"\tstp\tfp,\tlr,\t[sp, "sv << -frame_size << "]!\n"
@@ -148,10 +170,13 @@ void Function::Generate(GenData& dat, std::ostream& os)
 		"\tstp\tx25,\tx26,\t[fp, "sv << (reg_save_off + 64) << "]\n"
 		"\tstp\tx27,\tx28,\t[fp, "sv << (reg_save_off + 80) << "]\n"sv;
 
-	// Output the body's code:
-	os << dos.rdbuf();
+	// Output any remapped register arguments and the body's code:
+	os << remap_os.rdbuf() << dos.rdbuf();
 
-	// Procedure footer:
+	// Reclaim stack space occupied by remapped arguments:
+	if (remap_off > 0) os << "\tadd\tsp,\tsp,\t"sv << remap_off << '\n';
+
+	// Output procedure footer:
 	os << "R_"sv << _name << ":\n"	// Procedure return label.
 		"\tldp\tx19,\tx20,\t[fp, "sv << (reg_save_off + 16) << "]\n"
 		"\tldp\tx21,\tx22,\t[fp, "sv << (reg_save_off + 32) << "]\n"

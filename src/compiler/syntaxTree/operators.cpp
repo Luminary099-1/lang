@@ -435,7 +435,26 @@ bool Invocation::Validate(ValidateData& dat)
 
 void Invocation::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
+	const BytesT stack_args_size {dat._stackParamSizes[_def]};
+	if (stack_args_size != 0)
+		os << "\tsub\tsp,\tsp,\t"sv << stack_args_size << '\n';
+
+	for (size_t i {0}; i < _args.size(); ++ i)
+	{
+		Parameter* param {_def->_params[i].get()};
+		Location loc {dat._argLocations[param]};
+		_args[i]->Generate(dat, os);
+		loc.ReinterpretStack(stack_args_size);
+		param->_type->GenerateAccess(dat, loc, false, os);
+	}
+
+	os << "\tbl\tF_"sv << _def->_name->_id << '\n';
+	if (stack_args_size != 0)
+		os << "\tadd\tsp,\tsp,\t"sv << stack_args_size << '\n';
+
+	if (_type->IsVoid()) return;
+	const char s {(_type->GetSize() <= 4) ? 'w' : 'x'};
+	os << "\tmov\t"sv << s << dat._safeRegs.top() << ",\t" << s << "0\n"sv;
 }
 
 
