@@ -7,36 +7,6 @@ using namespace std::string_literals;
 using namespace std::string_view_literals;
 
 
-void ScopeStack::Enter()
-{
-	_stackMap.push_front(std::map<std::string_view, Declaration*>());
-}
-
-
-void ScopeStack::Exit()
-{
-	_stackMap.front().clear();
-	_stackMap.pop_front();
-}
-
-
-Declaration* ScopeStack::Define(std::string_view name, Declaration* node)
-{
-	std::map<std::string_view, Declaration*>& front {_stackMap.front()};
-	if (front.count(name) == 0) return front[name];
-	front.insert(std::pair(name, node));
-	return nullptr;
-}
-
-
-Declaration* ScopeStack::Lookup(std::string_view name)
-{
-	for (std::map<std::string_view, Declaration*> scope : _stackMap)
-		if (scope.count(name)) return scope[name];
-	return nullptr;
-}
-
-
 ValidateData::ValidateData(TUBuffer& src)
 	: _src{src}
 {}
@@ -124,13 +94,6 @@ void GenData::GeneratePush(Type* type, RegT reg, std::ostream& os)
 }
 
 
-bool SyntaxTreeNode::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	// Take no action and assume success by default.
-	return true;
-}
-
-
 bool SyntaxTreeNode::Validate(ValidateData& dat)
 {
 	// Take no action and assume success by default.
@@ -177,23 +140,6 @@ void Identifier::Print(std::ostream& os, std::string_view indent, int depth)
 Declaration::Declaration(Identifier* name)
 	: _name{name}
 {}
-
-
-bool Declaration::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	Declaration* pre_def {ss.Define(_name->_id, this)};
-	if (pre_def != nullptr)
-	{
-		std::cerr << '(' << _name->_row << ", "sv << _name->_col
-			<< "): Symbol collision: "sv << _name->_id
-			<< "\n# The following on line "sv << _name->_row << ":\n"sv;
-		HighlightError(std::cerr, src, *_name);
-		std::cerr << "# Redefines on line "sv << pre_def->_name->_row << ":\n"sv;
-		HighlightError(std::cerr, src, *pre_def->_name);
-		return false;
-	}
-	return true;
-}
 
 
 const std::unique_ptr<Type> Type::_void(	new Type("void"s,	0));
@@ -338,23 +284,6 @@ Type::GenerateAccess(GenData& dat, Location loc, bool load, std::ostream& os)
 			os << ",\t[x"sv << ar << "]\n"sv;
 		else os << ",\t[fp, "sv << loc._val._offset << "]\n"sv;
 	}
-}
-
-
-bool Type::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	if (!_fundamentals.count(this))
-	{
-		_defType = ss.Lookup(_name);
-		if (_defType == nullptr)
-		{
-			std::cerr << '(' << _row << ", "sv << _col
-				<< "): Unknown type: "sv << _name << '\n';
-			HighlightError(std::cerr, src, *this);
-			return false;
-		}
-	}
-	return true;
 }
 
 

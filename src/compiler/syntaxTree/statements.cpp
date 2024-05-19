@@ -51,13 +51,6 @@ VariableDef::VariableDef(Type* type, Identifier* name, Expression* init)
 {}
 
 
-bool VariableDef::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	bool success {Declaration::Scope(ss, src)};
-	return _init->Scope(ss, src) && success;
-}
-
-
 bool VariableDef::Validate(ValidateData& dat)
 {
 	bool success {_init->Validate(dat)};
@@ -121,16 +114,6 @@ IfStmt::IfStmt(Expression* cond, Statement* body, Statement* alt)
 {}
 
 
-bool IfStmt::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	// Kinda ugly to avoid short-circuit evaluation.
-	bool success {_cond->Scope(ss, src)};
-	success = _body->Scope(ss, src) && success;
-	if (_alt != nullptr) return _alt->Scope(ss, src) && success;
-	return success;
-}
-
-
 bool IfStmt::Validate(ValidateData& dat)
 {
 	bool success {_cond->Validate(dat)};
@@ -189,13 +172,6 @@ void IfStmt::Print(std::ostream& os, std::string_view indent, int depth)
 BreakStmt::BreakStmt(Expression* expr, IntLiteral* count)
 	: _expr{expr}, _count{count}
 {}
-
-
-bool BreakStmt::Scope(ScopeStack &ss, TUBuffer &src)
-{
-	if (_expr != nullptr) return _expr->Scope(ss, src);
-	else return true;
-}
 
 
 bool BreakStmt::Validate(ValidateData& dat)
@@ -265,13 +241,6 @@ ReturnStmt::ReturnStmt(Expression* expr)
 	: _expr{expr}
 {
 	_hasReturn = true;
-}
-
-
-bool ReturnStmt::Scope(ScopeStack &ss, TUBuffer &src)
-{
-	if (_expr != nullptr) return _expr->Scope(ss, src);
-	else return true;
 }
 
 
@@ -350,18 +319,6 @@ CompoundStmt::CompoundStmt(StmtList stmts, Expression* expr)
 	: _stmts{std::move(stmts)}, _expr{expr}
 {
 	std::reverse(_stmts.begin(), _stmts.end());
-}
-
-
-bool CompoundStmt::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	bool success {true};
-	ss.Enter();
-	for (size_t i {0}; i < _stmts.size(); ++ i)
-		success = _stmts[i]->Scope(ss, src) && success;
-	if (_expr != nullptr) success = _expr->Scope(ss, src) && success;
-	ss.Exit();
-	return success;
 }
 
 

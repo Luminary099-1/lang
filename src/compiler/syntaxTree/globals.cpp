@@ -88,20 +88,6 @@ BytesT Function::MarshalParams(GenData& dat)
 }
 
 
-bool Function::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	bool success {Declaration::Scope(ss, src)};
-
-	ss.Enter();
-	for (size_t i {0}; i < _params.size(); ++ i)
-		success = _params[i]->Scope(ss, src) && success;
-	for (size_t i {0}; i < _body.size(); ++ i)
-		success = _body[i]->Scope(ss, src) && success;
-	ss.Exit();
-	return success;
-}
-
-
 bool Function::Validate(ValidateData& dat)
 {
 	bool success {true};

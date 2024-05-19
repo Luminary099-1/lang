@@ -65,7 +65,6 @@ struct Function
 	 */
 	BytesT MarshalParams(GenData& dat);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;

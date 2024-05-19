@@ -25,20 +25,6 @@ Variable::Variable(std::string& name)
 {}
 
 
-bool Variable::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	_def = ss.Lookup(_rawValue);
-	if (_def != nullptr && dynamic_cast<Function*>(_def) != nullptr)
-	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Unkown symbol: " << _rawValue << '\n';
-		HighlightError(std::cerr, src, *this);
-		return false;
-	}
-	return true;
-}
-
-
 void Variable::Generate(GenData& dat, std::ostream& os)
 {
 	const RegT out_reg {dat._safeRegs.top()};

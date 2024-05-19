@@ -10,21 +10,6 @@ AssignmentExpr::AssignmentExpr(Identifier* name, Expression* expr)
 {}
 
 
-bool AssignmentExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	bool success {_expr->Scope(ss, src)};
-	_def = dynamic_cast<VariableDef*>(ss.Lookup(_name->_id));
-	if (_def == nullptr)
-	{
-		std::cerr << '(' << _name->_row << ", "sv << _name->_col
-			<< "): Unkown variable: "sv << _name->_id << '\n';
-		HighlightError(std::cerr, src, *_name);
-		success = false;
-	}
-	return success;
-}
-
-
 bool AssignmentExpr::Validate(ValidateData& dat)
 {
 	bool success {_expr->Validate(dat)};
@@ -70,16 +55,6 @@ ForExpr::ForExpr(
 	Expression* init, Expression* cond, Expression* inc, Statement* body)
 	: _init{init}, _cond{cond}, _inc{inc}, _body{body}
 {}
-
-
-bool ForExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	bool success {true};
-	if (_init != nullptr) success = _init->Scope(ss, src) && success;
-	if (_cond != nullptr) success = _cond->Scope(ss, src) && success;
-	if (_inc != nullptr) success = _inc->Scope(ss, src) && success;
-	return _body->Scope(ss, src) && success;
-}
 
 
 bool ForExpr::Validate(ValidateData& dat)
@@ -152,12 +127,6 @@ LoopExpr::LoopExpr(Statement* body)
 {}
 
 
-bool LoopExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	return _body->Scope(ss, src);
-}
-
-
 bool LoopExpr::Validate(ValidateData& dat)
 {
 	dat._bs.push_back(this);
@@ -198,13 +167,6 @@ void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
 WhileExpr::WhileExpr(Expression* cond, Statement* body)
 	: _cond{cond}, _body{body}
 {}
-
-
-bool WhileExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	bool success {_cond->Scope(ss, src)};
-	return _body->Scope(ss, src) && success;
-}
 
 
 bool WhileExpr::Validate(ValidateData& dat)

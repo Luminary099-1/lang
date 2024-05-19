@@ -24,51 +24,7 @@ using RegT = uint8_t;
 
 // Forward declarations.
 struct Breakable;
-struct Declaration;
 struct Function;
-
-
-// A data structure to store program symbols in a scope hierarchy.
-struct ScopeStack
-{
-protected:
-	// A stack of scopes that map identifiers to AST definitions.
-	std::forward_list<std::map<std::string_view, Declaration*>> _stackMap;
-
-public:
-	/**
-	 * @brief Begin a new scope in the scope stack.
-	 */
-	void Enter();
-
-	/**
-	 * @brief Exit the current scope in the scope stack.
-	 */
-	void Exit();
-
-	/**
-	 * @brief Attempts to define a new symbol in the scope stack in the current
-	 * scope.
-	 * 
-	 * @param name The symbol's identifier (name).
-	 * @param node The AST node referred to by the symbol.
-	 * @return The AST node that defines the symbol. If no such symbol is
-	 * defined, nullptr is returned.
-	 */
-	Declaration* Define(std::string_view name, Declaration* node);
-
-	/**
-	 * @brief Returns a pointer to the AST node referred to by the specfied
-	 * symbol, if it exists in any scope. The most recently defined instance of
-	 * the symbol will be returned.
-	 * 
-	 * @param name The symbol's identifier (name).
-	 * @return The AST node that defines the symbol. If no such symbol is
-	 * defined, nullptr is returned.
-	 */
-	Declaration* Lookup(std::string_view name);
-};
-
 
 // Stores the data necessary to perform validation.
 struct ValidateData
@@ -179,6 +135,9 @@ public:
 };
 
 
+// Forward declarations.
+struct Parameter;
+
 // Storess the data necessary to generate code and provides some utilities.
 struct GenData
 {
@@ -236,18 +195,6 @@ public:
 struct SyntaxTreeNode
 	: public virtual TokenInfo
 {
-	/**
-	 * @brief Accumulates all symbols definitions into the specified scope stack
-	 * and verifies the existence of symbols for all other occurrences.
-	 * 
-	 * @param ss The scope stack instance to use.
-	 * @param src The TUBuffer that contains the source file containing this AST
-	 * node.
-	 * @return true on success; false if a symbol is redefined in the same scope
-	 * or an undefined symbol is referenced.
-	 */
-	virtual bool Scope(ScopeStack& ss, TUBuffer& src);
-
 	/**
 	 * @brief Traverses the AST structure and validates the semantics of the
 	 * represented program.
@@ -334,8 +281,6 @@ struct Declaration
 	 * @param name The identifier associated with the declaration.
 	 */
 	Declaration(Identifier* name);
-
-	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 };
 
 
@@ -437,7 +382,6 @@ public:
 	void
 	GenerateAccess(GenData& dat, Location loc, bool load, std::ostream& os);
 
-	bool Scope(ScopeStack& ss, TUBuffer& src) override;
 	// Prints inline in the format "Type = <type_name>".
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 };

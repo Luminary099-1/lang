@@ -42,14 +42,6 @@ std::string_view BinaryExpr::GetOpText(Ops op)
 }
 
 
-bool BinaryExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	// Kinda ugly to avoid short-circuit evaluation.
-	bool success {_argl->Scope(ss, src)};
-	return _argr->Scope(ss, src) && success;
-}
-
-
 /**
  * @brief Prints the error message associated with incorrectly typed operand
  * expressions for binary operators.
@@ -263,12 +255,6 @@ std::string_view PreExpr::GetOpText(Ops op)
 }
 
 
-bool PreExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	return _arg->Scope(ss, src);
-}
-
-
 bool PreExpr::Validate(ValidateData& dat)
 {
 	bool success {_arg->Validate(dat)};
@@ -324,12 +310,6 @@ std::string_view PostExpr::GetOpText(Ops op)
 }
 
 
-bool PostExpr::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	return _arg->Scope(ss, src);
-}
-
-
 bool PostExpr::Validate(ValidateData& dat)
 {
 	bool success {_arg->Validate(dat)};
@@ -373,25 +353,6 @@ Invocation::Invocation(Identifier* name, ArgList& args)
 {
 	std::reverse(_args.begin(), _args.end());
 	_hasCall = true;
-}
-
-
-bool Invocation::Scope(ScopeStack& ss, TUBuffer& src)
-{
-	bool success {true};
-	_def = dynamic_cast<Function*>(ss.Lookup(_name->_id));
-	if (_def == nullptr)
-	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Unkown function: "sv << _name->_id << '\n';
-		HighlightError(std::cerr, src, *_name);
-		success = false;
-	}
-
-	for (size_t i {0}; i < _args.size(); ++ i)
-		success = _args[i]->Scope(ss, src) && success;
-
-	return success;
 }
 
 

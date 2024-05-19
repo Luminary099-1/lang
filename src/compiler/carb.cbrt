@@ -554,4 +554,3 @@ literal: STRING
 		lit->SetSymbolInfo(${0});
 		$$ = lit;
 	}
-
