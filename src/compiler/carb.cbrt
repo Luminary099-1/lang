@@ -1,11 +1,11 @@
 #include "./syntaxTree/base.hpp"
 #include "./syntaxTree/common.hpp"
 #include "./syntaxTree/globals.hpp"
+#include "./utilities.hpp"
 
-#include <cstdlib>
+#include <iostream>
 #include <string>
 #include <string_view>
-#include <utility>
 
 %no_externc
 %prefix carb_
@@ -18,7 +18,6 @@
 
 %scanner%
 %common_class TokenInfo
-
 $:
 {
 	$._row = $line;
@@ -92,7 +91,8 @@ STRING: \".*\" { $$ = std::string($text); }
 
 
 %grammar%
-%params std::vector<SyntaxTreeNode*>& output
+%params std::vector<SyntaxTreeNode*>& output, SymbolTable<std::string_view, Declaration>& symbols, TUBuffer& src
+
 
 globals: global globals
 	{ output.push_back($0); }
@@ -114,6 +114,18 @@ function_def: ID LPAREN param_list RPAREN RARROW ID LCURLY statements RCURLY
 		Function* fn {new Function(id, $2, type, $7)};
 		fn->SetMergedInfo(${0}, ${5});
 		$$ = fn;
+
+		Declaration* pre {symbols.Define(fn->_name->_id, fn)};
+		if (pre != nullptr)
+		{
+			std::cerr << '(' << fn->_name->_row << ", "sv << fn->_name->_col
+				<< "): Symbol collision: "sv << fn->_name->_id
+				<< "\n# The following on line "sv << fn->_name->_row << ":\n"sv;
+			HighlightError(std::cerr, src, *fn->_name);
+			std::cerr << "# Redefines on line "sv << pre->_name->_row << ":\n"sv;
+			HighlightError(std::cerr, src, *pre->_name);
+			src._failed = true;
+		}
 	}
 
 %class param_list: Function::ParamList
@@ -146,6 +158,18 @@ param: ID ID
 		Parameter* param {new Parameter(type, id)};
 		param->SetMergedInfo(${0}, ${1});
 		$$ = param;
+
+		Declaration* pre {symbols.Define(param->_name->_id, param)};
+		if (pre != nullptr)
+		{
+			std::cerr << '(' << param->_name->_row << ", "sv << param->_name->_col
+				<< "): Symbol collision: "sv << param->_name->_id
+				<< "\n# The following on line "sv << param->_name->_row << ":\n"sv;
+			HighlightError(std::cerr, src, *param->_name);
+			std::cerr << "# Redefines on line "sv << pre->_name->_row << ":\n"sv;
+			HighlightError(std::cerr, src, *pre->_name);
+			src._failed = true;
+		}
 	}
 
 %class statement: Statement*
@@ -221,9 +245,21 @@ var_def_stmt: ID ID ASSIGN expression SEMICOL
 		type->SetSymbolInfo(${0});
 		Identifier* id {new Identifier($1)};
 		id->SetSymbolInfo(${1});
-		VariableDef* def {new VariableDef(type, id, $3)};
-		def->SetSymbolInfo(${2});
-		$$ = def;
+		VariableDef* vDef {new VariableDef(type, id, $3)};
+		vDef->SetSymbolInfo(${2});
+		$$ = vDef;
+
+		Declaration* pre {symbols.Define(vDef->_name->_id, vDef)};
+		if (pre != nullptr)
+		{
+			std::cerr << '(' << vDef->_name->_row << ", "sv << vDef->_name->_col
+				<< "): Symbol collision: "sv << vDef->_name->_id
+				<< "\n# The following on line "sv << vDef->_name->_row << ":\n"sv;
+			HighlightError(std::cerr, src, *vDef->_name);
+			std::cerr << "# Redefines on line "sv << pre->_name->_row << ":\n"sv;
+			HighlightError(std::cerr, src, *pre->_name);
+			src._failed = true;
+		}
 	}
 
 %class expression: Expression*
@@ -314,6 +350,15 @@ primary_expr: ID LPAREN arg_list RPAREN
 		Invocation* inv {new Invocation(id, $2)};
 		inv->SetMergedInfo(${0}, ${3});
 		$$ = inv;
+
+		inv->_def = dynamic_cast<Function*>(symbols.Lookup(inv->_name->_id));
+		if (inv->_def == nullptr)
+		{
+			std::cerr << '(' << inv->_row << ", "sv << inv->_col
+				<< "): Unkown function: "sv << inv->_name->_id << '\n';
+			HighlightError(std::cerr, src, *inv->_name);
+			src._failed = true;
+		}
 	}
 primary_expr: literal
 	{ $$ = $0; }
@@ -532,9 +577,18 @@ logic_or_expr: logic_or_expr LOR logic_and_expr
 %class literal: Literal*
 literal: ID
 	{
-		Variable* id {new Variable($0)};
-		id->SetSymbolInfo(${0});
-		$$ = id;
+		Variable* var {new Variable($0)};
+		var->SetSymbolInfo(${0});
+		$$ = var;
+
+		var->_def = symbols.Lookup(var->_rawValue);
+		if (var->_def == nullptr)
+		{
+			std::cerr << '(' << var->_row << ", "sv << var->_col
+				<< "): Unkown function: "sv << var->_rawValue << '\n';
+			HighlightError(std::cerr, src, *var);
+			src._failed = true;
+		}
 	}
 literal: INTEGER
 	{
