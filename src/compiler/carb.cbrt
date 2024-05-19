@@ -82,14 +82,12 @@ STRING: \".*\" { $$ = std::string($text); }
 %token LEVELS ID STRING IF ELSE MATCH FOR LOOP WHILE BOOLEAN BREAK RETURN
 
 %class BOOLEAN INTEGER LEVELS ID STRING: std::string
-/* Not sure what else to put here for now. */
-%token_type int
 
 
-%nt globals global function_def param_list param_list_tail param statement compound_stmt statements
-%nt open_stmt closed_stmt general_stmt var_def_stmt expression assignment_expr for_expr loop_expr
-%nt while_expr break_stmt return_stmt expr_maybe primary_expr arg_list arg_list_tail pre_expr
-%nt multiplicative_expr additive_expr shift_expr relative_expr absolute_expr bit_and_expr
+%nt globals global function_def param_list param_list_tail param statement open_stmt closed_stmt
+%nt close_else_if_stmt compound_stmt statements var_def_stmt expression assignment_expr for_expr
+%nt loop_expr while_expr break_stmt return_stmt expr_maybe primary_expr arg_list arg_list_tail
+%nt pre_expr multiplicative_expr additive_expr shift_expr relative_expr absolute_expr bit_and_expr
 %nt bit_xor_expr bit_or_expr logic_and_expr logic_or_expr literal
 
 
@@ -97,210 +95,463 @@ STRING: \".*\" { $$ = std::string($text); }
 %params std::vector<SyntaxTreeNode*>& output
 
 globals: global globals
-	{}
+	{ output.push_back($0); }
 globals: ;
 
+%class global: SyntaxTreeNode*
 global: function_def
-	{}
+	{ $$ = $0; }
 global: var_def_stmt
-	{}
+	{ $$ = $0; }
 
+%class function_def: Function*
 function_def: ID LPAREN param_list RPAREN RARROW ID LCURLY statements RCURLY
-	{}
+	{
+		Identifier* id {new Identifier($0)};
+		id->SetSymbolInfo(${0});
+		Type* type {Type::Create($5)};
+		type->SetSymbolInfo(${5});
+		Function* fn {new Function(id, $2, type, $7)};
+		fn->SetMergedInfo(${0}, ${5});
+		$$ = fn;
+	}
 
+%class param_list: Function::ParamList
 param_list: param param_list_tail
-	{}
+	{
+		Function::ParamList l {$1};
+		l.emplace_back($0);
+		$$ = l;
+	}
 param_list:
-	{}
+	{ $$ = Function::ParamList(); }
 
+%class param_list_tail: Function::ParamList
 param_list_tail: COMMA param param_list_tail
-	{}
+	{
+		Function::ParamList l {$2};
+		l.emplace_back($1);
+		$$ = l;
+	}
 param_list_tail:
-	{}
+	{ $$ = Function::ParamList(); }
 
+%class param: Parameter*
 param: ID ID
-	{}
+	{
+		Type* type {Type::Create($0)};
+		type->SetSymbolInfo(${0});
+		Identifier* id {new Identifier($1)};
+		id->SetSymbolInfo(${1});
+		Parameter* param {new Parameter(type, id)};
+		param->SetMergedInfo(${0}, ${1});
+		$$ = param;
+	}
 
+%class statement: Statement*
 statement: open_stmt
-	{}
+	{ $$ = $0; }
 statement: closed_stmt
-	{}
+	{ $$ = $0; }
 
+%class open_stmt: IfStmt*
 open_stmt: IF LPAREN expression RPAREN statement
-	{}
+	{
+		IfStmt* stmt {new IfStmt($2, $4, nullptr)};
+		stmt->SetSymbolInfo(${0});
+		$$ = stmt;
+	}
 open_stmt: IF LPAREN expression RPAREN closed_stmt ELSE open_stmt
-	{}
+	{
+		IfStmt* stmt {new IfStmt($2, $4, $6)};
+		stmt->SetSymbolInfo(${0});
+		$$ = stmt;
+	}
 
-closed_stmt: IF LPAREN expression RPAREN closed_stmt ELSE closed_stmt
-	{}
-closed_stmt: general_stmt
-	{}
+%class closed_stmt: Statement*
+closed_stmt: close_else_if_stmt
+	{ $$ = $0; }
+closed_stmt: compound_stmt
+	{ $$ = $0; }
+closed_stmt: var_def_stmt
+	{ $$ = $0; }
+closed_stmt: expression SEMICOL
+	{ $$ = $0; }
+closed_stmt: break_stmt
+	{ $$ = $0; }
+closed_stmt: return_stmt
+	{ $$ = $0; }
 
-general_stmt: compound_stmt
-	{}
-general_stmt: var_def_stmt
-	{}
-general_stmt: expression SEMICOL
-	{}
-general_stmt: break_stmt
-	{}
-general_stmt: return_stmt
-	{}
+%class close_else_if_stmt: IfStmt*
+close_else_if_stmt: IF LPAREN expression RPAREN closed_stmt ELSE closed_stmt
+	{
+		IfStmt* stmt {new IfStmt($2, $4, $6)};
+		stmt->SetSymbolInfo(${0});
+		$$ = stmt;
+	}
 
+%class compound_stmt: CompoundStmt*
 compound_stmt: LCURLY statements RCURLY
-	{}
+	{
+		CompoundStmt* stmt {new CompoundStmt($1, nullptr)};
+		stmt->SetMergedInfo(${0}, ${2});
+		$$ = stmt;
+	}
 compound_stmt: LCURLY statements LARROW expression RCURLY
-	{}
+	{
+		CompoundStmt* stmt {new CompoundStmt($1, $3)};
+		stmt->SetMergedInfo(${0}, ${4});
+		$$ = stmt;
+	}
 
+%class statements: StmtList
 statements: statement statements
-	{}
+	{
+		StmtList l {$1};
+		l.emplace_back($0);
+		$$ = l;
+	}
 statements:
-	{}
+	{ $$ = StmtList(); }
 
+%class var_def_stmt: VariableDef*
 var_def_stmt: ID ID ASSIGN expression SEMICOL
-	{}
+	{
+		Type* type {Type::Create($0)};
+		type->SetSymbolInfo(${0});
+		Identifier* id {new Identifier($1)};
+		id->SetSymbolInfo(${1});
+		VariableDef* def {new VariableDef(type, id, $3)};
+		def->SetSymbolInfo(${2});
+		$$ = def;
+	}
 
+%class expression: Expression*
 expression: assignment_expr
-	{}
+	{ $$ = $0; }
 expression: for_expr
-	{}
+	{ $$ = $0; }
 expression: loop_expr
-	{}
+	{ $$ = $0; }
 expression: while_expr
-	{}
+	{ $$ = $0; }
 expression: logic_or_expr
-	{}
+	{ $$ = $0; }
 
+%class assignment_expr: AssignmentExpr*
 assignment_expr: ID ASSIGN expression
-	{}
+	{
+		Identifier* id {new Identifier($0)};
+		id->SetSymbolInfo(${0});
+		AssignmentExpr* expr {new AssignmentExpr(id, $2)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+%class for_expr: ForExpr*
 for_expr: FOR LPAREN expr_maybe SEMICOL expr_maybe SEMICOL expr_maybe RPAREN statement
-	{}
+	{
+		ForExpr* expr {new ForExpr($2, $4, $6, $8)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 
+%class loop_expr: LoopExpr*
 loop_expr: LOOP statement
-	{}
+	{
+		LoopExpr* expr {new LoopExpr($1)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 
+%class while_expr: WhileExpr*
 while_expr: WHILE LPAREN expression RPAREN statement
-	{}
+	{
+		WhileExpr* expr {new WhileExpr($2, $4)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 
+
+%class break_stmt: BreakStmt*
 break_stmt: BREAK expr_maybe SEMICOL
-	{}
+	{
+		BreakStmt* brk {new BreakStmt($1, nullptr)};
+		brk->SetSymbolInfo(${0});
+		$$ = brk;
+	}
 break_stmt: BREAK LBRACK INTEGER RBRACK expr_maybe SEMICOL
-	{}
+	{
+		IntLiteral* level_count {new IntLiteral($2)};
+		level_count->SetSymbolInfo(${2});
+		BreakStmt* brk {new BreakStmt($4, level_count)};
+		brk->SetSymbolInfo(${0});
+		$$ = brk;
+	}
 
+%class return_stmt: ReturnStmt*
 return_stmt: RETURN expr_maybe SEMICOL
-	{}
+	{
+		ReturnStmt* ret {new ReturnStmt($1)};
+		ret->SetSymbolInfo(${0});
+		$$ = ret;
+	}
 
+%class expr_maybe: Expression*
 expr_maybe: expression
-	{}
+	{ $$ = $0; }
 expr_maybe:
-	{}
+	{ $$ = nullptr; }
 
 
+%class primary_expr: Expression*
 primary_expr: LPAREN expression RPAREN
-	{}
+	{ $$ = $1; }
 primary_expr: ID LPAREN arg_list RPAREN
-	{}
+	{
+		Identifier* id {new Identifier($0)};
+		id->SetSymbolInfo(${0});
+		Invocation* inv {new Invocation(id, $2)};
+		inv->SetMergedInfo(${0}, ${3});
+		$$ = inv;
+	}
 primary_expr: literal
-	{}
+	{ $$ = $0; }
 
+%class arg_list: Invocation::ArgList
 arg_list: expression arg_list_tail
-	{}
+	{
+		Invocation::ArgList l {$1};
+		l.emplace_back($0);
+		$$ = l;
+	}
 arg_list:
-	{}
+	{ $$ = Invocation::ArgList(); }
 
+%class arg_list_tail: Invocation::ArgList
 arg_list_tail: COMMA expression arg_list_tail
-	{}
+	{
+		Invocation::ArgList l {$2};
+		l.emplace_back($1);
+		$$ = l;
+	}
 arg_list_tail:
-	{}
+	{ $$ = Invocation::ArgList(); }
 
+%class pre_expr: Expression*
 pre_expr: primary_expr
-	{}
+	{ $$ = static_cast<PreExpr*>($0); }
 pre_expr: PLUS primary_expr
-	{}
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Pos)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: MINUS primary_expr
-	{}
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Neg)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: INC primary_expr
-	{}
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Inc)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: DEC primary_expr
-	{}
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Dec)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: DENY primary_expr
-	{}
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Deny)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 pre_expr: COMP primary_expr
-	{}
+	{
+		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Comp)};
+		expr->SetSymbolInfo(${0});
+		$$ = expr;
+	}
 
+%class multiplicative_expr: Expression*
 multiplicative_expr: pre_expr
-	{}
+	{ $$ = $0; }
 multiplicative_expr: multiplicative_expr ASTERISK pre_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Mul)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 multiplicative_expr: multiplicative_expr SLASH pre_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Div)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 multiplicative_expr: multiplicative_expr PERCENT pre_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Mod)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+%class additive_expr: Expression*
 additive_expr: multiplicative_expr
-	{}
+	{ $$ = $0; }
 additive_expr: additive_expr PLUS multiplicative_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Add)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 additive_expr: additive_expr MINUS multiplicative_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Sub)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+%class shift_expr: Expression*
 shift_expr: additive_expr
-	{}
+	{ $$ = $0; }
 shift_expr: shift_expr SHL additive_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LShift)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 shift_expr: shift_expr SHR additive_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::RShift)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+%class relative_expr: Expression*
 relative_expr: shift_expr
-	{}
+	{ $$ = $0; }
 relative_expr: relative_expr LT shift_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LT)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 relative_expr: relative_expr LE shift_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LE)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 relative_expr: relative_expr GT shift_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::GT)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 relative_expr: relative_expr GE shift_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::GE)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+%class absolute_expr: Expression*
 absolute_expr: relative_expr
-	{}
+	{ $$ = $0; }
 absolute_expr: absolute_expr EQ relative_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::Eq)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 absolute_expr: absolute_expr NE relative_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::NE)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+
+%class bit_and_expr: Expression*
 bit_and_expr: absolute_expr
-	{}
+	{ $$ = $0; }
 bit_and_expr: bit_and_expr AND absolute_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::AND)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+%class bit_xor_expr: Expression*
 bit_xor_expr: bit_and_expr
-	{}
+	{ $$ = $0; }
 bit_xor_expr: bit_xor_expr XOR bit_and_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::XOR)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+
+%class bit_or_expr: Expression*
 bit_or_expr: bit_xor_expr
-	{}
+	{ $$ = $0; }
 bit_or_expr: bit_or_expr OR bit_xor_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::OR)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+%class logic_and_expr: Expression*
 logic_and_expr: bit_or_expr
-	{}
+	{ $$ = $0; }
 logic_and_expr: logic_and_expr LAND bit_or_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LAND)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
+%class logic_or_expr: Expression*
 logic_or_expr: logic_and_expr
-	{}
+	{ $$ = $0; }
 logic_or_expr: logic_or_expr LOR logic_and_expr
-	{}
+	{
+		BinaryExpr* expr {new BinaryExpr($0, $2, BinaryExpr::Ops::LOR)};
+		expr->SetSymbolInfo(${1});
+		$$ = expr;
+	}
 
 
+%class literal: Literal*
 literal: ID
-	{}
+	{
+		Variable* id {new Variable($0)};
+		id->SetSymbolInfo(${0});
+		$$ = id;
+	}
 literal: INTEGER
-	{}
+	{
+		IntLiteral* lit {new IntLiteral($0)};
+		lit->SetSymbolInfo(${0});
+		$$ = lit;
+	}
 literal: BOOLEAN
-	{}
+	{
+		BoolLiteral* lit {new BoolLiteral($0)};
+		lit->SetSymbolInfo(${0});
+		$$ = lit;
+	}
 literal: STRING
-	{}
+	{
+		StrLiteral* lit {new StrLiteral($0)};
+		lit->SetSymbolInfo(${0});
+		$$ = lit;
+	}
+
