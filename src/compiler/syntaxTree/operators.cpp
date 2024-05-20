@@ -53,14 +53,14 @@ std::string_view BinaryExpr::GetOpText(Ops op)
  * otherwise.
  * @param expected The name of the expected type.
  */
-void ExpectedBinaryType(TUBuffer& src, TokenInfo& op, Expression* expr,
+void ExpectedBinaryType(TU* src, TokenInfo& op, Expression* expr,
 	bool is_left, std::string_view expected)
 {
 	std::cerr << '(' << op._row << ", "sv << op._col << "): Expected "sv
 		<< ((is_left) ? "left"sv : "right"sv)
 		<< " operand of type "sv << expected << ", found: "sv
 		<< expr->_type->_name << '\n';
-	HighlightError(std::cerr, src, op);
+	src->HighlightError(std::cerr, op);
 }
 
 
@@ -114,7 +114,7 @@ bool BinaryExpr::Validate(ValidateData& dat)
 					<< "): Expected operands of matching types, found: "sv
 					<< _argl->_type->_name << " and "sv
 					<< _argr->_type->_name << '\n';
-				HighlightError(std::cerr, dat._src, *this);
+			dat._src->HighlightError(std::cerr, *this);
 			}
 			_type = Type::Create("bool");
 			break;
@@ -264,7 +264,7 @@ bool PreExpr::Validate(ValidateData& dat)
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Expected operand of type int, found: "sv
 			<< _arg->_type->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		success = false;
 	}
 
@@ -319,7 +319,7 @@ bool PostExpr::Validate(ValidateData& dat)
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Expected operand of type int, found: "sv
 			<< _arg->_type->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		success = false;
 	}
 
@@ -366,7 +366,7 @@ bool Invocation::Validate(ValidateData& dat)
 			<< "): Incorrect number of arguments in call to "sv
 			<< _name->_id << ". Expected "sv << expected_args
 			<< ", found "sv << _args.size() << ".\n"sv;
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		return false;
 	}
 	_evalWeight = static_cast<RegT>(expected_args - 1);
@@ -384,7 +384,7 @@ bool Invocation::Validate(ValidateData& dat)
 				<< "): Expected "sv << expected_type->_name << " for argument"sv
 				<< i + 1 << " in call to "sv << _name->_id << ", found: "sv
 				<< given_type->_name << '\n';
-			HighlightError(std::cerr, dat._src, *arg);
+			dat._src->HighlightError(std::cerr, *this);
 			success = false;
 		}
 		_hasCall = _hasCall || arg->_hasCall;

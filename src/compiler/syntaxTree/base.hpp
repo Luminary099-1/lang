@@ -29,8 +29,8 @@ struct Function;
 // Stores the data necessary to perform validation.
 struct ValidateData
 {
-	// TUBuffer for the source file expressing this AST.
-	TUBuffer& _src;
+	// TU for the source file expressing this AST.
+	TU* _src;
 	// Sack containing the chain of breakable predecessor AST nodes.
 	std::vector<Breakable*> _bs;
 	// Function definition currently being validated.
@@ -41,7 +41,7 @@ struct ValidateData
 	 * 
 	 * @param src A translation unit source file buffer.
 	 */
-	ValidateData(TUBuffer& src);
+	ValidateData(TU* src);
 };
 
 

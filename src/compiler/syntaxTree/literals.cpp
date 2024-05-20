@@ -45,7 +45,7 @@ bool IntLiteral::Validate(ValidateData& dat)
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Ingeger literal is out of range of u32: "sv
 			<< _rawValue << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		return false;
 	}
 	return true;

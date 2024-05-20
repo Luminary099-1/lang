@@ -35,7 +35,7 @@ bool Statement::ValidateAndGetReturn(StmtList &stmts, ValidateData& dat,
 	{
 		std::cerr << '(' << cur->_row << ", "sv << cur->_col
 			<< "): Unreachable code after a returning statement.\n"sv;
-		HighlightError(std::cerr, dat._src, *cur);
+		dat._src->HighlightError(std::cerr, *cur);
 		success = false;
 		return false;
 	}
@@ -59,7 +59,7 @@ bool VariableDef::Validate(ValidateData& dat)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Variable cannot be type void: "sv << _name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		return false;
 	}
 	
@@ -68,7 +68,7 @@ bool VariableDef::Validate(ValidateData& dat)
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Expected initializer of type "sv << _type->_name
 			<< ", found: "sv << _init->_type->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		return false;
 	}
 
@@ -130,7 +130,7 @@ bool IfStmt::Validate(ValidateData& dat)
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Expected if statement condition of type bool, found: "sv
 			<< _cond->_type->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		success = false;
 	}
 
@@ -182,7 +182,7 @@ bool BreakStmt::Validate(ValidateData& dat)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Break count exceeds breakable depth: "sv << count << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		return false;
 	}
 	_target = dat._bs[count - 1];
@@ -198,7 +198,7 @@ bool BreakStmt::Validate(ValidateData& dat)
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Expected break expression of type "sv << existing->_name
 				<< ", found: "sv << existing->_name << '\n';
-			HighlightError(std::cerr, dat._src, *this);
+			dat._src->HighlightError(std::cerr, *this);
 			success = false;
 		}
 		return success;
@@ -207,7 +207,7 @@ bool BreakStmt::Validate(ValidateData& dat)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Expected break expression, none provided.\n"sv;
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		return false;
 	}
 	else return true;
@@ -250,7 +250,7 @@ bool ReturnStmt::Validate(ValidateData& dat)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Return statement occurs outside of a function body.\n"sv;
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		return false;
 	}
 
@@ -264,7 +264,7 @@ bool ReturnStmt::Validate(ValidateData& dat)
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Return from a function of type "sv
 				<< expected->_name << " is missing a return expression.\n"sv;
-			HighlightError(std::cerr, dat._src, *this);
+			dat._src->HighlightError(std::cerr, *this);
 			return false;
 		}
 	}
@@ -276,7 +276,7 @@ bool ReturnStmt::Validate(ValidateData& dat)
 		{
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Unexpected return expression in a void function.\n"sv;
-			HighlightError(std::cerr, dat._src, *this);
+			dat._src->HighlightError(std::cerr, *this);
 			success = false;
 		}
 		else if (*_expr->_type != *expected)
@@ -284,7 +284,7 @@ bool ReturnStmt::Validate(ValidateData& dat)
 			std::cerr << '(' << _row << ", "sv << _col
 				<< "): Expected return expression of type "sv << expected->_name
 				<< ", found: "sv << expected->_name << '\n';
-			HighlightError(std::cerr, dat._src, *this);
+			dat._src->HighlightError(std::cerr, *this);
 			success = false;
 		}
 		return success;
@@ -337,7 +337,7 @@ bool CompoundStmt::Validate(ValidateData& dat)
 			std::cerr << '(' << _expr->_row << ", "sv << _expr->_col
 				<< "): Evaluation never occurs as it appears after a "sv 
 				<< "return statement."sv;
-			HighlightError(std::cerr, dat._src, *_expr);
+			dat._src->HighlightError(std::cerr, *this);
 			success = false;
 		}
 	}

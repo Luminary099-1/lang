@@ -101,7 +101,7 @@ bool Function::Validate(ValidateData& dat)
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Non-void function does not return in all control paths: \n"sv
 			<< _name->_id << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		success = false;
 	}
 

@@ -2,6 +2,7 @@
 
 #include <forward_list>
 #include <map>
+#include <memory>
 #include <ostream>
 #include <string_view>
 #include <vector>
@@ -37,23 +38,41 @@ struct TokenInfo
 };
 
 
-// Wraps the buffer that contains a TU's source, including its length.
-struct TUBuffer
+// Wraps a buffer to contain a TU's source.
+struct TU
 {
-	char* _buf;		// A pointer to a TU's source buffer.
-	size_t _size;	// The TU's size.
-	bool _failed;	// Indicates a semantic error was detected during scanning.
+	char* _buf;		// Pointer to a TU's source buffer.
+	size_t _size;	// Size of the buffer referred to by _buf.
+
+	/**
+	 * @brief Construct a new TU object.
+	 * 
+	 * @param size Size of the stored translation unit in bytes.
+	 */
+	TU(size_t size);
+
+	// Destroy the TU object,
+	~TU();
+
+	/**
+	 * @brief Creates a new TU and populates the buffer with the contents of a
+	 * file.
+	 * 
+	 * @param src_path Path to the file that will populate the buffer.
+	 * @return TU instance containing the contents of the file.
+	 * @throws std::runtime_error If the specified file could not be opened.
+	 */
+	static std::unique_ptr<TU> LoadFromFile(char* src_path);
+
+	/**
+	 * @brief Outputs an error message that contains an erroneous line of code
+	 * and highlights which token causes the error.
+	 * 
+	 * @param os Stream to write the message to.
+	 * @param info Position information of the offending token.
+	 */
+	void HighlightError(std::ostream& os, TokenInfo& info);
 };
-
-
-/**
- * @brief Prints the line of referenced token to the specified output stream.
- * 
- * @param os The output stream to write the line and highlighting to.
- * @param src The source file buffer containing the line.
- * @param info The token to highlight from the line.
- */
-void HighlightError(std::ostream& os, TUBuffer& src, TokenInfo& info);
 
 
 /**

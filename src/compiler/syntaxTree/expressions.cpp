@@ -20,7 +20,7 @@ bool AssignmentExpr::Validate(ValidateData& dat)
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Expected assignment expression of type "sv << _type->_name
 			<< ", found: "sv << _expr->_type->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		success = false;
 	}
 	
@@ -181,7 +181,7 @@ bool WhileExpr::Validate(ValidateData& dat)
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Expected while loop condition of type bool, found: "sv
 			<< _cond->_type->_name << '\n';
-		HighlightError(std::cerr, dat._src, *this);
+		dat._src->HighlightError(std::cerr, *this);
 		success = false;
 	}
 

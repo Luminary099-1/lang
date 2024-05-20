@@ -1,17 +1,6 @@
 #include "utilities.hpp"
 
-
-void HighlightError(std::ostream& os, TUBuffer& src, TokenInfo& info)
-{
-	size_t line_start {info._off - info._col + 1};
-	os << '\t';
-	for (size_t i {line_start}; src._buf[i] != '\n' && i < src._size; ++ i)
-		os << src._buf[i];
-	os << '\n' << '\t';
-	for (int i {0}; i < info._col - 1; ++ i) os << ' ';
-	for (int i {0}; i < info._endOff - info._off; ++ i) os << '^';
-	os << '\n';
-};
+#include <fstream>
 
 
 void TokenInfo::SetSymbolInfo(TokenInfo info)
@@ -41,6 +30,53 @@ void TokenInfo::SetMergedInfo(TokenInfo& i1, TokenInfo& i2)
 	_off	= first._off;
 	_endOff	= second._endOff;
 }
+
+
+TU::TU(size_t size)
+	: _size{size}, _buf{new char[size]}
+{}
+
+
+TU::~TU()
+{
+	delete _buf;
+}
+
+
+std::unique_ptr<TU> TU::LoadFromFile(char* src_path)
+{
+	std::ifstream src_file;
+	src_file.open(src_path, std::ios_base::in);
+	if (!src_file)
+	{
+		std::string msg {"Failed to open source file: "};
+		msg.append(src_path);
+		throw std::runtime_error(msg);
+	}
+
+	src_file.seekg(0, std::ios_base::end);
+	size_t size = src_file.tellg();
+	src_file.seekg(0, std::ios_base::beg);
+	
+	std::unique_ptr<TU> tu {std::make_unique<TU>(size)};
+	src_file.read(tu->_buf, tu->_size);
+	src_file.close();
+
+	return tu;
+}
+
+
+void TU::HighlightError(std::ostream& os, TokenInfo& info)
+{
+	size_t line_start {info._off - info._col + 1};
+	os << '\t';
+	for (size_t i {line_start}; _buf[i] != '\n' && i < _size; ++ i)
+		os << _buf[i];
+	os << '\n' << '\t';
+	for (int i {0}; i < info._col - 1; ++ i) os << ' ';
+	for (int i {0}; i < info._endOff - info._off; ++ i) os << '^';
+	os << '\n';
+};
 
 
 template<typename I, typename D>
