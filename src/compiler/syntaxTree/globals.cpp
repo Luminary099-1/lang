@@ -22,7 +22,7 @@ void Parameter::Print(std::ostream& os, std::string_view indent, int depth)
 
 
 Function::Function(
-	Identifier* name, ParamList& params, Type* type, StmtList body)
+	Identifier* name, ParamList params, Type* type, StmtList body)
 	: Declaration{name}, _params{std::move(params)}
 		, _type{type}, _body{std::move(body)}
 {

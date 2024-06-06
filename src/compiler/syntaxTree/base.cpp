@@ -142,10 +142,10 @@ Declaration::Declaration(Identifier* name)
 {}
 
 
-const std::unique_ptr<Type> Type::_void(	new Type("void"s,	0));
-const std::unique_ptr<Type> Type::_int(		new Type("int"s,	4));
-const std::unique_ptr<Type> Type::_bool(	new Type("bool"s,	1));
-const std::unique_ptr<Type> Type::_string(	new Type("string"s,	8));
+const std::unique_ptr<Type> Type::_void		(new Type("void",	0));
+const std::unique_ptr<Type> Type::_int		(new Type("int",	4));
+const std::unique_ptr<Type> Type::_bool		(new Type("bool",	1));
+const std::unique_ptr<Type> Type::_string	(new Type("string",	8));
 
 
 const std::map<std::string_view, Type*> Type::_namedFundamentals
@@ -170,7 +170,7 @@ Type::Type()
 {}
 
 
-Type::Type(std::string& type_name, BytesT size)
+Type::Type(std::string type_name, BytesT size)
 	: _name{type_name}, _size{size}
 {}
 

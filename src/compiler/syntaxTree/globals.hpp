@@ -51,7 +51,7 @@ struct Function
 	 * @param body The function's body. Assumed to be in reverse order after
 	 * being parsed.
 	 */
-	Function(Identifier* name, ParamList& params, Type* type, StmtList body);
+	Function(Identifier* name, ParamList params, Type* type, StmtList body);
 
 	/**
 	 * @brief Determine the storage allocations for arguments for this

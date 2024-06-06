@@ -1,14 +1,14 @@
 #include "utilities.hpp"
 
+#include <algorithm>
+#include <filesystem>
 #include <fstream>
 
 
 void TokenInfo::SetSymbolInfo(TokenInfo info)
 {
 	_row		= info._row;
-	_endRow		= info._endRow;
 	_col		= info._col;
-	_endCol		= info._endCol;
 	_off		= info._off;
 	_endOff		= info._endOff;
 }
@@ -24,57 +24,62 @@ void TokenInfo::SetMergedInfo(TokenInfo& i1, TokenInfo& i2)
 		second = i1;
 	}
 	_row	= first._row;
-	_endRow	= second._endRow;
 	_col	= first._col;
-	_endCol	= second._endCol;
 	_off	= first._off;
 	_endOff	= second._endOff;
 }
 
 
-TU::TU(size_t size)
-	: _size{size}, _buf{new char[size]}
-{}
-
-
-TU::~TU()
+TU::TU(char* src_path)
 {
-	delete _buf;
-}
-
-
-std::unique_ptr<TU> TU::LoadFromFile(char* src_path)
-{
-	std::ifstream src_file;
-	src_file.open(src_path, std::ios_base::in);
-	if (!src_file)
+	_src.open(src_path, std::ios_base::in);
+	if (!_src)
 	{
 		std::string msg {"Failed to open source file: "};
 		msg.append(src_path);
 		throw std::runtime_error(msg);
 	}
 
-	src_file.seekg(0, std::ios_base::end);
-	size_t size = src_file.tellg();
-	src_file.seekg(0, std::ios_base::beg);
-	
-	std::unique_ptr<TU> tu {std::make_unique<TU>(size)};
-	src_file.read(tu->_buf, tu->_size);
-	src_file.close();
+	_buf = new char[_chunk];
+	ReadNext();
+}
 
-	return tu;
+
+TU::~TU()
+{
+	_src.close();
+	delete _buf;
+}
+
+
+void TU::ReadNext()
+{
+	_src.read(_buf, _chunk);
+	_size = _src.gcount();
+	_end = _src.eof();
+}
+
+
+void TU::ReadFrom(size_t pos)
+{
+	_src.seekg(pos);
+	ReadNext();
 }
 
 
 void TU::HighlightError(std::ostream& os, TokenInfo& info)
 {
-	size_t line_start {info._off - info._col + 1};
+	const size_t line_start {info._off - info._col + 1ull};
+	ReadFrom(line_start);
 	os << '\t';
-	for (size_t i {line_start}; _buf[i] != '\n' && i < _size; ++ i)
+	const size_t line_len {std::min(_size, (size_t) 256)};
+	for (size_t i {line_start}; _buf[i] != '\n' && i < line_len; ++ i)
 		os << _buf[i];
 	os << '\n' << '\t';
-	for (int i {0}; i < info._col - 1; ++ i) os << ' ';
-	for (int i {0}; i < info._endOff - info._off; ++ i) os << '^';
+	const size_t padding {info._col - 1};
+	for (int i {0}; i < padding; ++ i) os << ' ';
+	const size_t len {info._endOff - info._off};
+	for (size_t i {0}; i < std::min(len, 256 - padding - len); ++ i) os << '^';
 	os << '\n';
 };
 

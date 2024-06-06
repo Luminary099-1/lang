@@ -176,7 +176,8 @@ BreakStmt::BreakStmt(Expression* expr, IntLiteral* count)
 
 bool BreakStmt::Validate(ValidateData& dat)
 {
-	const int count {(_count == nullptr) ? 1 : _count->_value};
+	const size_t count
+		{static_cast<size_t>((_count == nullptr) ? 1 : _count->_value)};
 
 	if (dat._bs.size() < count)
 	{

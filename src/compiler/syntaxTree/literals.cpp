@@ -40,7 +40,7 @@ IntLiteral::IntLiteral(std::string& value)
 bool IntLiteral::Validate(ValidateData& dat)
 {
 	try { _value = std::stoi(_rawValue); }
-	catch (const std::out_of_range& e)
+	catch ([[maybe_unused]] const std::out_of_range& e)
 	{
 		std::cerr << '(' << _row << ", "sv << _col
 			<< "): Ingeger literal is out of range of u32: "sv

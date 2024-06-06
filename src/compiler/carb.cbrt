@@ -7,12 +7,16 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <utility>
 
 
 %no_externc
 %prefix carb_
 
 %header%
+#pragma once
+
+
 #include "./syntaxTree/base.hpp"
 #include "./utilities.hpp"
 
@@ -29,9 +33,7 @@ bool carbFailed;
 $:
 {
 	$._row = $line;
-	$._endRow = $endline;
 	$._col = $column;
-	$._endCol = $endcolumn;
 	$._off = $offset;
 	$._endOff = $endoffset;
 }
@@ -118,7 +120,7 @@ function_def: ID LPAREN param_list RPAREN RARROW ID LCURLY statements RCURLY
 		id->SetSymbolInfo(${0});
 		Type* type {Type::Create($5)};
 		type->SetSymbolInfo(${5});
-		Function* fn {new Function(id, $2, type, $7)};
+		Function* fn {new Function(id, std::move($2), type, std::move($7))};
 		fn->SetMergedInfo(${0}, ${5});
 		$$ = fn;
 
@@ -138,9 +140,9 @@ function_def: ID LPAREN param_list RPAREN RARROW ID LCURLY statements RCURLY
 %class param_list: Function::ParamList
 param_list: param param_list_tail
 	{
-		Function::ParamList l {$1};
+		Function::ParamList l {std::move($1)};
 		l.emplace_back($0);
-		$$ = l;
+		$$ = std::move(l);
 	}
 param_list:
 	{ $$ = Function::ParamList(); }
@@ -148,9 +150,9 @@ param_list:
 %class param_list_tail: Function::ParamList
 param_list_tail: COMMA param param_list_tail
 	{
-		Function::ParamList l {$2};
+		Function::ParamList l {std::move($2)};
 		l.emplace_back($1);
-		$$ = l;
+		$$ = std::move(l);
 	}
 param_list_tail:
 	{ $$ = Function::ParamList(); }
@@ -224,13 +226,13 @@ close_else_if_stmt: IF LPAREN expression RPAREN closed_stmt ELSE closed_stmt
 %class compound_stmt: CompoundStmt*
 compound_stmt: LCURLY statements RCURLY
 	{
-		CompoundStmt* stmt {new CompoundStmt($1, nullptr)};
+		CompoundStmt* stmt {new CompoundStmt(std::move($1), nullptr)};
 		stmt->SetMergedInfo(${0}, ${2});
 		$$ = stmt;
 	}
 compound_stmt: LCURLY statements LARROW expression RCURLY
 	{
-		CompoundStmt* stmt {new CompoundStmt($1, $3)};
+		CompoundStmt* stmt {new CompoundStmt(std::move($1), $3)};
 		stmt->SetMergedInfo(${0}, ${4});
 		$$ = stmt;
 	}
@@ -238,9 +240,9 @@ compound_stmt: LCURLY statements LARROW expression RCURLY
 %class statements: StmtList
 statements: statement statements
 	{
-		StmtList l {$1};
+		StmtList l {std::move($1)};
 		l.emplace_back($0);
-		$$ = l;
+		$$ = std::move(l);
 	}
 statements:
 	{ $$ = StmtList(); }
@@ -373,9 +375,9 @@ primary_expr: literal
 %class arg_list: Invocation::ArgList
 arg_list: expression arg_list_tail
 	{
-		Invocation::ArgList l {$1};
+		Invocation::ArgList l {std::move($1)};
 		l.emplace_back($0);
-		$$ = l;
+		$$ = std::move(l);
 	}
 arg_list:
 	{ $$ = Invocation::ArgList(); }
@@ -383,9 +385,9 @@ arg_list:
 %class arg_list_tail: Invocation::ArgList
 arg_list_tail: COMMA expression arg_list_tail
 	{
-		Invocation::ArgList l {$2};
+		Invocation::ArgList l {std::move($2)};
 		l.emplace_back($1);
-		$$ = l;
+		$$ = std::move(l);
 	}
 arg_list_tail:
 	{ $$ = Invocation::ArgList(); }

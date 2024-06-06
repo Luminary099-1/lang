@@ -55,9 +55,9 @@ struct Function;
 struct Location
 {
 	// TODO: Address this nonsense by extracting subclasses?
-	friend class Type;
-	friend class Invocation;
-	friend class Function;
+	friend struct Type;
+	friend struct Invocation;
+	friend struct Function;
 
 	// Indicated the type of storage location represented.
 	enum class Place
@@ -137,6 +137,7 @@ public:
 
 // Forward declarations.
 struct Parameter;
+struct Declaration;
 
 // Storess the data necessary to generate code and provides some utilities.
 struct GenData
@@ -310,10 +311,11 @@ protected:
 	 * @param type_name The type's symbolic name.
 	 * @param size The type's instance size in bytes.
 	 */
-	Type(std::string& type_name, BytesT size = 0);
+	Type(std::string type_name, BytesT size = 0);
 
 
 public:
+	// TODO: Reevaluate whether the name should be stored as an Identifier.
 	std::string _name;					// The type's name.
 	SyntaxTreeNode*	_defType {nullptr};	// The defined type, if applicable.
 
