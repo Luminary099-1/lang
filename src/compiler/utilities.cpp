@@ -55,7 +55,7 @@ TU::~TU()
 void TU::ReadNext()
 {
 	_src.read(_buf, _chunk);
-	_size = _src.gcount();
+	_size = static_cast<size_t>(_src.gcount());
 	_end = _src.eof();
 }
 
@@ -76,8 +76,8 @@ void TU::HighlightError(std::ostream& os, TokenInfo& info)
 	for (size_t i {line_start}; _buf[i] != '\n' && i < line_len; ++ i)
 		os << _buf[i];
 	os << '\n' << '\t';
-	const size_t padding {info._col - 1};
-	for (int i {0}; i < padding; ++ i) os << ' ';
+	const size_t padding {static_cast<size_t>(info._col - 1)};
+	for (size_t i {0}; i < padding; ++ i) os << ' ';
 	const size_t len {info._endOff - info._off};
 	for (size_t i {0}; i < std::min(len, 256 - padding - len); ++ i) os << '^';
 	os << '\n';

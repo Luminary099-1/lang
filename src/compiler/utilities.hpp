@@ -1,9 +1,9 @@
 #pragma once
 
 #include <forward_list>
+#include <fstream>
 #include <map>
 #include <memory>
-#include <ostream>
 #include <string_view>
 #include <vector>
 

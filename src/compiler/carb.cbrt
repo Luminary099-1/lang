@@ -1,29 +1,23 @@
 #include "parse.h"
 
-#include "./syntaxTree/base.hpp"
-#include "./syntaxTree/common.hpp"
-#include "./syntaxTree/globals.hpp"
-
-#include <iostream>
-#include <string>
-#include <string_view>
-#include <utility>
-
+std::vector<SyntaxTreeNode*>* carbOut;
+TU* carbTU;
+bool carbFailed;
 
 %no_externc
 %prefix carb_
 
 %header%
-#pragma once
+#include <iostream>
+#include <string>
+#include <string_view>
+#include <utility>
 
-
-#include "./syntaxTree/base.hpp"
 #include "./utilities.hpp"
-
-std::vector<SyntaxTreeNode*>* carbOut;
-SymbolTable<std::string_view, Declaration>* carbSymbols;
-TU* carbTU;
-bool carbFailed;
+#include "./syntaxTree/base.hpp"
+#include "./syntaxTree/base.hpp"
+#include "./syntaxTree/common.hpp"
+#include "./syntaxTree/globals.hpp"
 %%
 
 
@@ -123,18 +117,6 @@ function_def: ID LPAREN param_list RPAREN RARROW ID LCURLY statements RCURLY
 		Function* fn {new Function(id, std::move($2), type, std::move($7))};
 		fn->SetMergedInfo(${0}, ${5});
 		$$ = fn;
-
-		Declaration* pre {carbSymbols->Define(fn->_name->_id, fn)};
-		if (pre != nullptr)
-		{
-			std::cerr << '(' << fn->_name->_row << ", "sv << fn->_name->_col
-				<< "): Symbol collision: "sv << fn->_name->_id
-				<< "\n# The following on line "sv << fn->_name->_row << ":\n"sv;
-			carbTU->HighlightError(std::cerr, *fn->_name);
-			std::cerr << "# Redefines on line "sv << pre->_name->_row << ":\n"sv;
-			carbTU->HighlightError(std::cerr, *pre->_name);
-			carbFailed = true;
-		}
 	}
 
 %class param_list: Function::ParamList
@@ -167,18 +149,6 @@ param: ID ID
 		Parameter* param {new Parameter(type, id)};
 		param->SetMergedInfo(${0}, ${1});
 		$$ = param;
-
-		Declaration* pre {carbSymbols->Define(param->_name->_id, param)};
-		if (pre != nullptr)
-		{
-			std::cerr << '(' << param->_name->_row << ", "sv << param->_name->_col
-				<< "): Symbol collision: "sv << param->_name->_id
-				<< "\n# The following on line "sv << param->_name->_row << ":\n"sv;
-			carbTU->HighlightError(std::cerr, *param->_name);
-			std::cerr << "# Redefines on line "sv << pre->_name->_row << ":\n"sv;
-			carbTU->HighlightError(std::cerr, *pre->_name);
-			carbFailed = true;
-		}
 	}
 
 %class statement: Statement*
@@ -257,18 +227,6 @@ var_def_stmt: ID ID ASSIGN expression SEMICOL
 		VariableDef* vDef {new VariableDef(type, id, $3)};
 		vDef->SetSymbolInfo(${2});
 		$$ = vDef;
-
-		Declaration* pre {carbSymbols->Define(vDef->_name->_id, vDef)};
-		if (pre != nullptr)
-		{
-			std::cerr << '(' << vDef->_name->_row << ", "sv << vDef->_name->_col
-				<< "): Symbol collision: "sv << vDef->_name->_id
-				<< "\n# The following on line "sv << vDef->_name->_row << ":\n"sv;
-			carbTU->HighlightError(std::cerr, *vDef->_name);
-			std::cerr << "# Redefines on line "sv << pre->_name->_row << ":\n"sv;
-			carbTU->HighlightError(std::cerr, *pre->_name);
-			carbFailed = true;
-		}
 	}
 
 %class expression: Expression*
@@ -359,15 +317,6 @@ primary_expr: ID LPAREN arg_list RPAREN
 		Invocation* inv {new Invocation(id, $2)};
 		inv->SetMergedInfo(${0}, ${3});
 		$$ = inv;
-
-		inv->_def = dynamic_cast<Function*>(carbSymbols->Lookup(inv->_name->_id));
-		if (inv->_def == nullptr)
-		{
-			std::cerr << '(' << inv->_row << ", "sv << inv->_col
-				<< "): Unknown function: "sv << inv->_name->_id << '\n';
-			carbTU->HighlightError(std::cerr, *inv->_name);
-			carbFailed = true;
-		}
 	}
 primary_expr: literal
 	{ $$ = $0; }
@@ -589,15 +538,6 @@ literal: ID
 		Variable* var {new Variable($0)};
 		var->SetSymbolInfo(${0});
 		$$ = var;
-
-		var->_def = carbSymbols->Lookup(var->_rawValue);
-		if (var->_def == nullptr)
-		{
-			std::cerr << '(' << var->_row << ", "sv << var->_col
-				<< "): Unkown function: "sv << var->_rawValue << '\n';
-			carbTU->HighlightError(std::cerr, *var);
-			carbFailed = true;
-		}
 	}
 literal: INTEGER
 	{
