@@ -1,9 +1,5 @@
 #include "parse.h"
 
-std::vector<SyntaxTreeNode*>* carbOut;
-TU* carbTU;
-bool carbFailed;
-
 %no_externc
 %prefix carb_
 
@@ -18,6 +14,14 @@ bool carbFailed;
 #include "./syntaxTree/base.hpp"
 #include "./syntaxTree/common.hpp"
 #include "./syntaxTree/globals.hpp"
+
+/*
+ * Largest value of best_match_action_ that corresponds to whitespace.
+ * Equivalent to the number of scanner patterns discarded as whitespace.
+ */
+const size_t carbWhiteBound {1};
+// Parser AST output.
+std::vector<SyntaxTreeNode*>* carbOut;
 %%
 
 
@@ -32,7 +36,7 @@ $:
 	$._endOff = $endoffset;
 }
 
-: [\ \t\n]+;	/* Skips whitespace. */
+: [\ \t\n\r]+ ;
 ASSIGN: =;
 SEMICOL: \;;
 COMMA: \,;
