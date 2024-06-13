@@ -24,6 +24,19 @@ add_executable(lex_dump
 )
 set_property(TARGET lex_dump PROPERTY CXX_STANDARD 20)
 
+add_executable(ast_dump
+	src/compiler/tools/dumpAST.cpp
+	src/compiler/utilities.cpp
+	src/compiler/parse.cpp
+	src/compiler/syntaxTree/base.cpp
+	src/compiler/syntaxTree/expressions.cpp
+	src/compiler/syntaxTree/globals.cpp
+	src/compiler/syntaxTree/literals.cpp
+	src/compiler/syntaxTree/operators.cpp
+	src/compiler/syntaxTree/statements.cpp
+)
+set_property(TARGET ast_dump PROPERTY CXX_STANDARD 20)
+
 add_executable(compiler
 	src/compiler/main.cpp
 	src/compiler/utilities.cpp

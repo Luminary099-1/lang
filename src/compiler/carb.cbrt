@@ -20,10 +20,9 @@
  * Equivalent to the number of scanner patterns discarded as whitespace.
  */
 const size_t carbWhiteBound {1};
-// Parser AST output.
-std::vector<SyntaxTreeNode*>* carbOut;
 %%
 
+%params std::vector<SyntaxTreeNode*>& out 
 
 
 %scanner%
@@ -102,7 +101,7 @@ STRING: \".*\" { $$ = std::string($text); }
 %grammar%
 
 globals: global globals
-	{ carbOut->push_back($0); }
+	{ out.push_back($0); }
 globals: ;
 
 %class global: SyntaxTreeNode*

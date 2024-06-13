@@ -1,13 +1,16 @@
 #include "../parse.h"
+#include "../syntaxTree/base.hpp"
 #include "../utilities.hpp"
 
 #include <iostream>
-#include <memory>
 #include <string_view>
 
 
+using namespace std::string_view_literals;
+
+
 /**
- * Outputs the lexemes of a source file to the standard output, one per line.
+ * Outputs the AST of a source file to the standard output.
  * @param argc Number of command line arguments (expects 2).
  * @param argv Command line arguments. The second expected argument is the
  * source file to analyze.
@@ -36,14 +39,15 @@ int main(int argc, char** argv)
 	carb_set_input(&stack, tu->_buf, tu->_size, 1);
 
 	int status {EXIT_SUCCESS};
+	std::vector<SyntaxTreeNode*> out;
 	while (true)
 	{
-		switch (carb_lex(&stack))
+		switch (carb_scan(&stack, out))
 		{
-			case _CARB_MATCH:
-				if (stack.best_match_action_ > carbWhiteBound)
-					std::cout << carb_text(&stack) << '\n';
-				continue;
+			case _CARB_FINISH:
+				for (SyntaxTreeNode* node : out)
+					node->Print(std::cout, "	"sv);
+				break;
 			case _CARB_FEED_ME:
 				tu->ReadNext();
 				carb_set_input(&stack, tu->_buf, tu->_size, 1);
@@ -53,13 +57,18 @@ int main(int argc, char** argv)
 			case _CARB_LEXICAL_ERROR:
 				std::cerr << "Unexpected token: "sv << carb_text(&stack) << '\n';
 				continue;
+			case _CARB_SYNTAX_ERROR:
+				std::cerr << "Syntax error on ("sv << carb_line(&stack)
+					<< ", "sv << carb_column(&stack) << "): "sv
+					<< carb_text(&stack) << '\n';
+				continue;
 			default:
 				std::cerr << "Encountered an unrecoverable error, aborting.\n"sv;
 				status = EXIT_FAILURE;
 		}
 		break;
 	}
-	
+
 	carb_stack_cleanup(&stack);
 	return status;
 }
