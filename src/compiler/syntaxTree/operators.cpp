@@ -138,85 +138,12 @@ bool BinaryExpr::Validate(ValidateData& dat)
 	}
 
 	_hasCall = _argl->_hasCall || _argr->_hasCall;
-	_evalWeight = std::max(
-		static_cast<RegT>(_argl->_evalWeight + 1), _argr->_evalWeight);
-	if (_op == Ops::Mod) ++ _evalWeight;
 	return success;
 }
 
 
 void BinaryExpr::Generate(GenData& dat, std::ostream& os)
-{
-	static const std::map<Ops, std::string_view> mnems
-	{
-		{Ops::LAND, "and"sv},	{Ops::AND, "and"sv},
-		{Ops::LOR, "orr"sv},	{Ops::OR, "orr"sv},
-		{Ops::XOR, "eor"sv},	{Ops::Eq, "eq"sv},
-		{Ops::NE, "ne"sv},		{Ops::LT, "lt"sv},
-		{Ops::LE, "le"sv},		{Ops::GT, "gt"sv},
-		{Ops::GE, "ge"sv},		{Ops::LShift, "lsl"sv},
-		{Ops::RShift, "lsr"sv},	{Ops::Add, "add"sv},
-		{Ops::Sub, "sub"sv},	{Ops::Mul, "mul"sv},
-		{Ops::Div, "sdiv"sv}
-	};
-
-	_argl->Generate(dat, os);
-	const RegT out_r {dat._safeRegs.top()};
-	RegT lr {out_r};
-	RegT rr {out_r};
-	if (_argr->_hasCall || _argr->_evalWeight > dat._safeRegs.size())
-	{
-		dat.GeneratePush(_argl->_type, lr, os);
-		_argr->Generate(dat, os);
-		dat._safeRegs.pop();
-		lr = dat._safeRegs.top();
-		dat.GeneratePop(_argl->_type, lr, os);
-	}
-	else
-	{
-		dat._safeRegs.pop();
-		rr = dat._safeRegs.top();
-		_argr->Generate(dat, os);
-	}
-
-	switch (_op)
-	{
-		case Ops::LAND:	case Ops::AND:	case Ops::LOR:	case Ops::OR:
-		case Ops::XOR:	case Ops::Add:	case Ops::Sub:	case Ops::Mul:
-		case Ops::Div:
-			os << '\t' << mnems.at(_op)
-				<< "\tw"sv << out_r << ",\tw"sv << lr << ",\tw"sv << rr << '\n';
-			break;
-		
-		case Ops::LShift:	case Ops::RShift:
-			os << '\t' << mnems.at(_op)
-				<< "\tw"sv << lr << ",\tw"sv << rr << '\n';
-			break;
-
-		case Ops::Eq:	case Ops::NE:	case Ops::LT:
-		case Ops::LE:	case Ops::GT:	case Ops::GE:
-		{
-			char s {(_type->GetSize() <= 4) ? 'w' : 'x'};
-			os << "\tcmp\t"sv << s << lr << ",\t" << s << rr << "\n\t"sv
-				<< "cset\t"sv << s << out_r << ",\t"sv << mnems.at(_op) << '\n';
-			break;
-		}
-
-		case Ops::Mod:
-		{
-			dat._safeRegs.pop();
-			RegT tr {dat._safeRegs.top()};
-			os << "\tudiv\tw"sv << tr << ",\tw"sv << lr << ",\tw"sv << rr
-				<< "\n\tmsub\tw"sv << out_r << ",\tw"sv << tr << ",\tw"sv << rr
-				<< ",\tw"sv << lr << '\n';
-			dat._safeRegs.push(tr);
-			break;
-		}
-	}
-
-	dat._safeRegs.push(lr);
-	dat._safeRegs.push(rr);
-}
+{}
 
 
 void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
@@ -270,14 +197,12 @@ bool PreExpr::Validate(ValidateData& dat)
 
 	_type = _arg->_type;
 	_hasCall = _arg->_hasCall;
-	_evalWeight = _arg->_evalWeight;
 	return success;
 }
 
 
 void PreExpr::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
 	// FIXME: These operations can incorrectly be applied to rvalues.
 }
 
@@ -325,14 +250,12 @@ bool PostExpr::Validate(ValidateData& dat)
 
 	_type = _arg->_type;
 	_hasCall = _arg->_hasCall;
-	_evalWeight = std::max(static_cast<RegT>(2), _arg->_evalWeight);
 	return success;
 }
 
 
 void PostExpr::Generate(GenData& dat, std::ostream& os)
 {
-	// TODO: Implement this.
 	// FIXME: These operations can incorrectly be applied to rvalues.
 }
 
@@ -369,7 +292,6 @@ bool Invocation::Validate(ValidateData& dat)
 		dat._src->HighlightError(std::cerr, *this);
 		return false;
 	}
-	_evalWeight = static_cast<RegT>(expected_args - 1);
 
 	bool success {true};
 	for (size_t i {0}; i < expected_args; ++ i)
@@ -395,28 +317,7 @@ bool Invocation::Validate(ValidateData& dat)
 
 
 void Invocation::Generate(GenData& dat, std::ostream& os)
-{
-	const BytesT stack_args_size {dat._stackParamSizes[_def]};
-	if (stack_args_size != 0)
-		os << "\tsub\tsp,\tsp,\t"sv << stack_args_size << '\n';
-
-	for (size_t i {0}; i < _args.size(); ++ i)
-	{
-		Parameter* param {_def->_params[i].get()};
-		Location loc {dat._argLocations[param]};
-		_args[i]->Generate(dat, os);
-		loc.ReinterpretStack(stack_args_size);
-		param->_type->GenerateAccess(dat, loc, false, os);
-	}
-
-	os << "\tbl\tF_"sv << _def->_name->_id << '\n';
-	if (stack_args_size != 0)
-		os << "\tadd\tsp,\tsp,\t"sv << stack_args_size << '\n';
-
-	if (_type->IsVoid()) return;
-	const char s {(_type->GetSize() <= 4) ? 'w' : 'x'};
-	os << "\tmov\t"sv << s << dat._safeRegs.top() << ",\t" << s << "0\n"sv;
-}
+{}
 
 
 void Invocation::Print(std::ostream& os, std::string_view indent, int depth)

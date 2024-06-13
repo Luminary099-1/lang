@@ -26,10 +26,7 @@ Variable::Variable(std::string& name)
 
 
 void Variable::Generate(GenData& dat, std::ostream& os)
-{
-	const RegT out_reg {dat._safeRegs.top()};
-	_type->GenerateAccess(dat, dat._locations[_def], true, os);
-}
+{}
 
 
 IntLiteral::IntLiteral(std::string& value)
@@ -53,9 +50,7 @@ bool IntLiteral::Validate(ValidateData& dat)
 
 
 void IntLiteral::Generate(GenData& dat, std::ostream& os)
-{
-	os << "\tmov\tw"sv << dat._safeRegs.top() << ",\t"sv << _value << '\n';
-}
+{}
 
 
 BoolLiteral::BoolLiteral(std::string& value)
@@ -71,9 +66,7 @@ bool BoolLiteral::Validate(ValidateData& dat)
 
 
 void BoolLiteral::Generate(GenData& dat, std::ostream& os)
-{
-	os << "\tmov\tw"sv << dat._safeRegs.top() << ",\t"sv << _value << '\n';
-}
+{}
 
 
 StrLiteral::StrLiteral(std::string& value)
@@ -89,11 +82,4 @@ bool StrLiteral::Validate(ValidateData& dat)
 
 
 void StrLiteral::Generate(GenData& dat, std::ostream& os)
-{
-	const IDT label {dat.NextLabel()};
-	dat._strings[label] = _value;
-	RegT reg {dat._safeRegs.top()};
-	os << "\tadrp\tx"sv << reg << ",\tL_"sv << label
-		<< "\n\tadd\tx"sv << reg << ",\tx" << reg << ",\t:lo12:L_"sv << label
-		<< '\n';
-}
+{}

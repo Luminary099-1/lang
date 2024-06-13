@@ -25,20 +25,12 @@ bool AssignmentExpr::Validate(ValidateData& dat)
 	}
 	
 	_hasCall = _expr->_hasCall;
-	_evalWeight = _expr->_evalWeight;
-	// An additional register is required to store the destination address.
-	if (dat._curFunc == nullptr) ++ _evalWeight;
 	return success;
 }
 
 
 void AssignmentExpr::Generate(GenData& dat, std::ostream& os)
-{
-	_expr->Generate(dat, os);
-	const RegT in_reg {dat._safeRegs.top()};
-	Location loc {dat._locations[_def]};
-	_type->GenerateAccess(dat, dat._locations[_def], false, os);
-}
+{}
 
 
 void AssignmentExpr::Print(std::ostream& os, std::string_view indent, int depth)
@@ -69,35 +61,12 @@ bool LoopExpr::Validate(ValidateData& dat)
 	_hasReturn = _body->_hasReturn;
 	_hasCall = _init->_hasCall || _cond->_hasCall
 		|| _body->_hasCall || _inc->_hasCall;
-	_evalWeight = std::max(_init->_evalWeight, _cond->_evalWeight);
-	_evalWeight = std::max(_inc->_evalWeight, _evalWeight);
-	_evalWeight = std::max(_body->_evalWeight, _evalWeight);
 	return success;
 }
 
 
 void LoopExpr::Generate(GenData& dat, std::ostream& os)
-{
-	const IDT before_loop = dat.NextLabel();
-	const IDT after_loop = dat.NextLabel();
-	dat._breakLabels[this] = after_loop;
-
-	if (_init != nullptr) _init->Generate(dat, os);
-	os << "L_"sv << before_loop << ":\n";
-
-	if (_cond != nullptr)
-	{
-		_cond->Generate(dat, os);
-		os << "\tcbz\tw"sv << dat._safeRegs.top()
-			<< ",\tL_"sv << after_loop << '\n';
-	}
-
-	_body->Generate(dat, os);
-
-	if (_inc != nullptr) _inc->Generate(dat, os);
-	os << "\tb\tL_"sv << before_loop << '\n';
-	os << "L_"sv << after_loop << ":\n"sv;
-}
+{}
 
 
 void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)

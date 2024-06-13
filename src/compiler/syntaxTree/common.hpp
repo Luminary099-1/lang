@@ -23,8 +23,6 @@ struct Statement
 {
 	bool _hasReturn {false};	// Indicates whether all control paths return.
 	bool _hasCall {false};		// This expression calls a function.
-	// The number of temporary intermediate values needed to evaluate.
-	uint8_t _evalWeight {1};
 
 	/**
 	 * Determines whether the passed list of statements contains a
@@ -34,14 +32,12 @@ struct Statement
 	 * validation.
 	 * @param success Reference to a Boolean that will be updated with the
 	 * success of the validations performed. A false value will not be set true.
-	 * @param eval_weight A pointer to _evalWeight of the parent owning the
-	 * stmts parameter.
 	 * @param has_call A pointer to _hasCall of the parent owning the stmts
 	 * parameter.
 	 * @return true if the statements return in a valid way; false otherwise.
 	 */
-	static bool ValidateAndGetReturn(StmtList& stmts, ValidateData& dat,
-		bool& success, RegT* eval_weight, bool* has_call);
+	static bool ValidateAndGetReturn(
+		StmtList& stmts, ValidateData& dat, bool& success, bool* has_call);
 
 	// TokenInfo should refer to the entire statement in extending classes.
 };

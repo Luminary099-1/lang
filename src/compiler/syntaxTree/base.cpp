@@ -58,42 +58,6 @@ void Location::ReinterpretStack(BytesT stack_args_size)
 }
 
 
-IDT GenData::NextLabel()
-{
-	return _nextLabel ++;
-}
-
-
-void GenData::GeneratePop(Type* type, RegT reg, std::ostream& os)
-{
-	const BytesT size {type->GetSize()};
-	if (_isSubFrame) _frameSize -= size;
-
-	switch (size)
-	{
-		case 1:	os << "\tldrb\tw"sv << reg << ",\t[sp]\t1\n"sv;	break;
-		case 2:	os << "\tldrh\tw"sv << reg << ",\t[sp]\t2\n"sv;	break;
-		case 4:	os << "\tldr\tw"sv << reg << ",\t[sp]\t4\n"sv;	break;
-		case 8:	os << "\tldr\tx"sv << reg << ",\t[sp]\t8\n"sv;	break;
-	}
-}
-
-
-void GenData::GeneratePush(Type* type, RegT reg, std::ostream& os)
-{
-	const BytesT size {type->GetSize()};
-	if (_isSubFrame) _frameSize += size;
-
-	switch (size)
-	{
-		case 1:	os << "\tstrb\tw"sv << reg << ",\t[sp, -1]!\n"sv;	break;
-		case 2:	os << "\tstrh\tw"sv << reg << ",\t[sp, -2]!\n"sv;	break;
-		case 4:	os << "\tstr\tw"sv << reg << ",\t[sp, -4]!\n"sv;	break;
-		case 8:	os << "\tstr\tx"sv << reg << ",\t[sp, -8]!\n"sv;	break;
-	}
-}
-
-
 bool SyntaxTreeNode::Scope(SymbolTable<std::string_view, Declaration>& symbols)
 {
 	// Take no action and assume success by default.
@@ -246,52 +210,7 @@ bool operator!=(const Type& lhs, const Type& rhs)
 
 void
 Type::GenerateAccess(GenData& dat, Location loc, bool load, std::ostream& os)
-{
-	RegT ior {dat._safeRegs.top()}; // Input/output register.
-	if (loc._place == Location::Place::Register)
-	{
-		const char s {(_size <= 4) ? 'w' : 'x'};
-		const RegT vr {loc._val._reg};
-		if (load) os << "\tmov\t"sv << s << ior << ",\t"sv << s << vr << '\n';
-		else os << "\tmov\t"sv << s << vr << ",\t"sv << s << ior << '\n';
-	}
-	else
-	{
-		RegT ar; // Address register.
-		if (loc._place == Location::Place::Global)
-		{
-			dat._safeRegs.pop();
-			ar = dat._safeRegs.top();
-			dat._safeRegs.push(ar);
-			os << "\tadrp\tx"sv << ar << "\t,L_"sv << loc._val._label
-				<< "\n\tadd\tx"sv << ar << ",\tx"sv << ar << ",\t:lo12:L_"sv
-				<< loc._val._label << '\n';
-		}
-		
-		if (load && IsInt()) switch (_size)
-		{
-			case 1:	os << "\tldrwb\tw"sv;	break;
-			case 2:	os << "\tldrwh\tw"sv;	break;
-			case 4:	os << "\tldrsw\tw"sv;	break;
-			case 8:	os << "\tldr\tx"sv;		break;
-		}
-		else
-		{
-			os << '\t' << ((load) ? 'l' : 's');
-			switch (_size)
-			{
-				case 1:	os << "drb\tw"sv;	break;
-				case 2:	os << "drh\tw"sv;	break;
-				case 4:	os << "dr\tw"sv;	break;
-				case 8:	os << "dr\tx"sv;	break;
-			}
-		}
-		os << ior;
-		if (loc._place == Location::Place::Global)
-			os << ",\t[x"sv << ar << "]\n"sv;
-		else os << ",\t[fp, "sv << loc._val._offset << "]\n"sv;
-	}
-}
+{}
 
 
 void Type::Print(std::ostream& os, std::string_view indent, int depth)

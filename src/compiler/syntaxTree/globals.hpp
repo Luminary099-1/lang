@@ -53,18 +53,6 @@ struct Function
 	 */
 	Function(Identifier* name, ParamList params, Type* type, StmtList body);
 
-	/**
-	 * @brief Determine the storage allocations for arguments for this
-	 * function's parameters.
-	 * 
-	 * Implements the algorithm for te marshalling of parameters described in
-	 * the ARM64 Procedure Call Standard (aapcs64), a part of the ARM ABI.
-	 * 
-	 * @param dat Instance of GenData with the appropriate context for this
-	 * opperation.
-	 */
-	BytesT MarshalParams(GenData& dat);
-
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;

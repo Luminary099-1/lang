@@ -137,51 +137,6 @@ struct Declaration;
 // Storess the data necessary to generate code and provides some utilities.
 struct GenData
 {
-protected:
-	IDT _nextLabel {0};		// Next available label ID.
-	
-public:
-	bool _isGlobal {true};	// Indicates the current node is a global.
-	// Indicates if locals should belong to the base frame.
-	bool _isSubFrame {false};
-	// Accumulates the size of the current sub-frame (absolute delta to FP).
-	BytesT _frameSize {0};
-
-	// Maps global variable declarations to their assembly declaration labels.
-	std::map<Type*, IDT> _globalVars;
-	// Maps declarations stored on the stack to their locations in memory.
-	std::map<Declaration*, Location> _locations;
-	// Maps parameters to their locations relative to the caller.
-	std::map<Parameter*, Location> _argLocations;
-	// Maps breakable statements to their exit label IDs.
-	std::map<Breakable*, IDT> _breakLabels;
-	// Maps functions to the total size of their stack allocated parameters.
-	std::map<Function*, BytesT> _stackParamSizes;
-	// Maps string constant label IDs to their values.
-	std::map<IDT, std::string> _strings;
-	// Stores the callee saved registers.
-	std::priority_queue<RegT> _safeRegs;
-
-	/**
-	 * @return The ID of the next label.
-	 */
-	IDT NextLabel();
-
-	/**
-	 * 
-	 * @param type 
-	 * @param reg 
-	 * @param os 
-	 */
-	void GeneratePop(Type* type, RegT reg, std::ostream& os);
-
-	/**
-	 * 
-	 * @param type 
-	 * @param reg 
-	 * @param os 
-	 */
-	void GeneratePush(Type* type, RegT reg, std::ostream& os);
 };
 
 

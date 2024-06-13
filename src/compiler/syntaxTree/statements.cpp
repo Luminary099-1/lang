@@ -11,20 +11,18 @@ using namespace std::string_literals;
 using namespace std::string_view_literals;
 
 
-bool Statement::ValidateAndGetReturn(StmtList &stmts, ValidateData& dat,
-	bool& success, RegT* eval_weight, bool* has_call)
+bool Statement::ValidateAndGetReturn(
+	StmtList &stmts, ValidateData& dat, bool& success, bool* has_call)
 {
 	const size_t stmts_len {stmts.size()};
 	if (stmts_len == 0) return false;
 
 	Statement* cur {nullptr};
 	Statement* last_ret {stmts[stmts_len - 1].get()};
-	RegT max_weight {0};
 	bool makes_call {false};
 	for (size_t i {0}; i < stmts_len; ++ i)
 	{
 		cur = stmts[i].get();
-		max_weight = std::max(cur->_evalWeight, max_weight);
 		makes_call = makes_call || cur->_hasCall;
 		success = cur->Validate(dat) && success;
 		if (cur->_hasReturn) last_ret = cur;
@@ -40,7 +38,6 @@ bool Statement::ValidateAndGetReturn(StmtList &stmts, ValidateData& dat,
 		return false;
 	}
 
-	if (eval_weight != nullptr) *eval_weight = max_weight;
 	if (has_call != nullptr) *has_call = makes_call;
 	return true;
 }
@@ -72,32 +69,12 @@ bool VariableDef::Validate(ValidateData& dat)
 		return false;
 	}
 
-	_evalWeight = _init->_evalWeight;
 	return success;
 }
 
 
 void VariableDef::Generate(GenData& dat, std::ostream& os)
-{
-	Location loc;
-
-	if (dat._isGlobal)
-	{
-		_init->Generate(dat, os);
-		const IDT label {dat.NextLabel()};
-		loc = Location::CreateGlobal(_type, label);
-		dat._globalVars[this->_type] = label;
-	}
-	else
-	{
-		_init->Generate(dat, os);
-		dat._frameSize += _type->GetSize();
-		loc = Location::CreateLocal(
-			_type, dat._isSubFrame ? -dat._frameSize : dat._frameSize);
-	}
-
-	_type->GenerateAccess(dat, dat._locations[this], false, os);
-}
+{}
 
 
 void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)
@@ -134,22 +111,12 @@ bool IfStmt::Validate(ValidateData& dat)
 		success = false;
 	}
 
-	_evalWeight = std::max(_cond->_evalWeight, _body->_evalWeight);
-	_evalWeight = std::max(_alt->_evalWeight, _evalWeight);
 	return success;
 }
 
 
 void IfStmt::Generate(GenData& dat, std::ostream& os)
-{
-	_cond->Generate(dat, os);
-	const RegT in_reg {dat._safeRegs.top()};
-	const IDT after_body = dat.NextLabel();
-	os << "\tcbz\tw"sv << in_reg << ",\tL_"sv << after_body << '\n';
-	_body->Generate(dat, os);
-	os << "L_"sv << after_body << ":\n"sv;
-	_alt->Generate(dat, os);
-}
+{}
 
 
 void IfStmt::Print(std::ostream& os, std::string_view indent, int depth)
@@ -192,7 +159,6 @@ bool BreakStmt::Validate(ValidateData& dat)
 	if (_expr != nullptr)
 	{
 		bool success {_expr->Validate(dat)};
-		_evalWeight = _expr->_evalWeight;
 		if (existing->IsVoid()) _target->_type = _expr->_type;
 		else if (*existing != *_expr->_type)
 		{
@@ -216,17 +182,7 @@ bool BreakStmt::Validate(ValidateData& dat)
 
 
 void BreakStmt::Generate(GenData& dat, std::ostream& os)
-{
-	if (_expr != nullptr)
-	{
-		_expr->Generate(dat, os);
-		const RegT reg {dat._safeRegs.top()}; // This should work fine.
-		const char s {(_expr->_type->GetSize() <= 4) ? 'w' : 'x'};
-		os << "\tmov\t"sv << s << reg << ",\t"sv << s << reg << '\n';
-	}
-
-	os << "\tb\tL_"sv << dat._breakLabels[_target] << '\n';
-}
+{}
 
 
 void BreakStmt::Print(std::ostream& os, std::string_view indent, int depth)
@@ -272,7 +228,6 @@ bool ReturnStmt::Validate(ValidateData& dat)
 	else
 	{
 		bool success {_expr->Validate(dat)};
-		_evalWeight = _expr->_evalWeight;
 		if (expected->IsVoid())
 		{
 			std::cerr << '(' << _row << ", "sv << _col
@@ -295,17 +250,7 @@ bool ReturnStmt::Validate(ValidateData& dat)
 
 
 void ReturnStmt::Generate(GenData& dat, std::ostream& os)
-{
-	if (_expr != nullptr)
-	{
-		_expr->Generate(dat, os);
-		if (_expr->_type->GetSize() > 4) os << "\tmov\tx0,\tx"sv;
-		else os << "\tmov\tw0,\tw"sv;
-		os << dat._safeRegs.top() << '\n';
-	}
-
-	os << "\tb\tR_"sv << _target->_name << '\n';
-}
+{}
 
 
 void ReturnStmt::Print(std::ostream& os, std::string_view indent, int depth)
@@ -326,13 +271,10 @@ CompoundStmt::CompoundStmt(StmtList stmts, Expression* expr)
 bool CompoundStmt::Validate(ValidateData& dat)
 {
 	bool success {true};
-	_hasReturn = Statement::ValidateAndGetReturn(
-		_stmts, dat, success, &_evalWeight, &_hasCall);
 	if (_expr != nullptr)
 	{
 		_type = _expr->_type;
 		_hasCall = _expr->_hasCall;
-		_evalWeight = std::max(_expr->_evalWeight, _evalWeight);
 		if (_hasReturn)
 		{
 			std::cerr << '(' << _expr->_row << ", "sv << _expr->_col
@@ -348,30 +290,7 @@ bool CompoundStmt::Validate(ValidateData& dat)
 
 
 void CompoundStmt::Generate(GenData& dat, std::ostream& os)
-{
-	const BytesT prev_frame_size {dat._frameSize};
-	bool is_first_sub_frame {false};
-	if (!dat._isSubFrame)
-	{
-		is_first_sub_frame = true;
-		dat._isSubFrame = true;
-		dat._frameSize = 0;
-	}
-
-	std::stringstream dos; // Deferred output for the children.
-	for (size_t i {0}; i < _stmts.size(); ++ i) _stmts[i]->Generate(dat, dos);
-
-	const BytesT sub_frame_size {dat._frameSize - prev_frame_size};
-	os << "\tsub\tsp,\tsp,\t"sv << sub_frame_size << '\n';
-	os << dos.rdbuf();
-	os << "\tadd\tsp,\tsp,\t"sv << sub_frame_size << '\n';
-	
-	if (is_first_sub_frame)
-	{
-		dat._isSubFrame = false;
-		dat._frameSize = prev_frame_size;
-	}
-}
+{}
 
 
 void CompoundStmt::Print(
