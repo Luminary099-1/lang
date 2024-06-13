@@ -51,13 +51,13 @@ void AssignmentExpr::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-ForExpr::ForExpr(
+LoopExpr::LoopExpr(
 	Expression* init, Expression* cond, Expression* inc, Statement* body)
 	: _init{init}, _cond{cond}, _inc{inc}, _body{body}
 {}
 
 
-bool ForExpr::Validate(ValidateData& dat)
+bool LoopExpr::Validate(ValidateData& dat)
 {
 	dat._bs.push_back(this);
 	bool success {true};
@@ -76,7 +76,7 @@ bool ForExpr::Validate(ValidateData& dat)
 }
 
 
-void ForExpr::Generate(GenData& dat, std::ostream& os)
+void LoopExpr::Generate(GenData& dat, std::ostream& os)
 {
 	const IDT before_loop = dat.NextLabel();
 	const IDT after_loop = dat.NextLabel();
@@ -100,10 +100,10 @@ void ForExpr::Generate(GenData& dat, std::ostream& os)
 }
 
 
-void ForExpr::Print(std::ostream& os, std::string_view indent, int depth)
+void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "ForExpression("sv;
+	os << "LoopExpression("sv;
 	_type->Print(os, indent, depth);
 	os << "):\n";
 	++ depth;
@@ -116,114 +116,6 @@ void ForExpr::Print(std::ostream& os, std::string_view indent, int depth)
 	PrintIndent(os, indent, depth);
 	os << "Increment =\n"sv;
 	_inc->Print(os, indent, depth + 1);
-	PrintIndent(os, indent, depth);
-	os << "Body =\n"sv;
-	_body->Print(os, indent, depth + 1);
-}
-
-
-LoopExpr::LoopExpr(Statement* body)
-	: _body{body}
-{}
-
-
-bool LoopExpr::Validate(ValidateData& dat)
-{
-	dat._bs.push_back(this);
-	bool success {_body->Validate(dat)};
-	dat._bs.pop_back();
-	_hasReturn = _body->_hasReturn;
-	_hasCall = _body->_hasCall;
-	_evalWeight = _body->_evalWeight;
-	return success;
-}
-
-
-void LoopExpr::Generate(GenData& dat, std::ostream& os)
-{
-	const IDT before_loop = dat.NextLabel();
-	const IDT after_loop = dat.NextLabel();
-	dat._breakLabels[this] = after_loop;
-
-	os << "L_"sv << before_loop << ":\n";
-	_body->Generate(dat, os);
-	os << "\tb\tL_"sv << before_loop << '\n';
-	os << "L_"sv << after_loop << ":\n"sv;
-}
-
-
-void LoopExpr::Print(std::ostream& os, std::string_view indent, int depth)
-{
-	PrintIndent(os, indent, depth);
-	os << "LoopExpression("sv;
-	_type->Print(os, indent, depth);
-	os << "):\n";
-	PrintIndent(os, indent, ++ depth);
-	os << "Body =:\n"sv;
-	_body->Print(os, indent, ++ depth);
-}
-
-
-WhileExpr::WhileExpr(Expression* cond, Statement* body)
-	: _cond{cond}, _body{body}
-{}
-
-
-bool WhileExpr::Validate(ValidateData& dat)
-{
-	dat._bs.push_back(this);
-	bool success {_cond->Validate(dat)};
-	success = _body->Validate(dat) && success;
-	dat._bs.pop_back();
-
-	if (!_cond->_type->IsBool())
-	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected while loop condition of type bool, found: "sv
-			<< _cond->_type->_name << '\n';
-		dat._src->HighlightError(std::cerr, *this);
-		success = false;
-	}
-
-	_hasReturn = _body->_hasReturn;
-	_hasCall = _cond->_hasCall || _body->_hasCall;
-	_evalWeight = std::max(_cond->_evalWeight, _body->_evalWeight);
-	return success;
-}
-
-
-void WhileExpr::Generate(GenData& dat, std::ostream& os)
-{
-	const IDT before_loop = dat.NextLabel();
-	const IDT after_loop = dat.NextLabel();
-	dat._breakLabels[this] = after_loop;
-
-	os << "L_"sv << before_loop << ":\n";
-
-	if (_cond != nullptr)
-	{
-		_cond->Generate(dat, os);
-		os << "\tcbz\tw"sv << dat._safeRegs.top()
-			<< ",\tL_"sv << after_loop << '\n';
-	}
-
-	_body->Generate(dat, os);
-	
-	os << "\tb\tL_"sv << before_loop << '\n';
-	os << "L_"sv << after_loop << ":\n"sv;
-}
-
-
-void WhileExpr::Print(std::ostream& os, std::string_view indent, int depth)
-{
-	PrintIndent(os, indent, depth);
-	os << "WhileExpression("sv;
-	_type->Print(os, indent, depth);
-	os << "):\n";
-	++ depth;
-	PrintIndent(os, indent, depth);
-	os << "Condition =\n"sv;
-	_cond->Print(os, indent, depth + 1);
 	PrintIndent(os, indent, depth);
 	os << "Body =\n"sv;
 	_body->Print(os, indent, depth + 1);

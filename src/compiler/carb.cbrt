@@ -254,10 +254,10 @@ assignment_expr: ID ASSIGN expression
 		$$ = expr;
 	}
 
-%class for_expr: ForExpr*
+%class for_expr: LoopExpr*
 for_expr: FOR LPAREN expr_maybe SEMICOL expr_maybe SEMICOL expr_maybe RPAREN statement
 	{
-		ForExpr* expr {new ForExpr($2, $4, $6, $8)};
+		LoopExpr* expr {new LoopExpr($2, $4, $6, $8)};
 		expr->SetSymbolInfo(${0});
 		$$ = expr;
 	}
@@ -265,15 +265,15 @@ for_expr: FOR LPAREN expr_maybe SEMICOL expr_maybe SEMICOL expr_maybe RPAREN sta
 %class loop_expr: LoopExpr*
 loop_expr: LOOP statement
 	{
-		LoopExpr* expr {new LoopExpr($1)};
+		LoopExpr* expr {new LoopExpr(nullptr, nullptr, nullptr, $1)};
 		expr->SetSymbolInfo(${0});
 		$$ = expr;
 	}
 
-%class while_expr: WhileExpr*
+%class while_expr: LoopExpr*
 while_expr: WHILE LPAREN expression RPAREN statement
 	{
-		WhileExpr* expr {new WhileExpr($2, $4)};
+		LoopExpr* expr {new LoopExpr(nullptr, $2, nullptr, $4)};
 		expr->SetSymbolInfo(${0});
 		$$ = expr;
 	}

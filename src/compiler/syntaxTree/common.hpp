@@ -376,8 +376,8 @@ struct AssignmentExpr
 };
 
 
-// Represents a counting for expression (a for loop that can return values).
-struct ForExpr
+// Represents loops expressions.
+struct LoopExpr
 	: public Breakable
 {
 	std::unique_ptr<Expression> _init;	// Runs before the loop. Optional.
@@ -386,64 +386,20 @@ struct ForExpr
 	std::unique_ptr<Statement> _body;	// Executed each iteration.
 
 	/**
-	 * @brief Construct a new ForExpr object.
+	 * @brief Construct a new LoopExpr object.
 	 * 
 	 * @param init An initialization expression.
 	 * @param cond A conditional expression.
 	 * @param inc An increment expression.
-	 * @param body The statement executed each iteration.
+	 * @param body Statement executed each iteration.
 	 */
-	ForExpr(Expression* init, Expression* cond, Expression* inc, Statement* body);
+	LoopExpr(Expression* init, Expression* cond, Expression* inc, Statement* body);
 
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
-	// TokenInfo refers to the for keyword.
-};
-
-
-// Represents an infinite loop expression (a loop that can return values).
-struct LoopExpr
-	: public Breakable
-{
-	std::unique_ptr<Statement> _body;	// Executed each iteration.
-
-	/**
-	 * @brief Construct a new LoopExpr object;
-	 * 
-	 * @param body The statement executed each iteration.
-	 */
-	LoopExpr(Statement* body);
-
-	bool Validate(ValidateData& dat) override;
-	void Generate(GenData& dat, std::ostream& os) override;
-	void Print(std::ostream& os, std::string_view indent, int depth) override;
-
-	// TokenInfo refers to the loop keyword.
-};
-
-
-// Represents a while loop expression (a while loop that can return a value).
-struct WhileExpr
-	: public Breakable
-{
-	std::unique_ptr<Expression> _cond;	// Tested before iterations.
-	std::unique_ptr<Statement> _body;	// Executed each iteration.
-
-	/**
-	 * @brief Construct a new WhileExpr object.
-	 * 
-	 * @param cond A conditional expression.
-	 * @param body The statement executed each iteration.
-	 */
-	WhileExpr(Expression* cond, Statement* body);
-
-	bool Validate(ValidateData& dat) override;
-	void Generate(GenData& dat, std::ostream& os) override;
-	void Print(std::ostream& os, std::string_view indent, int depth) override;
-
-	// TokenInfo refers to the while keyword.
+	// TokenInfo refers to the loop keyword (for, loop, or while).
 };
 
 
