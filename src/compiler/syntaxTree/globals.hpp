@@ -69,5 +69,5 @@ struct Function
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
-	// TokenInfo refers to the span from the name to the closing parentheses.
+	// TokenInfo refers to the span from the name to return type.
 };

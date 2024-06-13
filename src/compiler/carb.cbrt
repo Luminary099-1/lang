@@ -63,10 +63,8 @@ GE: >=;
 LE: <=;
 LPAREN: \(;
 RPAREN: \);
-LCURLY: \{;
-RCURLY: \};
-LBRACK: <;
-RBRACK: >;
+LBRACE: \{;
+RBRACE: \};
 LARROW: <\-;
 RARROW: \->;
 IF: if;
@@ -85,7 +83,7 @@ STRING: \".*\" { $$ = std::string($text); }
 
 
 %token ASSIGN SEMICOL COMMA PLUS MINUS ASTERISK SLASH PERCENT INC DEC AND OR XOR COMP SHR SHL LAND
-%token LOR DENY EQ NE GT LT GE LE LPAREN RPAREN LCURLY RCURLY LBRACK RBRACK LARROW RARROW INTEGER
+%token LOR DENY EQ NE GT LT GE LE LPAREN RPAREN LBRACE RBRACE LARROW RARROW INTEGER
 %token LEVELS ID STRING IF ELSE MATCH FOR LOOP WHILE BOOLEAN BREAK RETURN
 
 %class BOOLEAN INTEGER LEVELS ID STRING: std::string
@@ -111,7 +109,7 @@ global: var_def_stmt
 	{ $$ = $0; }
 
 %class function_def: Function*
-function_def: ID LPAREN param_list RPAREN RARROW ID LCURLY statements RCURLY
+function_def: ID LPAREN param_list RPAREN RARROW ID LBRACE statements RBRACE
 	{
 		Identifier* id {new Identifier($0)};
 		id->SetSymbolInfo(${0});
@@ -197,13 +195,13 @@ close_else_if_stmt: IF LPAREN expression RPAREN closed_stmt ELSE closed_stmt
 	}
 
 %class compound_stmt: CompoundStmt*
-compound_stmt: LCURLY statements RCURLY
+compound_stmt: LBRACE statements RBRACE
 	{
 		CompoundStmt* stmt {new CompoundStmt(std::move($1), nullptr)};
 		stmt->SetMergedInfo(${0}, ${2});
 		$$ = stmt;
 	}
-compound_stmt: LCURLY statements LARROW expression RCURLY
+compound_stmt: LBRACE statements LARROW expression RBRACE
 	{
 		CompoundStmt* stmt {new CompoundStmt(std::move($1), $3)};
 		stmt->SetMergedInfo(${0}, ${4});
@@ -286,7 +284,7 @@ break_stmt: BREAK expr_maybe SEMICOL
 		brk->SetSymbolInfo(${0});
 		$$ = brk;
 	}
-break_stmt: BREAK LBRACK INTEGER RBRACK expr_maybe SEMICOL
+break_stmt: BREAK LT INTEGER GT expr_maybe SEMICOL
 	{
 		IntLiteral* level_count {new IntLiteral($2)};
 		level_count->SetSymbolInfo(${2});

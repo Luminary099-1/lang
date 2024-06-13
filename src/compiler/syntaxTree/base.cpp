@@ -94,6 +94,13 @@ void GenData::GeneratePush(Type* type, RegT reg, std::ostream& os)
 }
 
 
+bool SyntaxTreeNode::Scope(SymbolTable<std::string_view, Declaration>& symbols)
+{
+	// Take no action and assume success by default.
+	return true;
+}
+
+
 bool SyntaxTreeNode::Validate(ValidateData& dat)
 {
 	// Take no action and assume success by default.

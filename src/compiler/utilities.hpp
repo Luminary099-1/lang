@@ -10,7 +10,6 @@
 
 // Stores the information necessary to locate a token in the TU buffer.
 struct TokenInfo
-// TODO: Determine whether all AST nodes should inherit this.
 {
 	int _row {1};		// Row at the start of the match.
 	int _col {1};		// Column at the start of the match.

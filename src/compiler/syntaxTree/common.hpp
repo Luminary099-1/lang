@@ -27,9 +27,8 @@ struct Statement
 	uint8_t _evalWeight {1};
 
 	/**
-	 * @brief Determines whether the passed list of statements contains a
+	 * Determines whether the passed list of statements contains a
 	 * return statement in a valid place (at the end of all control paths).
-	 * 
 	 * @param stmts The list of statements to consider.
 	 * @param dat An instance of ValidateData to store the state of the
 	 * validation.
@@ -70,8 +69,7 @@ struct VariableDef
 	std::unique_ptr<Expression> _init;	// The variable's initializer.
 
 	/**
-	 * @brief Construct a new VariableDef object.
-	 * 
+	 * Construct a new VariableDef object.
 	 * @param type The variable's type.
 	 * @param name The variable's identifier.
 	 * @param init The variable's initialization expression.
@@ -95,8 +93,7 @@ struct IfStmt
 	std::unique_ptr<Statement> _alt;	// The else case. Optional.
 
 	/**
-	 * @brief Construct a new IfStmt object;
-	 * 
+	 * Construct a new IfStmt object;
 	 * @param cond A condition expression.
 	 * @param body A statement executed on true.
 	 * @param alt The else case if the condition is false.
@@ -123,8 +120,7 @@ struct BreakStmt
 	std::unique_ptr<IntLiteral> _count;	// The break count literal. Optional.
 
 	/**
-	 * @brief Construct a new BreakStmt object.
-	 * 
+	 * Construct a new BreakStmt object.
 	 * @param expr Yield expression. Optional.
 	 * @param cout The number of expressions to break. Optional.
 	 */
@@ -145,8 +141,7 @@ struct ReturnStmt
 	std::unique_ptr<Expression> _expr;	// An optional return expression.
 
 	/**
-	 * @brief Construct a new ReturnStmt object.
-	 * 
+	 * Construct a new ReturnStmt object.
 	 * @param expr An optional return expression.
 	 */
 	ReturnStmt(Expression* expr);
@@ -167,8 +162,7 @@ struct CompoundStmt
 	std::unique_ptr<Expression> _expr;	// An evaluation expression. Optional.
 	
 	/**
-	 * @brief Construct a new CompoundStmt object.
-	 * 
+	 * Construct a new CompoundStmt object.
 	 * @param stmts This node's children statements. Assumed to be in reverse 
 	 * order after being parsed.
 	 * @param expr An optional return expression, declared as the last statement
@@ -218,8 +212,7 @@ struct BinaryExpr
 	Ops _op;							// The operator being applied.
 
 	/**
-	 * @brief Construct a new BinaryExpr object.
-	 * 
+	 * Construct a new BinaryExpr object.
 	 * @param argl A left operand expression.
 	 * @param argr A right operand expression.
 	 * @param op The operator to be applied.
@@ -227,12 +220,11 @@ struct BinaryExpr
 	BinaryExpr(Expression* argl, Expression* argr, Ops op);
 
 	/**
-	 * @brief Returns a view to a textual representation of the operator.
-	 * 
+	 * Returns a view to a textual representation of the operator.
 	 * @param op The operator to be named.
 	 * @return std::string_view A view to the operator's name.
 	 */
-	std::string_view GetOpText(Ops op);
+	std::string_view GetOpText(Ops op); // TODO: Extract superclass to own this.
 	
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
@@ -261,16 +253,14 @@ struct PreExpr
 	Ops _op;							// The operator being applied.
 
 	/**
-	 * @brief Construct a new PreExpr object.
-	 * 
+	 * Construct a new PreExpr object.
 	 * @param arg An operand expression.
 	 * @param op The operator to be applied.
 	 */
 	PreExpr(Expression* arg, Ops op);
 
 	/**
-	 * @brief Returns a view to a textual representation of the operator.
-	 * 
+	 * Returns a view to a textual representation of the operator.
 	 * @param op The operator to be named.
 	 * @return std::string_view A view to the operator's name.
 	 */
@@ -307,8 +297,7 @@ struct PostExpr
 	PostExpr(Expression* arg, Ops op);
 
 	/**
-	 * @brief Returns a view to a textual representation of the operator.
-	 * 
+	 * Returns a view to a textual representation of the operator.
 	 * @param op The operator to be named.
 	 * @return std::string_view A view to the operator's name.
 	 */
@@ -334,8 +323,7 @@ struct Invocation
 	ArgList _args;						// The arguments specified by the call.
 
 	/**
-	 * @brief Construct a new Invocation object.
-	 * 
+	 * Construct a new Invocation object.
 	 * @param name The name of the function being called.
 	 * @param args The arguments specified by the function call. Assumed to be
 	 * in reverse order after being parsed.
@@ -361,8 +349,7 @@ struct AssignmentExpr
 	std::unique_ptr<Expression> _expr;	// The expression being assigned.
 
 	/**
-	 * @brief Construct a new AssignmentExpr object.
-	 * 
+	 * Construct a new AssignmentExpr object.
 	 * @param name The variable's identifier.
 	 * @param expr The expression being assigned to the variable.
 	 */
@@ -386,8 +373,7 @@ struct LoopExpr
 	std::unique_ptr<Statement> _body;	// Executed each iteration.
 
 	/**
-	 * @brief Construct a new LoopExpr object.
-	 * 
+	 * Construct a new LoopExpr object.
 	 * @param init An initialization expression.
 	 * @param cond A conditional expression.
 	 * @param inc An increment expression.
@@ -413,10 +399,9 @@ struct Literal
 	std::string _rawValue;			// The raw value obtained from the source.
 
 	/**
-	 * @brief Construct a new Literal object.
-	 * 
-	 * @param literal_name
-	 * @param raw_value The value described by the literal sans type descriptors.
+	 * Construct a new literal object.
+	 * @param literal_name Specifies the type of literal represented.
+	 * @param raw_value Value described by the literal sans type descriptors.
 	 */
 	Literal(std::string_view literal_name, std::string& raw_value);
 
@@ -433,9 +418,8 @@ struct Variable
 	Declaration* _def;	// The AST node that defines this variable.
 
 	/**
-	 * @brief Construct a new Variable object.
-	 * 
-	 * @param name The variable's identifier.
+	 * Construct a new variable.
+	 * @param name Variable's identifier.
 	 */
 	Variable(std::string& name);
 
@@ -452,9 +436,8 @@ struct IntLiteral
 	int32_t _value {0};	// Concrete literal value.
 
 	/**
-	 * @brief Construct a new IntLiteral object.
-	 * 
-	 * @param raw_val The literal's integer value.
+	 * Construct a new integer literal.
+	 * @param raw_val Literal's integer value.
 	 */
 	IntLiteral(std::string& value);
 
@@ -472,9 +455,8 @@ struct BoolLiteral
 	bool _value {false};	// Concrete literal value.
 
 	/**
-	 * @brief Construct a new BoolLiteral object.
-	 * 
-	 * @param value The literal's Boolean value.
+	 * Construct a new Boolean literal.
+	 * @param value Literal's Boolean value.
 	 */
 	BoolLiteral(std::string& value);
 
@@ -492,9 +474,8 @@ struct StrLiteral
 	std::string _value;	// Concrete literal value.
 
 	/**
-	 * @brief Construct a new StrLiteral object.
-	 * 
-	 * @param value The literal's Boolean value.
+	 * Construct a new string literal.
+	 * @param value Literal's Boolean value.
 	 */
 	StrLiteral(std::string& value);
 

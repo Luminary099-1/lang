@@ -37,8 +37,7 @@ struct ValidateData
 	Function* _curFunc {nullptr};
 
 	/**
-	 * @brief Construct a new ValidateData object.
-	 * 
+	 * Construct a new structure to store validation data.
 	 * @param src A translation unit source file buffer.
 	 */
 	ValidateData(TU* src);
@@ -80,8 +79,7 @@ protected:
 	_val; // Stores information necessary for each variant.
 
 	/**
-	 * @brief Construct a new Location object.
-	 * 
+	 * Construct a new location.
 	 * @param place Storage type designated by this Location.
 	 * @param type Type of data stored in this Location.
 	 */
@@ -92,9 +90,8 @@ public:
 	Location();
 
 	/**
-	 * @brief Factory function to create a new Location object representing a
-	 * global variable.
-	 * 
+	 * Factory function to create a new Location object representing a global
+	 * variable.
 	 * @param type The stored data's type.
 	 * @param label ID of the storage definitions of this location.
 	 * @return A new instance of Location.
@@ -102,19 +99,17 @@ public:
 	static Location CreateGlobal(Type* type, IDT label);
 
 	/**
-	 * @brief Factory function to create a new Location object representing a
-	 * register-backed variable.
-	 * 
-	 * @param type The stored data's type.
+	 * Factory function to create a new Location object representing a register-
+	 * backed variable.
+	 * @param type Stored data's type.
 	 * @param reg Designation of the register represented by this location.
 	 * @return A new instance of Location.
 	 */
 	static Location CreateRegister(Type* type, RegT reg);
 
 	/**
-	 * @brief Factory function to create a new Location object representing a
-	 * memory-backed variable relative to FP.
-	 * 
+	 * Factory function to create a new Location object representing a memory-
+	 * backed variable relative to FP.
 	 * @param type The stored data's type.
 	 * @param offset FP-relative offset represented by this location.
 	 * @return A new instance of Location.
@@ -127,8 +122,8 @@ public:
 	Place GetPlace();
 
 	/**
-	 * @brief Converts this stack argument Location for access as a callee to a
-	 * the corresponding location for access as a caller. Has no effect if this
+	 * Converts this stack argument Location for access as a callee to a the
+	 * corresponding location for access as a caller. Has no effect if this
 	 * location is not a local.
 	 */
 	void ReinterpretStack(BytesT stack_args_size);
@@ -173,7 +168,6 @@ public:
 	IDT NextLabel();
 
 	/**
-	 * @brief 
 	 * 
 	 * @param type 
 	 * @param reg 
@@ -182,7 +176,6 @@ public:
 	void GeneratePop(Type* type, RegT reg, std::ostream& os);
 
 	/**
-	 * @brief 
 	 * 
 	 * @param type 
 	 * @param reg 
@@ -197,9 +190,15 @@ struct SyntaxTreeNode
 	: public virtual TokenInfo
 {
 	/**
-	 * @brief Traverses the AST structure and validates the semantics of the
+	 * Performs scope resolution by populating references to declarations.
+	 * @param symbols Symbol table to be used.
+	 * @return true if scope resolution is successful; false otherwise.
+	 */
+	virtual bool Scope(SymbolTable<std::string_view, Declaration>& symbols);
+
+	/**
+	 * Traverses the AST structure and validates the semantics of the
 	 * represented program.
-	 * 
 	 * @param dat An instance of ValidateData to store the state of the
 	 * validation.
 	 * @return true if the validation discovered no errors; false otherwise.
@@ -207,17 +206,14 @@ struct SyntaxTreeNode
 	virtual bool Validate(ValidateData& dat);
 
 	/**
-	 * @brief Generates the output assembly described by the AST.
-	 * 
+	 * Generates the output assembly described by the AST.
 	 * @param dat An instance of GenData to store the state of the generation.
 	 * @param os The output stream to write the program output to.
 	 */
 	virtual void Generate(GenData& dat, std::ostream& os);
 
 	/**
-	 * @brief Prints a textual representation of this AST node to the specified
-	 * stream.
-	 * 
+	 * Prints a textual representation of this AST node to the specified stream.
 	 * @param os The output stream to print to.
 	 * @param indent A view of the unit of indentation to be used.
 	 * @param depth The depth of the node in the tree. Need not be set.
@@ -226,8 +222,7 @@ struct SyntaxTreeNode
 		Print(std::ostream& os, std::string_view indent, int depth = 0) = 0;
 
 	/**
-	 * @brief Prints the indentation for Print().
-	 * 
+	 * Prints the indentation for Print().
 	 * @param os The output stream to print to.
 	 * @param indent A view of the unit of indentation to be used.
 	 * @param depth The depth of the node in the tree (the number of levels of
@@ -237,9 +232,8 @@ struct SyntaxTreeNode
 		PrintIndent(std::ostream& os, std::string_view indent, int depth);
 
 	/**
-	 * @brief Calls Print() on the referenced node. If the node is nullptr,
+	 * Calls Print() on the referenced node. If the node is nullptr,
 	 * "nullptr\n" is printed instead.
-	 * 
 	 * @param node A node to attempt to print.
 	 * @param os The output stream to print to.
 	 * @param indent A view of the unit of indentation to be used.
@@ -254,12 +248,11 @@ struct SyntaxTreeNode
 struct Identifier
 	: public SyntaxTreeNode
 {
-	std::string _id; // The name associated with this node.
+	std::string _id; // Name associated with this node.
 
 	/**
-	 * @brief Construct a new Identifier object.
-	 * 
-	 * @param id The name to be associated with this node.
+	 * Construct a new identifier.
+	 * @param id Name to be associated with this node.
 	 */
 	Identifier(std::string& id);
 
@@ -274,12 +267,11 @@ struct Identifier
 struct Declaration
 	: public virtual SyntaxTreeNode
 {
-	std::unique_ptr<Identifier> _name; // The declared identifier.
+	std::unique_ptr<Identifier> _name; // Declared identifier.
 
 	/**
-	 * @brief Construct a new Declaration object.
-	 * 
-	 * @param name The identifier associated with the declaration.
+	 * Construct a new declaration.
+	 * @param name Identifier associated with the declaration.
 	 */
 	Declaration(Identifier* name);
 };
@@ -297,32 +289,30 @@ protected:
 
 	// Maps the names of fundamental types to their singletons.
 	static const std::map<std::string_view, Type*> _namedFundamentals;
-	// The set of fundamental types.
+	// Set of fundamental types.
 	static const std::set<const Type*> _fundamentals;
-	// The type's instance size in bytes.
+	// Type's instance size in bytes.
 	BytesT _size {0};
 
 	// Default constructor.
 	Type();
 
 	/**
-	 * @brief Construct a new Type object.
-	 * 
-	 * @param type_name The type's symbolic name.
-	 * @param size The type's instance size in bytes.
+	 * Construct a new type.
+	 * @param type_name Type's symbolic name.
+	 * @param size Type's instance size in bytes.
 	 */
 	Type(std::string type_name, BytesT size = 0);
 
 
 public:
-	// TODO: Reevaluate whether the name should be stored as an Identifier.
+	// TODO: Reevaluate whether the name should be stored as an Identifier node.
 	std::string _name;					// The type's name.
 	SyntaxTreeNode*	_defType {nullptr};	// The defined type, if applicable.
 
 	/**
-	 * @brief Returns a pointer to a new instance of Type with. AST nodes which
+	 * Returns a pointer to a new instance of Type with. AST nodes which
 	 * define the type must take ownership of the pointer.
-	 * 
 	 * @param type_name The type to be represented.
 	 * @return Type* A pointer to the new Type instance.
 	 */
@@ -370,10 +360,9 @@ public:
 	friend bool operator!=(const Type& lhs, const Type& rhs);
 
 	/**
-	 * @brief Generates the output assembly necessary to load or store data to
+	 * Generates the output assembly necessary to load or store data to
 	 * the specified location. The source/destination register for the operation
 	 * will be the first available register in dat.
-	 * 
 	 * @param dat Instance of GenData with the appropriate context for this
 	 * opperation.
 	 * @param loc The data's location.
