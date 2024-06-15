@@ -13,16 +13,16 @@
 struct Parameter
 	: public Declaration
 {
-	Type* _type {nullptr}; // The parameter's type.
+	Type* _type {nullptr}; // Parameter's type.
 
 	/**
-	 * @brief Construct a new Parameter object.
-	 * 
-	 * @param type The name of the parameter's type.
-	 * @param name The parameter's name.
+	 * Construct a new Parameter object.
+	 * @param type Name of the parameter's type.
+	 * @param name Parameter's name.
 	 */
 	Parameter(Type* type, Identifier* name);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the span of the parameter's type and name.
@@ -36,23 +36,23 @@ struct Function
 	// Stores the parameters expressed in the function definition.
 	using ParamList = std::vector<std::unique_ptr<Parameter>>;
 
-	Type* _type {nullptr};	// This function's return type.
-	ParamList _params;		// This function's parameters.
-	StmtList _body;			// This function's body statements.
-	bool _hasCall;			// This function's body contains a function call.
+	Type* _type {nullptr};	// Function's return type.
+	ParamList _params;		// Function's parameters.
+	StmtList _body;			// Function's body statements.
+	bool _hasCall;			// Function's body contains a function call.
 
 	/**
-	 * @brief Construct a new Function object.
-	 * 
-	 * @param name The function's name.
-	 * @param params The function's parameters. Assumed to be in reverse order
-	 * after being parsed.
-	 * @param type The function's return type.
-	 * @param body The function's body. Assumed to be in reverse order after
-	 * being parsed.
+	 * Construct a new function.
+	 * @param name Function's name.
+	 * @param params Function's parameters. Assumed to be in reverse order after
+	 * being parsed bottom-up.
+	 * @param type Function's return type.
+	 * @param body Function's body. Assumed to be in reverse order after being
+	 * parsed bottom-up.
 	 */
 	Function(Identifier* name, ParamList params, Type* type, StmtList body);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;

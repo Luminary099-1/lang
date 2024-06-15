@@ -136,9 +136,13 @@ struct Declaration;
 
 // Storess the data necessary to generate code and provides some utilities.
 struct GenData
-{
-};
+{};
 
+
+// Symbol table template alias.
+using SymTab = SymbolTable<std::string_view, Declaration>;
+
+template struct SymbolTable<std::string_view, Declaration>;
 
 // Base class for nodes of the AST.
 struct SyntaxTreeNode
@@ -147,9 +151,10 @@ struct SyntaxTreeNode
 	/**
 	 * Performs scope resolution by populating references to declarations.
 	 * @param symbols Symbol table to be used.
+	 * @param tu Translation unit corresponding to this node.
 	 * @return true if scope resolution is successful; false otherwise.
 	 */
-	virtual bool Scope(SymbolTable<std::string_view, Declaration>& symbols);
+	virtual bool Scope(SymTab& symbols, TU& tu);
 
 	/**
 	 * Traverses the AST structure and validates the semantics of the

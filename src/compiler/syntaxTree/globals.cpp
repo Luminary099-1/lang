@@ -13,6 +13,23 @@ Parameter::Parameter(Type* type, Identifier* name)
 {}
 
 
+bool Parameter::Scope(SymTab& symbols, TU& tu)
+{
+	Declaration* pre {symbols.Define(_name->_id, this)};
+	if (pre != nullptr)
+	{
+		std::cerr << '(' << _name->_row << ", "sv << _name->_col
+			<< "): Symbol collision: "sv << _name->_id
+			<< "\n# The following on line "sv << _name->_row << ":\n"sv;
+		tu.HighlightError(std::cerr, *_name);
+		std::cerr << "# Redefines on line "sv << pre->_name->_row << ":\n"sv;
+		tu.HighlightError(std::cerr, *pre->_name);
+		return false;
+	}
+	return true;
+}
+
+
 void Parameter::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
@@ -28,6 +45,19 @@ Function::Function(
 {
 	std::reverse(_params.begin(), _params.end());
 	std::reverse(_body.begin(), _body.end());
+}
+
+
+bool Function::Scope(SymTab& symbols, TU& tu)
+{
+	symbols.Enter();
+	bool success {true};
+	for (size_t i {0}; i < _params.size(); ++ i)
+		success = _params[i]->Scope(symbols, tu) && success;
+	for (size_t i {0}; i < _body.size(); ++ i)
+		success = _body[i]->Scope(symbols, tu) && success;
+	symbols.Exit();
+	return success;
 }
 
 

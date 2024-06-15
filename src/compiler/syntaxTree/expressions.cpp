@@ -10,6 +10,22 @@ AssignmentExpr::AssignmentExpr(Identifier* name, Expression* expr)
 {}
 
 
+bool AssignmentExpr::Scope(SymTab& symbols, TU& tu)
+{
+	bool success {true};
+	_def = dynamic_cast<VariableDef*>(symbols.Lookup(_name->_id));
+	if (_def == nullptr)
+	{
+		std::cerr << '(' << _name->_row << ", "sv << _name->_col
+			<< "): Unkown variable: "sv << _name->_id << '\n';
+		tu.HighlightError(std::cerr, *_name);
+		success = false;
+	}
+	
+	return _expr->Scope(symbols, tu) && success;
+}
+
+
 bool AssignmentExpr::Validate(ValidateData& dat)
 {
 	bool success {_expr->Validate(dat)};
@@ -47,6 +63,15 @@ LoopExpr::LoopExpr(
 	Expression* init, Expression* cond, Expression* inc, Statement* body)
 	: _init{init}, _cond{cond}, _inc{inc}, _body{body}
 {}
+
+
+bool LoopExpr::Scope(SymTab& symbols, TU& tu)
+{
+	bool success {_init != nullptr ? _init->Scope(symbols, tu) : true};
+	success = (_cond != nullptr ? _init->Scope(symbols, tu) : true) && success;
+	success = (_inc != nullptr ? _init->Scope(symbols, tu) : true) && success;
+	return (_body != nullptr ? _init->Scope(symbols, tu) : true) && success;
+}
 
 
 bool LoopExpr::Validate(ValidateData& dat)

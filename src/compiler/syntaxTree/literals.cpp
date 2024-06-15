@@ -25,6 +25,27 @@ Variable::Variable(std::string& name)
 {}
 
 
+bool Variable::Scope(SymTab& symbols, TU& tu)
+{
+	_def = symbols.Lookup(_rawValue);
+	if (_def == nullptr)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Unkown symbol: " << _rawValue << '\n';
+		tu.HighlightError(std::cerr, *this);
+		return false;
+	}
+	else if (dynamic_cast<Function*>(_def) != nullptr)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Misuse of function identifier: " << _rawValue << '\n';
+		tu.HighlightError(std::cerr, *this);
+		return false;
+	}
+	return true;
+}
+
+
 void Variable::Generate(GenData& dat, std::ostream& os)
 {}
 

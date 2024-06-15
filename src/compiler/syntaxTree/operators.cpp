@@ -57,10 +57,17 @@ void ExpectedBinaryType(TU* src, TokenInfo& op, Expression* expr,
 	bool is_left, std::string_view expected)
 {
 	std::cerr << '(' << op._row << ", "sv << op._col << "): Expected "sv
-		<< ((is_left) ? "left"sv : "right"sv)
+		<< (is_left ? "left"sv : "right"sv)
 		<< " operand of type "sv << expected << ", found: "sv
 		<< expr->_type->_name << '\n';
 	src->HighlightError(std::cerr, op);
+}
+
+
+bool BinaryExpr::Scope(SymTab& symbols, TU& tu)
+{
+	const bool success {_argl->Scope(symbols, tu)};
+	return _argr->Scope(symbols, tu) && success;
 }
 
 
@@ -182,6 +189,12 @@ std::string_view PreExpr::GetOpText(Ops op)
 }
 
 
+bool PreExpr::Scope(SymTab& symbols, TU& tu)
+{
+	return _arg->Scope(symbols, tu);
+}
+
+
 bool PreExpr::Validate(ValidateData& dat)
 {
 	bool success {_arg->Validate(dat)};
@@ -235,6 +248,12 @@ std::string_view PostExpr::GetOpText(Ops op)
 }
 
 
+bool PostExpr::Scope(SymTab& symbols, TU& tu)
+{
+	return _arg->Scope(symbols, tu);
+}
+
+
 bool PostExpr::Validate(ValidateData& dat)
 {
 	bool success {_arg->Validate(dat)};
@@ -276,6 +295,25 @@ Invocation::Invocation(Identifier* name, ArgList& args)
 {
 	std::reverse(_args.begin(), _args.end());
 	_hasCall = true;
+}
+
+
+bool Invocation::Scope(SymTab& symbols, TU& tu)
+{
+	bool success {true};
+	_def = dynamic_cast<Function*>(symbols.Lookup(_name->_id));
+	if (_def == nullptr)
+	{
+		std::cerr << '(' << _row << ", "sv << _col
+			<< "): Unknown function: "sv << _name->_id << '\n';
+		tu.HighlightError(std::cerr, *_name);
+		success = false;
+	}
+
+	for (size_t i {0}; i < _args.size(); ++ i)
+		success = _args[i]->Scope(symbols, tu) && success;	
+
+	return success;
 }
 
 

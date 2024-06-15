@@ -58,7 +58,7 @@ void Location::ReinterpretStack(BytesT stack_args_size)
 }
 
 
-bool SyntaxTreeNode::Scope(SymbolTable<std::string_view, Declaration>& symbols)
+bool SyntaxTreeNode::Scope(SymTab& symbols, TU& tu)
 {
 	// Take no action and assume success by default.
 	return true;

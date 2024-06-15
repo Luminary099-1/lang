@@ -61,17 +61,18 @@ struct Breakable
 struct VariableDef
 	: public virtual Statement, public Declaration
 {
-	Type* _type;						// The variable's type.
-	std::unique_ptr<Expression> _init;	// The variable's initializer.
+	Type* _type;						// Variable's type.
+	std::unique_ptr<Expression> _init;	// Variable's initializer.
 
 	/**
-	 * Construct a new VariableDef object.
-	 * @param type The variable's type.
-	 * @param name The variable's identifier.
-	 * @param init The variable's initialization expression.
+	 * Construct a new variable definition.
+	 * @param type Variable's type.
+	 * @param name Variable's identifier.
+	 * @param init Variable's initialization expression.
 	 */
 	VariableDef(Type* type, Identifier* name, Expression* init);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -85,17 +86,18 @@ struct IfStmt
 	: public Statement
 {
 	std::unique_ptr<Expression> _cond;	// A conditional expression.
-	std::unique_ptr<Statement> _body;	// The statement executed on true.
+	std::unique_ptr<Statement> _body;	// Statement executed on true.
 	std::unique_ptr<Statement> _alt;	// The else case. Optional.
 
 	/**
-	 * Construct a new IfStmt object;
+	 * Construct a new if statement.
 	 * @param cond A condition expression.
 	 * @param body A statement executed on true.
-	 * @param alt The else case if the condition is false.
+	 * @param alt Else case if the condition is false.
 	 */
 	IfStmt(Expression* cond, Statement* body, Statement* alt);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -111,17 +113,17 @@ struct IntLiteral;	// Forward declaration.
 struct BreakStmt
 	: public Statement
 {
-	Breakable* _target {nullptr};		// The targetted breakable expression.
+	Breakable* _target {nullptr};		// Targetted breakable expression.
 	std::unique_ptr<Expression> _expr;	// Yield expression. Optional.
-	std::unique_ptr<IntLiteral> _count;	// The break count literal. Optional.
+	std::unique_ptr<IntLiteral> _count;	// Break count literal. Optional.
 
 	/**
-	 * Construct a new BreakStmt object.
+	 * Construct a new break statement.
 	 * @param expr Yield expression. Optional.
-	 * @param cout The number of expressions to break. Optional.
-	 */
+N	 */
 	BreakStmt(Expression* expr, IntLiteral* count);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -137,11 +139,12 @@ struct ReturnStmt
 	std::unique_ptr<Expression> _expr;	// An optional return expression.
 
 	/**
-	 * Construct a new ReturnStmt object.
+	 * Construct a new return statement.
 	 * @param expr An optional return expression.
 	 */
 	ReturnStmt(Expression* expr);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -154,18 +157,19 @@ struct ReturnStmt
 struct CompoundStmt
 	: public Expression
 {
-	StmtList _stmts;					// This node's children statements.
+	StmtList _stmts;					// Node's children statements.
 	std::unique_ptr<Expression> _expr;	// An evaluation expression. Optional.
 	
 	/**
-	 * Construct a new CompoundStmt object.
-	 * @param stmts This node's children statements. Assumed to be in reverse 
-	 * order after being parsed.
+	 * Construct a new compound statement.
+	 * @param stmts Node's children statements. Assumed to be in reverse order
+	 * after being parsed bottom-up.
 	 * @param expr An optional return expression, declared as the last statement
 	 * without a semicolon.
 	 */
 	CompoundStmt(StmtList stmts, Expression* expr);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -203,25 +207,26 @@ struct BinaryExpr
 		Mod
 	};
 
-	std::unique_ptr<Expression> _argl;	// The expression's left operand.
-	std::unique_ptr<Expression> _argr;	// The expression's right operand.
-	Ops _op;							// The operator being applied.
+	std::unique_ptr<Expression> _argl;	// Expression's left operand.
+	std::unique_ptr<Expression> _argr;	// Expression's right operand.
+	Ops _op;							// Operator being applied.
 
 	/**
-	 * Construct a new BinaryExpr object.
-	 * @param argl A left operand expression.
-	 * @param argr A right operand expression.
-	 * @param op The operator to be applied.
+	 * Construct a new binary expression.
+	 * @param argl Left operand expression.
+	 * @param argr Right operand expression.
+	 * @param op Operator to be applied.
 	 */
 	BinaryExpr(Expression* argl, Expression* argr, Ops op);
 
 	/**
 	 * Returns a view to a textual representation of the operator.
-	 * @param op The operator to be named.
-	 * @return std::string_view A view to the operator's name.
+	 * @param op Operator to be named.
+	 * @return std::string_view View to the operator's name.
 	 */
 	std::string_view GetOpText(Ops op); // TODO: Extract superclass to own this.
 	
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -245,23 +250,24 @@ struct PreExpr
 		Comp
 	};
 
-	std::unique_ptr<Expression> _arg;	// The expression's operand.
-	Ops _op;							// The operator being applied.
+	std::unique_ptr<Expression> _arg;	// Expression's operand.
+	Ops _op;							// Operator being applied.
 
 	/**
-	 * Construct a new PreExpr object.
+	 * Construct a new prefix unary expression.
 	 * @param arg An operand expression.
-	 * @param op The operator to be applied.
+	 * @param op Operator to be applied.
 	 */
 	PreExpr(Expression* arg, Ops op);
 
 	/**
 	 * Returns a view to a textual representation of the operator.
-	 * @param op The operator to be named.
-	 * @return std::string_view A view to the operator's name.
+	 * @param op Operator to be named.
+	 * @return std::string_view View to the operator's name.
 	 */
 	std::string_view GetOpText(Ops op);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -281,24 +287,25 @@ struct PostExpr
 		Dec
 	};
 
-	std::unique_ptr<Expression> _arg;	// The expression's operand.
-	Ops _op;							// The operator being applied.
+	std::unique_ptr<Expression> _arg;	// Expression's operand.
+	Ops _op;							// Operator being applied.
 
 	/**
-	 * @brief Construct a new PostExpr object.
+	 * @brief Construct a new postfix unary expression.
 	 * 
 	 * @param arg An operand expression.
-	 * @param op The operator to be applied.
+	 * @param op Operator to be applied.
 	 */
 	PostExpr(Expression* arg, Ops op);
 
 	/**
 	 * Returns a view to a textual representation of the operator.
-	 * @param op The operator to be named.
-	 * @return std::string_view A view to the operator's name.
+	 * @param op Operator to be named.
+	 * @return std::string_view View to the operator's name.
 	 */
 	std::string_view GetOpText(Ops op);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -314,18 +321,19 @@ struct Invocation
 	// Stores the arguments passed to a function.
 	using ArgList = std::vector<std::unique_ptr<Expression>>;
 
-	std::unique_ptr<Identifier> _name;	// The called function's identifier.
-	Function* _def;						// The node defining the call.
-	ArgList _args;						// The arguments specified by the call.
+	std::unique_ptr<Identifier> _name;	// Callee function's identifier.
+	Function* _def;						// Node defining the callee function.
+	ArgList _args;						// Arguments specified by the call.
 
 	/**
-	 * Construct a new Invocation object.
-	 * @param name The name of the function being called.
-	 * @param args The arguments specified by the function call. Assumed to be
-	 * in reverse order after being parsed.
+	 * Construct a new invocation.
+	 * @param name Name of the function being called.
+	 * @param args Arguments specified by the function call. Assumed to be in
+	 * reverse order after being parsed.
 	 */
 	Invocation(Identifier* name, ArgList& args);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -340,17 +348,18 @@ struct Invocation
 struct AssignmentExpr
 	: public Expression
 {
-	std::unique_ptr<Identifier> _name;	// The variable's identifier.
-	VariableDef* _def;					// The AST node declaring the variable.
-	std::unique_ptr<Expression> _expr;	// The expression being assigned.
+	std::unique_ptr<Identifier> _name;	// Variable's identifier.
+	VariableDef* _def;					// AST node declaring the variable.
+	std::unique_ptr<Expression> _expr;	// Expression being assigned.
 
 	/**
-	 * Construct a new AssignmentExpr object.
-	 * @param name The variable's identifier.
-	 * @param expr The expression being assigned to the variable.
+	 * Construct a new assignment expression.
+	 * @param name Variable's identifier.
+	 * @param expr Expression being assigned to the variable.
 	 */
 	AssignmentExpr(Identifier* name, Expression* expr);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -377,6 +386,7 @@ struct LoopExpr
 	 */
 	LoopExpr(Expression* init, Expression* cond, Expression* inc, Statement* body);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -419,6 +429,7 @@ struct Variable
 	 */
 	Variable(std::string& name);
 
+	bool Scope(SymTab& symbols, TU& tu) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 
 	// TokenInfo refers to the identifier itself.

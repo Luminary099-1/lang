@@ -48,6 +48,24 @@ VariableDef::VariableDef(Type* type, Identifier* name, Expression* init)
 {}
 
 
+
+bool VariableDef::Scope(SymTab& symbols, TU& tu)
+{
+	Declaration* pre {symbols.Define(_name->_id, this)};
+	if (pre != nullptr)
+	{
+		std::cerr << '(' << _name->_row << ", "sv << _name->_col
+			<< "): Symbol collision: "sv << _name->_id
+			<< "\n# The following on line "sv << _name->_row << ":\n"sv;
+		tu.HighlightError(std::cerr, *_name);
+		std::cerr << "# Redefines on line "sv << pre->_name->_row << ":\n"sv;
+		tu.HighlightError(std::cerr, *pre->_name);
+		return false;
+	}
+	return true;
+}
+
+
 bool VariableDef::Validate(ValidateData& dat)
 {
 	bool success {_init->Validate(dat)};
@@ -89,6 +107,13 @@ void VariableDef::Print(std::ostream& os, std::string_view indent, int depth)
 IfStmt::IfStmt(Expression* cond, Statement* body, Statement* alt)
 	: _cond{cond}, _body{body}, _alt{alt}
 {}
+
+
+bool IfStmt::Scope(SymTab& symbols, TU& tu)
+{
+	const bool success {_cond->Scope(symbols, tu) && _body->Scope(symbols, tu)};
+	return (_cond != nullptr ? _cond->Scope(symbols, tu) : true) && success;
+}
 
 
 bool IfStmt::Validate(ValidateData& dat)
@@ -141,10 +166,16 @@ BreakStmt::BreakStmt(Expression* expr, IntLiteral* count)
 {}
 
 
+bool BreakStmt::Scope(SymTab& symbols, TU& tu)
+{
+	return _expr != nullptr ? _expr->Scope(symbols, tu) : true;
+}
+
+
 bool BreakStmt::Validate(ValidateData& dat)
 {
 	const size_t count
-		{static_cast<size_t>((_count == nullptr) ? 1 : _count->_value)};
+		{static_cast<size_t>(_count == nullptr ? 1 : _count->_value)};
 
 	if (dat._bs.size() < count)
 	{
@@ -189,7 +220,7 @@ void BreakStmt::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
 	os << "BreakStatement(Levels = "sv
-		<< ((_count == nullptr) ? 0 : _count->_value) << "):\n"sv;
+		<< (_count == nullptr ? 0 : _count->_value) << "):\n"sv;
 	PrintMaybe(_expr.get(), os, indent, ++ depth);
 }
 
@@ -198,6 +229,12 @@ ReturnStmt::ReturnStmt(Expression* expr)
 	: _expr{expr}
 {
 	_hasReturn = true;
+}
+
+
+bool ReturnStmt::Scope(SymTab& symbols, TU& tu)
+{
+	return _expr != nullptr ? _expr->Scope(symbols, tu) : true;
 }
 
 
@@ -265,6 +302,18 @@ CompoundStmt::CompoundStmt(StmtList stmts, Expression* expr)
 	: _stmts{std::move(stmts)}, _expr{expr}
 {
 	std::reverse(_stmts.begin(), _stmts.end());
+}
+
+
+bool CompoundStmt::Scope(SymTab& symbols, TU& tu)
+{
+	symbols.Enter();
+	bool success {true};
+	for (size_t i {0}; i < _stmts.size(); ++ i)
+		success = _stmts[i]->Scope(symbols, tu) && success;
+	success = (_expr != nullptr ? _expr->Scope(symbols, tu) : true) && success;
+	symbols.Exit();
+	return success;
 }
 
 
