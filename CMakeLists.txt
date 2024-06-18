@@ -1,51 +1,24 @@
-cmake_minimum_required(VERSION 3.28)
-project(language)
+cmake_minimum_required(VERSION 3.8)
+project(language LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+# Carburetta directory and build command:
+set(CARB_DIR ${CMAKE_SOURCE_DIR}/tools/carburetta)
 add_custom_target(
-	carb_build
-	COMMAND msbuild ${PROJECT_SOURCE_DIR}/tools/carburetta/carburetta.sln
+	carburetta_build
+	COMMAND msbuild ${CARB_DIR}/carburetta.sln -nologo -p:Configuration=Release
 )
 
-add_custom_target(
-	carb_run
-	COMMAND ${PROJECT_SOURCE_DIR}/tools/carburetta/build/Win_amd64/Release/carburetta.exe ${PROJECT_SOURCE_DIR}/src/compiler/carb.cbrt --c ${PROJECT_SOURCE_DIR}/src/compiler/parse.cpp --h
-)
+add_subdirectory(src)
 
-add_executable(lex_dump
-	src/compiler/tools/dumpLex.cpp
-	src/compiler/utilities.cpp
-	src/compiler/parse.cpp
-	src/compiler/syntaxTree/base.cpp
-	src/compiler/syntaxTree/expressions.cpp
-	src/compiler/syntaxTree/globals.cpp
-	src/compiler/syntaxTree/literals.cpp
-	src/compiler/syntaxTree/operators.cpp
-	src/compiler/syntaxTree/statements.cpp
+# Testing:
+include(FetchContent)
+FetchContent_Declare(
+	CppUTest
+	GIT_REPOSITORY https://github.com/cpputest/cpputest
+	GIT_TAG master
 )
-set_property(TARGET lex_dump PROPERTY CXX_STANDARD 20)
+FetchContent_MakeAvailable(CppUTest)
 
-add_executable(ast_dump
-	src/compiler/tools/dumpAST.cpp
-	src/compiler/utilities.cpp
-	src/compiler/parse.cpp
-	src/compiler/syntaxTree/base.cpp
-	src/compiler/syntaxTree/expressions.cpp
-	src/compiler/syntaxTree/globals.cpp
-	src/compiler/syntaxTree/literals.cpp
-	src/compiler/syntaxTree/operators.cpp
-	src/compiler/syntaxTree/statements.cpp
-)
-set_property(TARGET ast_dump PROPERTY CXX_STANDARD 20)
-
-add_executable(compiler
-	src/compiler/main.cpp
-	src/compiler/utilities.cpp
-	src/compiler/parse.cpp
-	src/compiler/syntaxTree/base.cpp
-	src/compiler/syntaxTree/expressions.cpp
-	src/compiler/syntaxTree/globals.cpp
-	src/compiler/syntaxTree/literals.cpp
-	src/compiler/syntaxTree/operators.cpp
-	src/compiler/syntaxTree/statements.cpp
-)
-set_property(TARGET compiler PROPERTY CXX_STANDARD 20)
+add_subdirectory(test)

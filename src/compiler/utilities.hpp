@@ -50,7 +50,7 @@ public:
 	 * @param src_path Path to the file to be represented by this object.
 	 * @throws std::runtime_error If the specified file could not be opened.
 	 */
-	TU(char* src_path);
+	TU(const char* src_path);
 
 	// Deconstructor.
 	~TU();

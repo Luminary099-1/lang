@@ -30,7 +30,7 @@ void TokenInfo::SetMergedInfo(TokenInfo& i1, TokenInfo& i2)
 }
 
 
-TU::TU(char* src_path)
+TU::TU(const char* src_path)
 {
 	_src.open(src_path, std::ios_base::in);
 	if (!_src)
@@ -48,7 +48,7 @@ TU::TU(char* src_path)
 TU::~TU()
 {
 	_src.close();
-	delete _buf;
+	delete[] _buf;
 }
 
 
