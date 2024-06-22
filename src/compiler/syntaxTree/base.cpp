@@ -58,6 +58,10 @@ void Location::ReinterpretStack(BytesT stack_args_size)
 }
 
 
+SyntaxTreeNode::~SyntaxTreeNode()
+{}
+
+
 bool SyntaxTreeNode::Scope(SymTab& symbols, TU& tu)
 {
 	// Take no action and assume success by default.

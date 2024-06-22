@@ -5,6 +5,7 @@
 
 %header%
 #include <iostream>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -22,7 +23,7 @@
 const size_t carbWhiteBound {1};
 %%
 
-%params std::vector<SyntaxTreeNode*>& out 
+%params AST& out 
 
 
 %scanner%
@@ -99,7 +100,7 @@ STRING: \".*\" { $$ = std::string($text); }
 %grammar%
 
 globals: global globals
-	{ out.push_back($0); }
+	{ out.emplace_back($0); }
 globals: ;
 
 %class global: SyntaxTreeNode*

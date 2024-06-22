@@ -15,10 +15,13 @@ add_subdirectory(src)
 # Testing:
 include(FetchContent)
 FetchContent_Declare(
-	CppUTest
-	GIT_REPOSITORY https://github.com/cpputest/cpputest
-	GIT_TAG master
+	googletest
+	GIT_REPOSITORY https://github.com/google/googletest
+	GIT_TAG v1.14.0
 )
-FetchContent_MakeAvailable(CppUTest)
+if(WIN32)
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
+FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(test)

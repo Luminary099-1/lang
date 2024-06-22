@@ -148,6 +148,9 @@ template struct SymbolTable<std::string_view, Declaration>;
 struct SyntaxTreeNode
 	: public virtual TokenInfo
 {
+	// Necessary to enable polymorphic deletion of derived AST nodes.
+	virtual ~SyntaxTreeNode();
+
 	/**
 	 * Performs scope resolution by populating references to declarations.
 	 * @param symbols Symbol table to be used.
@@ -203,6 +206,10 @@ struct SyntaxTreeNode
 	static void PrintMaybe(SyntaxTreeNode* node, std::ostream& os
 		, std::string_view indent, int depth);
 };
+
+
+// Stores the AST of a complete program.
+using AST = std::vector<std::unique_ptr<SyntaxTreeNode>>;
 
 
 struct Identifier

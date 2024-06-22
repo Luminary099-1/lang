@@ -6,6 +6,6 @@ target_include_directories(test_parser PRIVATE ${CMAKE_SOURCE_DIR}/src/compiler)
 target_link_libraries(
 	test_parser PRIVATE
 	compiler_core
-	CppUTest::CppUTest
-    CppUTest::CppUTestExt
+	GTest::gtest_main
 )
+include(GoogleTest)

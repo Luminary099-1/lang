@@ -39,14 +39,14 @@ int main(int argc, char** argv)
 	carb_set_input(&stack, tu->_buf, tu->_size, 1);
 
 	int status {EXIT_SUCCESS};
-	std::vector<SyntaxTreeNode*> out;
+	AST out;
 	while (true)
 	{
 		switch (carb_scan(&stack, out))
 		{
 			case _CARB_FINISH:
-				for (SyntaxTreeNode* node : out)
-					node->Print(std::cout, "	"sv);
+				for (size_t i {0}; i < out.size(); ++ i)
+					out[i]->Print(std::cout, "	"sv);
 				break;
 			case _CARB_FEED_ME:
 				tu->ReadNext();

@@ -73,7 +73,7 @@ bool VariableDef::Validate(ValidateData& dat)
 	if (_type->IsVoid())
 	{
 		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Variable cannot be type void: "sv << _name << '\n';
+			<< "): Variable cannot be type void: "sv << _name->_id << '\n';
 		dat._src->HighlightError(std::cerr, *this);
 		return false;
 	}
