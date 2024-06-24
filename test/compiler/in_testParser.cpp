@@ -9,21 +9,43 @@
 #include <memory>
 
 
-// Evaluates the parsing of an empty function.
-TEST(Parser, Function_Empty)
+// Test fixture for testing parser output.
+class ParserTest
+	: public testing::Test
 {
-	std::unique_ptr<TU> tu;
-	carb_stack stack;
-	carb_stack_init(&stack);
+protected:
+	carb_stack _stack;	// Parser structure.
+	AST _ast;			// AST output.
+	bool _success;		// Indicates the parsing was successful.
 
-	tu = std::make_unique<TU>("@TESTDATADIR@/testParser/fn_empty.lang");
-	carb_set_input(&stack, tu->GetBuf(), tu->GetSize(), tu->IsFinal());
-	AST prog {};
-	ASSERT_TRUE(Parser::getAST(stack, *tu, prog))
+	ParserTest()
+	{
+		carb_stack_init(&_stack);
+	}
+
+	~ParserTest()
+	{
+		carb_stack_cleanup(&_stack);
+	}
+
+	void Load(const char* src_path)
+	{
+		TU tu (src_path);
+		carb_set_input(&_stack, tu.GetBuf(), tu.GetSize(), tu.IsFinal());
+		_success = Parser::getAST(_stack, tu, _ast);
+	}
+};
+
+
+// Empty void function with no parameters.
+TEST_F(ParserTest, Function_Empty)
+{
+	Load("@TESTDATADIR@/testParser/fn_empty.lang");
+	ASSERT_TRUE(_success)
 		<< "An error occured constructing the AST.";
-	ASSERT_EQ(1, prog.size())
+	ASSERT_EQ(1, _ast.size())
 		<< "Incorrect number of top-level AST nodes.";
-	Function* fn {dynamic_cast<Function*>(prog[0].get())};
+	Function* fn {dynamic_cast<Function*>(_ast[0].get())};
 	ASSERT_NE(fn, nullptr)
 		<< "Expected a function node.";
 	EXPECT_STREQ("empty", fn->_name->_id.c_str())
@@ -34,6 +56,4 @@ TEST(Parser, Function_Empty)
 		<< "Unexpected function parameters.";
 	EXPECT_EQ(0, fn->_body.size())
 		<< "Unexpected function body statements.";
-
-	carb_stack_cleanup(&stack);
 }
