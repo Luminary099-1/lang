@@ -40,21 +40,38 @@ TU::TU(const char* src_path)
 		throw std::runtime_error(msg);
 	}
 
-	_buf = new char[_chunk];
+	_buf = std::make_unique<char[]>(_capacity);
 	ReadNext();
 }
 
 
-TU::~TU()
+char* TU::GetBuf() const
 {
-	_src.close();
-	delete[] _buf;
+	return _buf.get();
+}
+
+
+size_t TU::GetSize() const
+{
+	return _size;
+}
+
+
+bool TU::IsEnd() const
+{
+	return _end;
+}
+
+
+int TU::IsFinal() const
+{
+	return _end ? 1 : 0;
 }
 
 
 void TU::ReadNext()
 {
-	_src.read(_buf, _chunk);
+	_src.read(_buf.get(), _capacity);
 	_size = static_cast<size_t>(_src.gcount());
 	_end = _src.eof();
 }

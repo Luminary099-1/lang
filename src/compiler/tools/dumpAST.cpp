@@ -1,4 +1,5 @@
-#include "../parse.h"
+#include "../parser/parser.h"
+#include "../parser/parserTools.hpp"
 #include "../syntaxTree/base.hpp"
 #include "../utilities.hpp"
 
@@ -36,38 +37,17 @@ int main(int argc, char** argv)
 
 	carb_stack stack;
 	carb_stack_init(&stack);
-	carb_set_input(&stack, tu->_buf, tu->_size, 1);
-
+	carb_set_input(&stack, tu->_buf, tu->_size, tu->_end ? 1 : 0);
 	int status {EXIT_SUCCESS};
 	AST out;
-	while (true)
+	
+	try
 	{
-		switch (carb_scan(&stack, out))
-		{
-			case _CARB_FINISH:
-				for (size_t i {0}; i < out.size(); ++ i)
-					out[i]->Print(std::cout, "	"sv);
-				break;
-			case _CARB_FEED_ME:
-				tu->ReadNext();
-				carb_set_input(&stack, tu->_buf, tu->_size, 1);
-				continue;
-			case _CARB_END_OF_INPUT:
-				break;
-			case _CARB_LEXICAL_ERROR:
-				std::cerr << "Unexpected token: "sv << carb_text(&stack) << '\n';
-				continue;
-			case _CARB_SYNTAX_ERROR:
-				std::cerr << "Syntax error on ("sv << carb_line(&stack)
-					<< ", "sv << carb_column(&stack) << "): "sv
-					<< carb_text(&stack) << '\n';
-				continue;
-			default:
-				std::cerr << "Encountered an unrecoverable error, aborting.\n"sv;
-				status = EXIT_FAILURE;
-		}
-		break;
+		Parser::getAST(stack, *tu, out);
+		for (size_t i {0}; i < out.size(); ++ i)
+			out[i]->Print(std::cout, "	"sv);
 	}
+	catch (std::runtime_error& e) { std::cerr << e.what() << '\n'; }
 
 	carb_stack_cleanup(&stack);
 	return status;

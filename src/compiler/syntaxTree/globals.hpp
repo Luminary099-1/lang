@@ -22,7 +22,7 @@ struct Parameter
 	 */
 	Parameter(Type* type, Identifier* name);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
 
 	// TokenInfo refers to the span of the parameter's type and name.
@@ -52,7 +52,7 @@ struct Function
 	 */
 	Function(Identifier* name, ParamList params, Type* type, StmtList body);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;

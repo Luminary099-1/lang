@@ -25,7 +25,7 @@ Variable::Variable(std::string& name)
 {}
 
 
-bool Variable::Scope(SymTab& symbols, TU& tu)
+bool Variable::Scope(SymbolTable& symbols, TU& tu)
 {
 	_def = symbols.Lookup(_rawValue);
 	if (_def == nullptr)

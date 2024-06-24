@@ -49,7 +49,7 @@ VariableDef::VariableDef(Type* type, Identifier* name, Expression* init)
 
 
 
-bool VariableDef::Scope(SymTab& symbols, TU& tu)
+bool VariableDef::Scope(SymbolTable& symbols, TU& tu)
 {
 	Declaration* pre {symbols.Define(_name->_id, this)};
 	if (pre != nullptr)
@@ -109,7 +109,7 @@ IfStmt::IfStmt(Expression* cond, Statement* body, Statement* alt)
 {}
 
 
-bool IfStmt::Scope(SymTab& symbols, TU& tu)
+bool IfStmt::Scope(SymbolTable& symbols, TU& tu)
 {
 	const bool success {_cond->Scope(symbols, tu) && _body->Scope(symbols, tu)};
 	return (_cond != nullptr ? _cond->Scope(symbols, tu) : true) && success;
@@ -166,7 +166,7 @@ BreakStmt::BreakStmt(Expression* expr, IntLiteral* count)
 {}
 
 
-bool BreakStmt::Scope(SymTab& symbols, TU& tu)
+bool BreakStmt::Scope(SymbolTable& symbols, TU& tu)
 {
 	return _expr != nullptr ? _expr->Scope(symbols, tu) : true;
 }
@@ -232,7 +232,7 @@ ReturnStmt::ReturnStmt(Expression* expr)
 }
 
 
-bool ReturnStmt::Scope(SymTab& symbols, TU& tu)
+bool ReturnStmt::Scope(SymbolTable& symbols, TU& tu)
 {
 	return _expr != nullptr ? _expr->Scope(symbols, tu) : true;
 }
@@ -305,7 +305,7 @@ CompoundStmt::CompoundStmt(StmtList stmts, Expression* expr)
 }
 
 
-bool CompoundStmt::Scope(SymTab& symbols, TU& tu)
+bool CompoundStmt::Scope(SymbolTable& symbols, TU& tu)
 {
 	symbols.Enter();
 	bool success {true};

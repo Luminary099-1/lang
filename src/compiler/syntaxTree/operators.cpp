@@ -64,7 +64,7 @@ void ExpectedBinaryType(TU* src, TokenInfo& op, Expression* expr,
 }
 
 
-bool BinaryExpr::Scope(SymTab& symbols, TU& tu)
+bool BinaryExpr::Scope(SymbolTable& symbols, TU& tu)
 {
 	const bool success {_argl->Scope(symbols, tu)};
 	return _argr->Scope(symbols, tu) && success;
@@ -189,7 +189,7 @@ std::string_view PreExpr::GetOpText(Ops op)
 }
 
 
-bool PreExpr::Scope(SymTab& symbols, TU& tu)
+bool PreExpr::Scope(SymbolTable& symbols, TU& tu)
 {
 	return _arg->Scope(symbols, tu);
 }
@@ -248,7 +248,7 @@ std::string_view PostExpr::GetOpText(Ops op)
 }
 
 
-bool PostExpr::Scope(SymTab& symbols, TU& tu)
+bool PostExpr::Scope(SymbolTable& symbols, TU& tu)
 {
 	return _arg->Scope(symbols, tu);
 }
@@ -298,7 +298,7 @@ Invocation::Invocation(Identifier* name, ArgList& args)
 }
 
 
-bool Invocation::Scope(SymTab& symbols, TU& tu)
+bool Invocation::Scope(SymbolTable& symbols, TU& tu)
 {
 	bool success {true};
 	_def = dynamic_cast<Function*>(symbols.Lookup(_name->_id));

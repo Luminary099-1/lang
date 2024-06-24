@@ -1,7 +1,4 @@
-# Carburetta generate command:
-file(GLOB CARB_EXE ${CARB_DIR}/build/*/Release/carburetta.exe)
-add_custom_target(parser_generate
-	COMMAND ${CARB_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/carb.cbrt --c ${CMAKE_CURRENT_SOURCE_DIR}/parse.cpp --h)
+add_subdirectory(parser)
 
 # Compiler sources and executables:
 add_library(compiler_core STATIC
@@ -11,7 +8,8 @@ add_library(compiler_core STATIC
 	syntaxTree/literals.cpp
 	syntaxTree/operators.cpp
 	syntaxTree/statements.cpp
-	parse.cpp
+	parser/parser.cpp
+	parser/parserTools.cpp
 	utilities.cpp
 )
 add_executable(compiler main.cpp)

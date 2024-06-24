@@ -37,14 +37,13 @@ struct TokenInfo
 // Wraps a buffer to contain a TU's source.
 class TU
 {
-	static const size_t _chunk {4096};	// Size of the buffer.
-	std::ifstream _src;	// Source file.
+	static const size_t _capacity {4096};	// Size of the buffer.
+	std::ifstream _src;						// Source file.
+	std::unique_ptr<char[]> _buf;			// TU's source buffer.
+	size_t _size;							// Bytes stored in the buffer.
+	bool _end {false}; // Indicates the EOF was reached in the last operation.
 
 public:
-	char* _buf;			// Pointer to a TU's source buffer.
-	size_t _size;		// Number of bytes stored in the buffer.
-	bool _end {false};	// Indicated the input has been exhausted.
-
 	/**
 	 * Construct a new TU object for the specified file.
 	 * @param src_path Path to the file to be represented by this object.
@@ -52,8 +51,27 @@ public:
 	 */
 	TU(const char* src_path);
 
-	// Deconstructor.
-	~TU();
+	/**
+	 * @return Pointer to the buffer.
+	 */
+	char* GetBuf() const;
+
+	/**
+	 * @return Number of bytes currently available in the buffer.
+	 */
+	size_t GetSize() const;
+
+	/**
+	 * @return true if the end of the source was reached in the last operation;
+	 * false otherwise.
+	 */
+	bool IsEnd() const;
+
+	/**
+	 * @return 1 if the end of the source was reached in the last operation; 0
+	 * otherwise.
+	 */
+	int IsFinal() const;
 
 	/**
 	 * Advances the buffer's position in the source file to the next available
@@ -75,66 +93,4 @@ public:
 	 * @param info Position information of the offending token.
 	 */
 	void HighlightError(std::ostream& os, TokenInfo& info);
-};
-
-
-/**
- * Stores program symbols in a scoped hierarchy.
- * @tparam I Type of identifiers in the scoped hierarchy.
- * @tparam D Type of the declarations in the scoped hierarchy.
- */
-template<typename I, typename D>
-struct SymbolTable
-{
-protected:
-	// A stack of scopes that map identifiers to AST definitions.
-	std::forward_list<std::map<I, D*>> _stackMap;
-
-public:
-	/** Default constructor. */
-	SymbolTable()
-	{}
-
-	/** Mark the beginning of a new scope. */
-	void Enter()
-	{
-		_stackMap.push_front(std::map<I, D*>());
-	}
-
-	/**  Mark the end of a new scope. */
-	void Exit()
-	{
-		_stackMap.front().clear();
-		_stackMap.pop_front();
-	}
-
-	/**
-	 * Attempts to define a new symbol in the current scope.
-	 * @param name The symbol's identifier (name).
-	 * @param node The AST node referred to by the symbol.
-	 * @return AST node that defines the symbol. If no such symbol is defined,
-	 * nullptr is returned.
-	 */
-	D* Define(I name, D* node)
-	{
-		std::map<I, D*>& front {_stackMap.front()};
-		if (front.count(name) == 0) return front[name];
-		front.insert(std::pair(name, node));
-		return nullptr;
-	}
-
-	/**
-	 * Returns a pointer to the AST node referred to by the specfied symbol,
-	 * if it exists in any scope. The most recently defined instance of that
-	 * symbol is returned over others (in preservation of shadowing).
-	 * @param name The symbol's identifier (name).
-	 * @return AST node that defines the symbol. If no such symbol is defined,
-	 * nullptr is returned. A returned pointer indicates a name collision.
-	 */
-	D* Lookup(I name)
-	{
-		for (std::map<I, D*> scope : _stackMap)
-			if (scope.count(name)) return scope[name];
-		return nullptr;
-	}
 };

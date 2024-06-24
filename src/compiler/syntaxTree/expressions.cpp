@@ -10,7 +10,7 @@ AssignmentExpr::AssignmentExpr(Identifier* name, Expression* expr)
 {}
 
 
-bool AssignmentExpr::Scope(SymTab& symbols, TU& tu)
+bool AssignmentExpr::Scope(SymbolTable& symbols, TU& tu)
 {
 	bool success {true};
 	_def = dynamic_cast<VariableDef*>(symbols.Lookup(_name->_id));
@@ -65,7 +65,7 @@ LoopExpr::LoopExpr(
 {}
 
 
-bool LoopExpr::Scope(SymTab& symbols, TU& tu)
+bool LoopExpr::Scope(SymbolTable& symbols, TU& tu)
 {
 	bool success {_init != nullptr ? _init->Scope(symbols, tu) : true};
 	success = (_cond != nullptr ? _init->Scope(symbols, tu) : true) && success;

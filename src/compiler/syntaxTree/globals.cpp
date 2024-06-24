@@ -13,7 +13,7 @@ Parameter::Parameter(Type* type, Identifier* name)
 {}
 
 
-bool Parameter::Scope(SymTab& symbols, TU& tu)
+bool Parameter::Scope(SymbolTable& symbols, TU& tu)
 {
 	Declaration* pre {symbols.Define(_name->_id, this)};
 	if (pre != nullptr)
@@ -48,7 +48,7 @@ Function::Function(
 }
 
 
-bool Function::Scope(SymTab& symbols, TU& tu)
+bool Function::Scope(SymbolTable& symbols, TU& tu)
 {
 	symbols.Enter();
 	bool success {true};

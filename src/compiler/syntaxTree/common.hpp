@@ -72,7 +72,7 @@ struct VariableDef
 	 */
 	VariableDef(Type* type, Identifier* name, Expression* init);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -97,7 +97,7 @@ struct IfStmt
 	 */
 	IfStmt(Expression* cond, Statement* body, Statement* alt);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -123,7 +123,7 @@ struct BreakStmt
 N	 */
 	BreakStmt(Expression* expr, IntLiteral* count);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -144,7 +144,7 @@ struct ReturnStmt
 	 */
 	ReturnStmt(Expression* expr);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -169,7 +169,7 @@ struct CompoundStmt
 	 */
 	CompoundStmt(StmtList stmts, Expression* expr);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -226,7 +226,7 @@ struct BinaryExpr
 	 */
 	std::string_view GetOpText(Ops op); // TODO: Extract superclass to own this.
 	
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -267,7 +267,7 @@ struct PreExpr
 	 */
 	std::string_view GetOpText(Ops op);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -305,7 +305,7 @@ struct PostExpr
 	 */
 	std::string_view GetOpText(Ops op);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -333,7 +333,7 @@ struct Invocation
 	 */
 	Invocation(Identifier* name, ArgList& args);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -359,7 +359,7 @@ struct AssignmentExpr
 	 */
 	AssignmentExpr(Identifier* name, Expression* expr);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -386,7 +386,7 @@ struct LoopExpr
 	 */
 	LoopExpr(Expression* init, Expression* cond, Expression* inc, Statement* body);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	bool Validate(ValidateData& dat) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 	void Print(std::ostream& os, std::string_view indent, int depth) override;
@@ -429,7 +429,7 @@ struct Variable
 	 */
 	Variable(std::string& name);
 
-	bool Scope(SymTab& symbols, TU& tu) override;
+	bool Scope(SymbolTable& symbols, TU& tu) override;
 	void Generate(GenData& dat, std::ostream& os) override;
 
 	// TokenInfo refers to the identifier itself.

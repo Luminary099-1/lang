@@ -58,11 +58,45 @@ void Location::ReinterpretStack(BytesT stack_args_size)
 }
 
 
+SymbolTable::SymbolTable()
+{}
+
+
+void SymbolTable::Enter()
+{
+	_stackMap.push_front(std::map<std::string_view, Declaration*>());
+}
+
+
+void SymbolTable::Exit()
+{
+	_stackMap.front().clear();
+	_stackMap.pop_front();
+}
+
+
+Declaration* SymbolTable::Define(std::string_view name, Declaration* node)
+{
+	std::map<std::string_view, Declaration*>& front {_stackMap.front()};
+	if (front.count(name) == 0) return front[name];
+	front.insert(std::pair(name, node));
+	return nullptr;
+}
+
+
+Declaration* SymbolTable::Lookup(std::string_view name)
+{
+	for (std::map<std::string_view, Declaration*> scope : _stackMap)
+		if (scope.count(name)) return scope[name];
+	return nullptr;
+}
+
+
 SyntaxTreeNode::~SyntaxTreeNode()
 {}
 
 
-bool SyntaxTreeNode::Scope(SymTab& symbols, TU& tu)
+bool SyntaxTreeNode::Scope(SymbolTable& symbols, TU& tu)
 {
 	// Take no action and assume success by default.
 	return true;

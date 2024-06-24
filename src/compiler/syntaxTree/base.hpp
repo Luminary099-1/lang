@@ -130,19 +130,52 @@ public:
 };
 
 
-// Forward declarations.
-struct Parameter;
+// Forward declaration:
 struct Declaration;
+
+
+// Stores program symbols in a scoped hierarchy.
+struct SymbolTable
+{
+protected:
+	// A stack of scopes that map identifiers to AST declarations.
+	std::forward_list<std::map<std::string_view, Declaration*>> _stackMap;
+
+public:
+	/** Default constructor. */
+	SymbolTable();
+
+	/** Mark the beginning of a new scope. */
+	void Enter();
+
+	/**  Mark the end of a new scope. */
+	void Exit();
+
+	/**
+	 * Attempts to define a new symbol in the current scope.
+	 * @param name The symbol's identifier (name).
+	 * @param node The AST node referred to by the symbol.
+	 * @return AST node that defines the symbol. If no such symbol is defined,
+	 * nullptr is returned.
+	 */
+	Declaration* Define(std::string_view name, Declaration* node);
+
+	/**
+	 * Returns a pointer to the AST node referred to by the specfied symbol,
+	 * if it exists in any scope. The most recently defined instance of that
+	 * symbol is returned over others (in preservation of shadowing).
+	 * @param name The symbol's identifier (name).
+	 * @return AST node that defines the symbol. If no such symbol is defined,
+	 * nullptr is returned. A returned pointer indicates a name collision.
+	 */
+	Declaration* Lookup(std::string_view name);
+};
+
 
 // Storess the data necessary to generate code and provides some utilities.
 struct GenData
 {};
 
-
-// Symbol table template alias.
-using SymTab = SymbolTable<std::string_view, Declaration>;
-
-template struct SymbolTable<std::string_view, Declaration>;
 
 // Base class for nodes of the AST.
 struct SyntaxTreeNode
@@ -157,7 +190,7 @@ struct SyntaxTreeNode
 	 * @param tu Translation unit corresponding to this node.
 	 * @return true if scope resolution is successful; false otherwise.
 	 */
-	virtual bool Scope(SymTab& symbols, TU& tu);
+	virtual bool Scope(SymbolTable& symbols, TU& tu);
 
 	/**
 	 * Traverses the AST structure and validates the semantics of the
