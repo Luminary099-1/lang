@@ -235,17 +235,19 @@ struct BinaryExpr
 };
 
 
-// Represents a prefix expression.
-struct PreExpr
+// Represents a unary expression.
+struct UnaryExpr
 	: public Expression
 {
-	// Enumerates all valid prefix operators.
+	// Enumerates all valid unary operators.
 	enum class Ops
 	{
 		Pos,
 		Neg,
-		Inc,
-		Dec,
+		PreInc,
+		PreDec,
+		PostInc,
+		PostDec,
 		Deny,
 		Comp
 	};
@@ -254,49 +256,11 @@ struct PreExpr
 	Ops _op;							// Operator being applied.
 
 	/**
-	 * Construct a new prefix unary expression.
+	 * Construct a new unary expression.
 	 * @param arg An operand expression.
 	 * @param op Operator to be applied.
 	 */
-	PreExpr(Expression* arg, Ops op);
-
-	/**
-	 * Returns a view to a textual representation of the operator.
-	 * @param op Operator to be named.
-	 * @return std::string_view View to the operator's name.
-	 */
-	std::string_view GetOpText(Ops op);
-
-	bool Scope(SymbolTable& symbols, TU& tu) override;
-	bool Validate(ValidateData& dat) override;
-	void Generate(GenData& dat, std::ostream& os) override;
-	void Print(std::ostream& os, std::string_view indent, int depth) override;
-
-	// TokenInfo refers to the operator symbol.
-};
-
-
-// Represents a postfix expression.
-struct PostExpr
-	: public Expression
-{
-	// Enumeration of all valid postfix operators.
-	enum class Ops
-	{
-		Inc,
-		Dec
-	};
-
-	std::unique_ptr<Expression> _arg;	// Expression's operand.
-	Ops _op;							// Operator being applied.
-
-	/**
-	 * @brief Construct a new postfix unary expression.
-	 * 
-	 * @param arg An operand expression.
-	 * @param op Operator to be applied.
-	 */
-	PostExpr(Expression* arg, Ops op);
+	UnaryExpr(Expression* arg, Ops op);
 
 	/**
 	 * Returns a view to a textual representation of the operator.

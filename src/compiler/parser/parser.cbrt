@@ -98,8 +98,8 @@ STRING: \".*\" { $$ = std::string($text); }
 
 %grammar%
 
-globals: global globals
-	{ out.emplace_back($0); }
+globals: globals global
+	{ out.emplace_back($1); }
 globals: ;
 
 %class global: SyntaxTreeNode*
@@ -201,7 +201,7 @@ compound_stmt: LBRACE statements RBRACE
 		stmt->SetMergedInfo(${0}, ${2});
 		$$ = stmt;
 	}
-compound_stmt: LBRACE statements LARROW expression RBRACE
+compound_stmt: LBRACE statements RARROW expression RBRACE
 	{
 		CompoundStmt* stmt {new CompoundStmt(std::move($1), $3)};
 		stmt->SetMergedInfo(${0}, ${4});
@@ -344,40 +344,40 @@ arg_list_tail:
 
 %class pre_expr: Expression*
 pre_expr: primary_expr
-	{ $$ = static_cast<PreExpr*>($0); }
+	{ $$ = static_cast<UnaryExpr*>($0); }
 pre_expr: PLUS primary_expr
 	{
-		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Pos)};
+		UnaryExpr* expr {new UnaryExpr($1, UnaryExpr::Ops::Pos)};
 		expr->SetSymbolInfo(${0});
 		$$ = expr;
 	}
 pre_expr: MINUS primary_expr
 	{
-		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Neg)};
+		UnaryExpr* expr {new UnaryExpr($1, UnaryExpr::Ops::Neg)};
 		expr->SetSymbolInfo(${0});
 		$$ = expr;
 	}
 pre_expr: INC primary_expr
 	{
-		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Inc)};
+		UnaryExpr* expr {new UnaryExpr($1, UnaryExpr::Ops::PreInc)};
 		expr->SetSymbolInfo(${0});
 		$$ = expr;
 	}
 pre_expr: DEC primary_expr
 	{
-		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Dec)};
+		UnaryExpr* expr {new UnaryExpr($1, UnaryExpr::Ops::PreDec)};
 		expr->SetSymbolInfo(${0});
 		$$ = expr;
 	}
 pre_expr: DENY primary_expr
 	{
-		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Deny)};
+		UnaryExpr* expr {new UnaryExpr($1, UnaryExpr::Ops::Deny)};
 		expr->SetSymbolInfo(${0});
 		$$ = expr;
 	}
 pre_expr: COMP primary_expr
 	{
-		PreExpr* expr {new PreExpr($1, PreExpr::Ops::Comp)};
+		UnaryExpr* expr {new UnaryExpr($1, UnaryExpr::Ops::Comp)};
 		expr->SetSymbolInfo(${0});
 		$$ = expr;
 	}

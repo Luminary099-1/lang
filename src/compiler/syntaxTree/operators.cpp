@@ -168,19 +168,21 @@ void BinaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
 }
 
 
-PreExpr::PreExpr(Expression* arg, Ops op)
+UnaryExpr::UnaryExpr(Expression* arg, Ops op)
 	: _arg{arg}, _op{op}
 {}
 
 
-std::string_view PreExpr::GetOpText(Ops op)
+std::string_view UnaryExpr::GetOpText(Ops op)
 {
 	switch (op)
 	{
 		case Ops::Pos: 		return "+"sv;
 		case Ops::Neg: 		return "-"sv;
-		case Ops::Inc: 		return "++"sv;
-		case Ops::Dec: 		return "--"sv;
+		case Ops::PreInc: 	return "++_"sv;
+		case Ops::PreDec: 	return "--_"sv;
+		case Ops::PostInc: 	return "_++"sv;
+		case Ops::PostDec: 	return "_--"sv;
 		case Ops::Deny: 	return "!"sv;
 		case Ops::Comp: 	return "~"sv;
 	}
@@ -189,13 +191,13 @@ std::string_view PreExpr::GetOpText(Ops op)
 }
 
 
-bool PreExpr::Scope(SymbolTable& symbols, TU& tu)
+bool UnaryExpr::Scope(SymbolTable& symbols, TU& tu)
 {
 	return _arg->Scope(symbols, tu);
 }
 
 
-bool PreExpr::Validate(ValidateData& dat)
+bool UnaryExpr::Validate(ValidateData& dat)
 {
 	bool success {_arg->Validate(dat)};
 
@@ -214,75 +216,16 @@ bool PreExpr::Validate(ValidateData& dat)
 }
 
 
-void PreExpr::Generate(GenData& dat, std::ostream& os)
+void UnaryExpr::Generate(GenData& dat, std::ostream& os)
 {
-	// FIXME: These operations can incorrectly be applied to rvalues.
+	// Note that some of these must be applied to lvalues.
 }
 
 
-void PreExpr::Print(std::ostream& os, std::string_view indent, int depth)
+void UnaryExpr::Print(std::ostream& os, std::string_view indent, int depth)
 {
 	PrintIndent(os, indent, depth);
-	os << "PreExpression(Op = "sv << GetOpText(_op)
-		<< ", Type = "sv << _type->_name << "):\n"sv;
-	PrintIndent(os, indent, ++ depth);
-	os << "Operand =\n"sv;
-	_arg->Print(os, indent, ++ depth);
-}
-
-
-PostExpr::PostExpr(Expression* arg, Ops op)
-	: _arg{arg}, _op{op}
-{}
-
-
-std::string_view PostExpr::GetOpText(Ops op)
-{
-	switch (op)
-	{
-		case Ops::Inc: return "++"sv;
-		case Ops::Dec: return "--"sv;
-	}
-
-	return ""sv; // Shouldn't ever reach this but the compiler complains.
-}
-
-
-bool PostExpr::Scope(SymbolTable& symbols, TU& tu)
-{
-	return _arg->Scope(symbols, tu);
-}
-
-
-bool PostExpr::Validate(ValidateData& dat)
-{
-	bool success {_arg->Validate(dat)};
-
-	if (!_arg->_type->IsInt())
-	{
-		std::cerr << '(' << _row << ", "sv << _col
-			<< "): Expected operand of type int, found: "sv
-			<< _arg->_type->_name << '\n';
-		dat._src->HighlightError(std::cerr, *this);
-		success = false;
-	}
-
-	_type = _arg->_type;
-	_hasCall = _arg->_hasCall;
-	return success;
-}
-
-
-void PostExpr::Generate(GenData& dat, std::ostream& os)
-{
-	// FIXME: These operations can incorrectly be applied to rvalues.
-}
-
-
-void PostExpr::Print(std::ostream& os, std::string_view indent, int depth)
-{
-	PrintIndent(os, indent, depth);
-	os << "PostExpression(Op = "sv << GetOpText(_op)
+	os << "UnaryExpr(Op = "sv << GetOpText(_op)
 		<< ", Type = "sv << _type->_name << "):\n"sv;
 	PrintIndent(os, indent, ++ depth);
 	os << "Operand =\n"sv;
